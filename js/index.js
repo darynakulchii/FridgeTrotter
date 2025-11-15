@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarOverlay.classList.add('opacity-100');
     }
 
+
     // Функція для закриття бокової панелі
     function closeSidebar() {
         sidebar.classList.add('-translate-x-full'); // Ховаємо панель
