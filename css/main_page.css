@@ -1,16 +1,237 @@
+/* * =========================================
+ * Глобальні налаштування (Змінні)
+ * =========================================
+ */
+:root {
+    /* Кольори (HEX - для суцільних заливок) */
+    --color-primary: #281822;
+    --color-secondary-accent: #48192E;
+    --color-text-light: #D3CBC4;
+    --color-bg-light: #D3CBC4; /* Фон сторінки */
+    --color-nav-bar: #2D4952;
+    --color-white: #FFFFFF;
+
+    /* Кольори (RGB - для використання з прозорістю rgba()) */
+    --rgb-secondary-accent: 72, 25, 46; /* = #48192E */
+    --rgb-black: 0, 0, 0;
+    --rgb-white: 255, 255, 255;
+
+    /* Тіні */
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* * =========================================
+ * Базові стилі
+ * =========================================
+ */
+body {
+    background-color: var(--color-bg-light);
+    min-height: 100vh;
+    margin: 0;
+    font-family: sans-serif; /* Рекомендую додати базовий шрифт */
+}
+
+/* * =========================================
+ * Хедер (Верхня панель)
+ * =========================================
+ */
 .main-header {
-    background-color: #281822;
-    color: #D3CBC4;
-    padding-left: 1rem;   /* 1rem = 16px, це px-4 */
-    padding-right: 1rem;  /* 1rem = 16px, це px-4 */
-    padding-top: 1rem;    /* 1rem = 16px, це py-4 */
-    padding-bottom: 1rem; /* 1rem = 16px, це py-4 */
+    background-color: var(--color-primary);
+    color: var(--color-text-light);
+    padding: 1rem 1rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 40;
-    /* shadow-lg трохи складніше, але це приклад */
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-lg);
+}
+
+.header-left,
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem; /* gap-4 */
+}
+
+.header-title {
+    font-size: 1.5rem; /* text-2xl */
+    font-weight: 600; /* font-semibold */
+}
+
+.header-btn {
+    color: var(--color-text-light);
+    padding: 0.5rem; /* p-2 */
+    border-radius: 6px; /* rounded-md */
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.header-btn:hover {
+    background-color: var(--color-secondary-accent);
+}
+
+.header-btn svg {
+    height: 1.25rem; /* h-5 */
+    width: 1.25rem; /* w-5 */
+    stroke: currentColor;
+    fill: none;
+}
+
+.notification-btn {
+    position: relative;
+}
+
+.notification-dot {
+    position: absolute;
+    top: 6px;   /* top-1 */
+    right: 6px; /* right-1 */
+    height: 0.5rem; /* h-2 */
+    width: 0.5rem;  /* w-2 */
+    background-color: var(--color-text-light);
+    border-radius: 50%; /* rounded-full */
+}
+
+/* * =========================================
+ * Головна навігація (Під хедером)
+ * =========================================
+ */
+.main-nav {
+    background-color: var(--color-nav-bar);
+    padding: 0.75rem 1rem; /* py-3 px-4 */
+    display: flex;
+    gap: 0.5rem; /* gap-2 */
+    overflow-x: auto; /* Дозволяє прокрутку на мобільних */
+    box-shadow: var(--shadow-md);
+}
+
+.main-nav-link {
+    background-color: transparent;
+    color: var(--color-text-light);
+    padding: 0.5rem 1rem; /* px-4 py-2 */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500; /* font-medium */
+    border-radius: 6px; /* rounded-md */
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background-color 0.2s ease;
+}
+
+.main-nav-link:hover {
+    background-color: rgba(var(--rgb-secondary-accent), 0.5); /* #48192E з 50% прозорістю */
+}
+
+.main-nav-link.active {
+    background-color: var(--color-secondary-accent);
+}
+
+.main-nav-link.active:hover {
+    background-color: rgba(var(--rgb-secondary-accent), 0.9); /* #48192E з 90% прозорістю */
+}
+
+/* * =========================================
+ * Сайдбар (Бічна панель)
+ * =========================================
+ */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(var(--rgb-black), 0.5); /* bg-black/50 */
+    z-index: 40;
+    transition: opacity 0.3s ease-in-out;
+
+    /* Стани, якими керує JS */
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar-overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 16rem; /* w-64 */
+    background-color: var(--color-primary);
+    color: var(--color-text-light);
+    padding: 1rem; /* p-4 */
+    z-index: 50;
+    transform: translateX(-100%); /* -translate-x-full */
+    transition: transform 0.3s ease-in-out;
+}
+
+.sidebar.is-open {
+    transform: translateX(0); /* translate-x-0 */
+}
+
+.sidebar-close-btn {
+    font-size: 1.875rem; /* text-2xl */
+    margin-bottom: 1rem; /* mb-4 */
+    color: var(--color-text-light);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.sidebar-close-btn:hover {
+    color: var(--color-white); /* hover:text-white */
+}
+
+.sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-nav-item {
+    padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    border-radius: 6px; /* rounded-md */
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.sidebar-nav-item:hover {
+    background-color: var(--color-secondary-accent); /* hover:bg-[#48192E] */
+}
+
+/* * =========================================
+ * Основний контент
+ * =========================================
+ */
+.main-content {
+    padding: 1rem; /* p-4 */
+}
+
+/* Адаптивність (sm: 640px) */
+@media (min-width: 640px) {
+    .main-content {
+        padding: 1.5rem; /* sm:p-6 */
+    }
+}
+
+.content-card {
+    padding: 1.5rem; /* p-6 */
+    background-color: rgba(var(--rgb-white), 0.2); /* bg-white/20 */
+    border-radius: 0.5rem; /* rounded-lg */
+    box-shadow: var(--shadow-md);
+}
+
+.content-title {
+    font-size: 1.5rem; /* text-2xl */
+    font-weight: 700; /* font-bold */
+    color: var(--color-primary);
+    margin-bottom: 1rem; /* mb-4 */
+}
+
+.content-text {
+    color: var(--color-primary);
 }

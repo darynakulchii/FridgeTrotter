@@ -9,18 +9,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Функція для відкриття бокової панелі
     function openSidebar() {
-        sidebar.classList.remove('-translate-x-full'); // Зсуваємо панель
-        sidebar.classList.add('translate-x-0');
-        sidebarOverlay.classList.remove('hidden', 'opacity-0', 'pointer-events-none'); // Показуємо фон
-        sidebarOverlay.classList.add('opacity-100');
+        // Додаємо нові класи, які визначені у вашому main_page.css
+        if (sidebar) sidebar.classList.add('is-open');
+        if (sidebarOverlay) sidebarOverlay.classList.add('is-visible');
+
+        // Оновлюємо ARIA-атрибути для доступності
+        if (menuToggleBtn) menuToggleBtn.setAttribute('aria-expanded', 'true');
     }
+
 
     // Функція для закриття бокової панелі
     function closeSidebar() {
-        sidebar.classList.add('-translate-x-full'); // Ховаємо панель
-        sidebar.classList.remove('translate-x-0');
-        sidebarOverlay.classList.add('hidden', 'opacity-0', 'pointer-events-none'); // Ховаємо фон
-        sidebarOverlay.classList.remove('opacity-100');
+        // Видаляємо нові класи
+        if (sidebar) sidebar.classList.remove('is-open');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('is-visible');
+
+        // Оновлюємо ARIA-атрибути для доступності
+        if (menuToggleBtn) menuToggleBtn.setAttribute('aria-expanded', 'false');
     }
 
     // Натискання на кнопку "меню" (бургер)
@@ -37,5 +42,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sidebarOverlay) {
         sidebarOverlay.addEventListener('click', closeSidebar);
     }
+
+    // Бонус: Закриття панелі по клавіші "Escape"
+    document.addEventListener('keydown', (e) => {
+        // Перевіряємо, чи відкрита панель (за наявністю класу is-open)
+        const isSidebarOpen = sidebar && sidebar.classList.contains('is-open');
+
+        if (e.key === 'Escape' && isSidebarOpen) {
+            closeSidebar();
+        }
+    });
 
 });
