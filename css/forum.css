@@ -1,0 +1,54 @@
+.forum-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: box-shadow 0.2s;
+}
+
+.forum-card:hover {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.08);
+}
+
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.tag-pill {
+    background-color: #E5E7EB;
+    color: #374151;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.forum-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid #F3F4F6;
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+.action-icon {
+    color: #6B7280;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.action-icon:hover {
+    color: #48192E;
+}
