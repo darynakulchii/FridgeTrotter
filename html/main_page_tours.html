@@ -9,101 +9,107 @@
     <link rel="stylesheet" href="../css/main_page.css">
     <link rel="stylesheet" href="../css/tours.css">
 </head>
-<body class="bg-[#EBE5DF]">
+<body>
 
 <header class="main-header">
     <div class="header-top">
         <div class="header-left-group">
             <button id="menu-toggle-btn" class="header-btn"><i class="fas fa-bars"></i></button>
-            <a href="main_page.html" class="header-title">FridgeTrotter</a>
+            <a href="main_page_tours.html" class="header-title">FridgeTrotter</a>
         </div>
         <div class="header-right-group">
-            <a href="chat.html" class="header-btn"><i class="far fa-comments"></i></a>
             <button class="header-btn"><i class="far fa-bell"></i></button>
+            <a href="chat.html" class="header-btn"><i class="far fa-comments"></i></a>
             <a href="my_profile.html" class="header-btn"><i class="far fa-user"></i></a>
         </div>
     </div>
     <div class="header-nav-row">
-        <a href="main_page.html" class="nav-tab active">Тури</a>
-        <a href="forum.html" class="nav-tab">Форум</a>
-        <a href="companions.html" class="nav-tab">Пошук компанії</a>
+        <div class="nav-container">
+            <a href="main_page_tours.html" class="nav-tab active">Тури</a>
+            <a href="forum.html" class="nav-tab">Форум</a>
+            <a href="companions.html" class="nav-tab">Пошук компанії</a>
+        </div>
     </div>
 </header>
 
 <div id="sidebar-overlay" class="sidebar-overlay"></div>
 <div id="sidebar" class="sidebar">
     <div class="sidebar-header">
-        <h2 class="sidebar-title">Меню</h2>
         <button id="sidebar-close-btn" class="sidebar-close-btn">&times;</button>
+        <h2 class="text-xl font-bold mb-6">Меню</h2>
     </div>
     <nav class="sidebar-nav">
         <ul>
-            <li><a href="main_page.html" class="sidebar-link"><i class="fas fa-home sidebar-icon"></i> Головна</a></li>
-            <li><a href="my_profile.html" class="sidebar-link"><i class="far fa-user sidebar-icon"></i> Мій профіль</a></li>
-            <li><a href="#" class="sidebar-link"><i class="fas fa-briefcase sidebar-icon"></i> Режим турагента</a></li>
-            <li><a href="#" class="sidebar-link"><i class="fas fa-cog sidebar-icon"></i> Налаштування</a></li>
+            <li><a href="main_page_tours.html" class="sidebar-link"><i class="fas fa-home"></i> Головна</a></li>
+            <li><a href="my_profile.html" class="sidebar-link"><i class="far fa-user"></i> Мій профіль</a></li>
+            <li><a href="#" class="sidebar-link"><i class="fas fa-briefcase"></i> Режим турагента</a></li>
         </ul>
     </nav>
-    <hr class="sidebar-divider">
-    <a href="login.html" class="sidebar-link"><i class="fas fa-sign-out-alt sidebar-icon"></i> Вийти</a>
 </div>
 
-<main class="max-w-7xl mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-bold text-[#281822]">Популярні тури</h2>
-        <button class="action-btn btn-outline bg-white">
+<main class="container-wide">
+    <div class="section-header">
+        <h2 class="section-title">Популярні тури</h2>
+        <button class="btn-rating">
             <i class="far fa-star"></i> Рейтинг турагенцій
         </button>
     </div>
 
-    <div class="filter-bar">
-        <div class="search-group">
+    <div class="filter-bar-card">
+        <div class="filter-item search">
             <label class="filter-label"><i class="fas fa-search"></i> Пошук</label>
-            <input type="text" placeholder="Країна, місто або назва туру" class="custom-input">
+            <input type="text" placeholder="Країна, місто або назва туру" class="filter-input">
         </div>
-        <div class="filter-group">
+
+        <div class="w-px h-10 bg-gray-200 mx-4 hidden md:block"></div>
+
+        <div class="filter-item min-w-[200px]">
             <label class="filter-label"><i class="fas fa-filter"></i> Тип туру</label>
-            <select class="custom-select">
+            <select class="filter-input cursor-pointer">
                 <option>Всі тури</option>
                 <option>Пляжний відпочинок</option>
                 <option>Екскурсійні</option>
             </select>
         </div>
-        <div class="filter-group">
+
+        <div class="w-px h-10 bg-gray-200 mx-4 hidden md:block"></div>
+
+        <div class="filter-item min-w-[200px]">
             <label class="filter-label"><i class="fas fa-sort"></i> Сортування</label>
-            <select class="custom-select">
+            <select class="filter-input cursor-pointer">
                 <option>За рейтингом туру</option>
                 <option>Ціна: за зростанням</option>
             </select>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="tour-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition">
-            <div class="relative h-64">
-                <img src="https://images.unsplash.com/photo-1514282401047-d77a7149ba6a?auto=format&fit=crop&w=1000&q=80" alt="Мальдіви" class="w-full h-full object-cover">
-                <span class="absolute bottom-3 right-3 bg-white/90 px-2 py-1 rounded-lg text-sm font-bold text-[#281822] shadow"><i class="fas fa-star text-yellow-500 text-xs"></i> 4.9</span>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col h-full border border-gray-100">
+            <div class="h-64 relative">
+                <img src="https://images.unsplash.com/photo-1514282401047-d77a7149ba6a?auto=format&fit=crop&w=1200&q=80" alt="Мальдіви" class="w-full h-full object-cover">
+                <span class="absolute top-4 right-4 bg-[#281822] text-[#D3CBC4] px-3 py-1 rounded-md text-xs font-bold uppercase">Пляжний відпочинок</span>
             </div>
-            <div class="p-6">
-                <h3 class="text-xl font-bold text-[#281822] mb-1">Тропічний рай на Мальдівах</h3>
-                <p class="text-sm text-gray-500 mb-4 line-clamp-2">Незабутній відпочинок на білосніжних пляжах...</p>
-                <div class="flex justify-between items-center mt-auto">
+            <div class="p-6 flex flex-col flex-grow">
+                <h3 class="text-2xl font-bold text-[#281822] mb-2">Тропічний рай на Мальдівах</h3>
+                <p class="text-gray-500 mb-6">Незабутній відпочинок на білосніжних пляжах з кришталево чистою водою...</p>
+                <div class="mt-auto flex justify-between items-center">
                     <span class="text-xl font-bold text-[#48192E]">45 000 ₴</span>
-                    <button class="action-btn btn-solid">Детальніше</button>
+                    <button class="btn-solid">Детальніше</button>
                 </div>
             </div>
         </div>
-        <div class="tour-card bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition">
-            <div class="relative h-64">
-                <img src="https://images.unsplash.com/photo-1512453979798-5ea936a7fe5b?auto=format&fit=crop&w=1000&q=80" alt="Дубаї" class="w-full h-full object-cover">
-                <span class="absolute bottom-3 right-3 bg-white/90 px-2 py-1 rounded-lg text-sm font-bold text-[#281822] shadow"><i class="fas fa-star text-yellow-500 text-xs"></i> 4.9</span>
+
+        <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col h-full border border-gray-100">
+            <div class="h-64 relative">
+                <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80" alt="Карпати" class="w-full h-full object-cover">
+                <span class="absolute top-4 right-4 bg-[#281822] text-[#D3CBC4] px-3 py-1 rounded-md text-xs font-bold uppercase">Активний відпочинок</span>
             </div>
-            <div class="p-6">
-                <h3 class="text-xl font-bold text-[#281822] mb-1">Міський вікенд у Дубаї</h3>
-                <p class="text-sm text-gray-500 mb-4 line-clamp-2">Розкіш та сучасність у серці ОАЕ...</p>
-                <div class="flex justify-between items-center mt-auto">
-                    <span class="text-xl font-bold text-[#48192E]">32 000 ₴</span>
-                    <button class="action-btn btn-solid">Детальніше</button>
+            <div class="p-6 flex flex-col flex-grow">
+                <h3 class="text-2xl font-bold text-[#281822] mb-2">Гірські пригоди в Карпатах</h3>
+                <p class="text-gray-500 mb-6">Піші походи, захоплюючі краєвиди та свіже гірське повітря...</p>
+                <div class="mt-auto flex justify-between items-center">
+                    <span class="text-xl font-bold text-[#48192E]">12 000 ₴</span>
+                    <button class="btn-solid">Детальніше</button>
                 </div>
             </div>
         </div>
