@@ -9,11 +9,11 @@
     <link rel="stylesheet" href="../css/main_page.css">
     <style>
         /* Загальні стилі профілю */
-        body { background-color: #D3CBC4; }
+        body { background-color: #D3CBC4; min-height: 100vh; }
         .profile-header-card { background-color: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .profile-title { font-size: 2rem; font-weight: 400; color: #281822; margin-bottom: 1.5rem; }
 
-        /* Стилі табів (кнопок навігації) */
+        /* Стилі табів */
         .nav-pills { display: flex; flex-wrap: wrap; gap: 0.5rem; }
         .nav-pill {
             padding: 0.5rem 1rem;
@@ -37,23 +37,44 @@
         .tab-content.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Вкладка: Холодильник */
-        .fridge-container { display: grid; grid-template-columns: 300px 1fr; gap: 2rem; }
+        /* Вкладка: Холодильник - Сітка */
+        .fridge-container { display: grid; grid-template-columns: 300px 1fr; gap: 2rem; align-items: start; }
         @media(max-width: 1024px) { .fridge-container { grid-template-columns: 1fr; } }
 
-        .magnet-panel { background: white; padding: 1.5rem; border-radius: 16px; height: fit-content; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
-        .fridge-wrapper-card { background: white; padding: 1.5rem; border-radius: 16px; height: fit-content; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        /* Рамки (Картки) для блоків холодильника */
+        .magnet-panel-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            height: fit-content;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
 
+        .fridge-wrapper-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Кнопки магнітів у панелі */
         .magnet-btn {
             display: flex; align-items: center; gap: 1rem;
             padding: 1rem; margin-bottom: 0.75rem;
             border-radius: 8px; color: #D3CBC4;
             cursor: grab; transition: transform 0.2s;
+            user-select: none; /* Заборона виділення тексту */
         }
         .magnet-btn:hover { transform: translateX(2px); }
+        .magnet-btn:active { cursor: grabbing; }
+
         .magnet-btn.burgundy { background-color: #48192E; }
         .magnet-btn.teal { background-color: #2D4952; }
 
+        /* ВАЖЛИВО: Відключаємо події миші для дітей магніту, щоб drag працював коректно */
+        .magnet-btn * { pointer-events: none; }
+
+        /* Сам холодильник */
         .fridge-view {
             background-color: #f3f4f6;
             height: 600px;
@@ -61,10 +82,12 @@
             position: relative;
             box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
             border: 1px solid rgba(0,0,0,0.05);
+            overflow: hidden;
         }
         .fridge-handle {
             position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
             width: 8px; height: 120px; background-color: #281822; border-radius: 10px; opacity: 0.8;
+            pointer-events: none;
         }
 
         /* Плейсхолдер текст */
@@ -78,10 +101,39 @@
             color: #9CA3AF;
             pointer-events: none;
             transition: opacity 0.3s;
+            text-align: center;
         }
-        .fridge-placeholder.hidden { opacity: 0; }
+        .fridge-placeholder p { margin: 0.25rem 0; }
+        .fridge-placeholder.hidden { opacity: 0; pointer-events: none; }
 
-        /* Вкладка: Налаштування */
+        /* Стиль магніту на холодильнику */
+        .magnet-on-fridge {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.75rem;
+            padding: 5px;
+            cursor: grab;
+            border-radius: 8px;
+            text-align: center;
+            line-height: 1.1;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+            color: #D3CBC4;
+            z-index: 10;
+            transition: transform 0.1s;
+            user-select: none;
+        }
+        .magnet-on-fridge:active { cursor: grabbing; transform: scale(1.05); }
+        .magnet-on-fridge.burgundy { background-color: #48192E; }
+        .magnet-on-fridge.teal { background-color: #2D4952; }
+        .magnet-on-fridge i { font-size: 1.5rem; margin-bottom: 4px; pointer-events: none; }
+        .magnet-on-fridge div { pointer-events: none; }
+
+        /* Налаштування */
         .settings-card { background: white; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; }
         .settings-title { font-size: 1.1rem; font-weight: 400; color: #281822; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
         .settings-desc { color: #6B7280; font-size: 0.9rem; margin-bottom: 1.5rem; }
@@ -137,47 +189,9 @@
         .btn-burgundy-solid { background: #48192E; color: #D3CBC4; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; border: none; cursor: pointer; }
     </style>
 </head>
-<body>
+<body ondrop="removeMagnet(event)" ondragover="allowDrop(event)">
 
-<header class="main-header">
-    <div class="header-top">
-        <div class="header-left-group">
-            <button id="menu-toggle-btn" class="header-btn"><i class="fas fa-bars"></i></button>
-            <a href="main_page_tours.html" class="header-title">FridgeTrotter</a>
-        </div>
-        <div class="header-right-group">
-            <button class="header-btn"><i class="far fa-bell"></i></button>
-            <a href="main_page_tours.html" class="header-btn"><i class="far fa-comments"></i></a>
-            <a href="my_profile.html" class="header-btn"><i class="far fa-user"></i></a>
-        </div>
-    </div>
-</header>
-
-<div id="sidebar-overlay" class="sidebar-overlay"></div>
-<div id="sidebar" class="sidebar">
-    <div class="sidebar-header">
-        <h2 class="text-2xl font-normal">Меню</h2>
-        <button id="sidebar-close-btn" class="sidebar-close-btn"><i class="fas fa-times"></i></button>
-    </div>
-    <nav class="sidebar-nav">
-        <ul class="sidebar-menu-group">
-            <li><a href="main_page_tours.html" class="sidebar-link"><i class="fas fa-home"></i> Головна</a></li>
-            <li><a href="my_profile.html" class="sidebar-link"><i class="far fa-user"></i> Мій профіль</a></li>
-            <li><a href="#" class="sidebar-link"><i class="fas fa-briefcase"></i> Режим турагента</a></li>
-            <li><a href="my_profile.html" class="sidebar-link" onclick="switchTab('settings'); closeSidebar();"><i class="fas fa-cog"></i> Налаштування</a></li>
-        </ul>
-        <div class="sidebar-separator"></div>
-        <ul class="sidebar-menu-group">
-            <li><button id="auth-btn" class="sidebar-link"><i class="fas fa-sign-in-alt"></i> Реєстрація/Вхід</button></li>
-            <li><button id="bug-report-btn" class="sidebar-link"><i class="fas fa-exclamation-circle"></i> Повідомити про помилку</button></li>
-            <li><button id="privacy-policy-btn" class="sidebar-link"><i class="fas fa-shield-alt"></i> Політика конфіденційності</button></li>
-        </ul>
-        <div class="sidebar-separator"></div>
-        <ul class="sidebar-menu-group">
-            <li><button id="logout-btn" class="sidebar-link"><i class="fas fa-sign-out-alt"></i> Вийти</button></li>
-        </ul>
-    </nav>
-</div>
+<script type="module" src="../js/modules/navigation.js"></script>
 
 <main class="container-wide">
     <div class="profile-header-card">
@@ -195,24 +209,24 @@
 
     <div id="tab-fridge" class="tab-content active">
         <div class="fridge-container">
-            <div class="magnet-panel">
+            <div class="magnet-panel-card">
                 <h3 class="text-lg font-normal mb-6 text-[#281822]">Доступні магніти</h3>
 
-                <div class="magnet-btn burgundy" draggable="true" ondragstart="drag(event)" id="mag-fr">
+                <div class="magnet-btn burgundy" draggable="true" ondragstart="drag(event)" id="mag-fr" data-icon="plane" data-country="Франція" data-city="Париж">
                     <i class="fas fa-plane text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Франція</div>
                         <div class="text-xs opacity-80">Париж</div>
                     </div>
                 </div>
-                <div class="magnet-btn burgundy" draggable="true" ondragstart="drag(event)" id="mag-jp">
+                <div class="magnet-btn burgundy" draggable="true" ondragstart="drag(event)" id="mag-jp" data-icon="camera" data-country="Японія" data-city="Токіо">
                     <i class="fas fa-camera text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Японія</div>
                         <div class="text-xs opacity-80">Токіо</div>
                     </div>
                 </div>
-                <div class="magnet-btn burgundy" draggable="true" ondragstart="drag(event)" id="mag-ch">
+                <div class="magnet-btn burgundy" draggable="true" ondragstart="drag(event)" id="mag-ch" data-icon="mountain" data-country="Швейцарія" data-city="Цюріх">
                     <i class="fas fa-mountain text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Швейцарія</div>
@@ -220,21 +234,21 @@
                     </div>
                 </div>
 
-                <div class="magnet-btn teal" draggable="true" ondragstart="drag(event)" id="mag-it">
+                <div class="magnet-btn teal" draggable="true" ondragstart="drag(event)" id="mag-it" data-icon="coffee" data-country="Італія" data-city="Рим">
                     <i class="fas fa-coffee text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Італія</div>
                         <div class="text-xs opacity-80">Рим</div>
                     </div>
                 </div>
-                <div class="magnet-btn teal" draggable="true" ondragstart="drag(event)" id="mag-gr">
+                <div class="magnet-btn teal" draggable="true" ondragstart="drag(event)" id="mag-gr" data-icon="umbrella-beach" data-country="Греція" data-city="Афіни">
                     <i class="fas fa-umbrella-beach text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Греція</div>
                         <div class="text-xs opacity-80">Афіни</div>
                     </div>
                 </div>
-                <div class="magnet-btn teal" draggable="true" ondragstart="drag(event)" id="mag-es">
+                <div class="magnet-btn teal" draggable="true" ondragstart="drag(event)" id="mag-es" data-icon="map-marker-alt" data-country="Іспанія" data-city="Барселона">
                     <i class="fas fa-map-marker-alt text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Іспанія</div>
@@ -247,10 +261,10 @@
 
             <div class="fridge-wrapper-card">
                 <h3 class="text-lg font-normal mb-6 text-[#281822]">Мій холодильник</h3>
-                <div class="fridge-view" id="fridge-door" ondrop="drop(event)" ondragover="allowDrop(event)">
+                <div class="fridge-view" id="fridge-door" ondrop="dropOnFridge(event)" ondragover="allowDrop(event)">
                     <div class="fridge-handle"></div>
                     <div id="fridge-placeholder" class="fridge-placeholder">
-                        <p class="mb-1">Перетягніть магніти сюди</p>
+                        <p class="mb-1 text-lg">Перетягніть магніти сюди</p>
                         <p class="text-sm">Збирайте колекцію ваших подорожей</p>
                     </div>
                 </div>
@@ -264,8 +278,8 @@
             <p class="settings-desc">Виберіть колір дверцят вашого холодильника</p>
 
             <div class="color-grid mb-8">
-                <div class="color-option selected" onclick="changeFridgeColor('#D3CBC4', this)">
-                    <div class="color-preview" style="background: #D3CBC4;"></div>
+                <div class="color-option selected" onclick="changeFridgeColor('#f3f4f6', this)">
+                    <div class="color-preview" style="background: #f3f4f6;"></div>
                     <div class="text-center text-sm">Класичний білий</div>
                 </div>
                 <div class="color-option" onclick="changeFridgeColor('#98D8C8', this)">
@@ -679,56 +693,82 @@
 <script>
     function switchTab(tabName) {
         document.querySelectorAll('.nav-pill').forEach(btn => btn.classList.remove('active'));
-        // Знаходимо кнопку по onclick атрибуту
         const targetBtn = Array.from(document.querySelectorAll('.nav-pill')).find(b => b.getAttribute('onclick')?.includes(tabName));
         if(targetBtn) targetBtn.classList.add('active');
 
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById('tab-' + tabName).classList.add('active');
+        document.getElementById('tab-' + tabName)?.classList.add('active');
     }
 
-    // Drag & Drop
+    // Drag & Drop Logic
     function allowDrop(ev) { ev.preventDefault(); }
-    function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
-    function drop(ev) {
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.currentTarget.id);
+    }
+
+    function dropOnFridge(ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+
+        var data = ev.dataTransfer.getData("text");
+        if(!data) return;
+
+        var original = document.getElementById(data);
+        if (!original) return;
+
+        var rect = ev.currentTarget.getBoundingClientRect();
+        var x = ev.clientX - rect.left;
+        var y = ev.clientY - rect.top;
+
+        // 1. Новий магніт
+        if (original.classList.contains('magnet-btn')) {
+            var nodeCopy = document.createElement('div');
+            nodeCopy.id = "magnet-on-fridge-" + new Date().getTime();
+            nodeCopy.classList.add("magnet-on-fridge");
+
+            if(original.classList.contains('burgundy')) nodeCopy.classList.add('burgundy');
+            else if(original.classList.contains('teal')) nodeCopy.classList.add('teal');
+
+            const iconClass = original.getAttribute('data-icon');
+            const city = original.getAttribute('data-city');
+            const country = original.getAttribute('data-country');
+
+            nodeCopy.innerHTML = `<i class="fas fa-${iconClass}"></i><div class="magnet-city">${city}</div><div class="magnet-country">${country}</div>`;
+
+            nodeCopy.style.left = (x - 35) + 'px';
+            nodeCopy.style.top = (y - 35) + 'px';
+
+            nodeCopy.setAttribute('draggable', 'true');
+            nodeCopy.ondragstart = drag;
+
+            ev.currentTarget.appendChild(nodeCopy);
+
+            document.getElementById('fridge-placeholder').classList.add('hidden');
+        }
+        // 2. Переміщення існуючого
+        else if (original.classList.contains('magnet-on-fridge')) {
+            original.style.left = (x - 35) + 'px';
+            original.style.top = (y - 35) + 'px';
+        }
+    }
+
+    function removeMagnet(ev) {
         ev.preventDefault();
         var data = ev.dataTransfer.getData("text");
-        var original = document.getElementById(data);
-        var nodeCopy = original.cloneNode(true);
-        nodeCopy.classList.add("magnet-on-fridge");
-        nodeCopy.classList.remove("magnet-btn"); // Remove formatting for sidebar
+        if(!data) return;
 
-        // Basic style for dropped item
-        nodeCopy.style.position = "absolute";
-        nodeCopy.style.width = "60px";
-        nodeCopy.style.height = "60px";
-        nodeCopy.style.display = "flex";
-        nodeCopy.style.flexDirection = "column";
-        nodeCopy.style.justifyContent = "center";
-        nodeCopy.style.alignItems = "center";
-        nodeCopy.style.fontSize = "0.7rem";
-        nodeCopy.style.padding = "5px";
-        nodeCopy.style.cursor = "move";
+        var element = document.getElementById(data);
 
-        // Hide text description, keep title and icon (simplification)
-        const divs = nodeCopy.querySelectorAll("div");
-        if(divs.length > 0) {
-            // Logic to simplify content could go here
+        if (element && element.classList.contains('magnet-on-fridge')) {
+            element.remove();
+
+            const fridge = document.getElementById('fridge-door');
+            const remainingMagnets = fridge.querySelectorAll('.magnet-on-fridge');
+            if (remainingMagnets.length === 0) {
+                document.getElementById('fridge-placeholder').classList.remove('hidden');
+            }
         }
-
-        var rect = ev.target.getBoundingClientRect();
-        var x = ev.clientX - rect.left - 30;
-        var y = ev.clientY - rect.top - 30;
-
-        nodeCopy.style.left = x + 'px';
-        nodeCopy.style.top = y + 'px';
-        nodeCopy.setAttribute('draggable', 'true');
-        nodeCopy.ondragstart = drag;
-
-        ev.target.appendChild(nodeCopy);
-
-        // HIDE PLACEHOLDER
-        document.getElementById('fridge-placeholder').classList.add('hidden');
     }
 
     function changeFridgeColor(color, element) {

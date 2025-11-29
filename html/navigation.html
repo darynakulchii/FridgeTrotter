@@ -1,11 +1,180 @@
-<head>
-    <meta charset="UTF-8">
-    <title>Панель навігації</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="../css/navigation.css">
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body>
+<header class="main-header">
+    <div class="header-top">
+        <div class="header-left-group">
+            <button id="menu-toggle-btn" class="header-btn"><i class="fas fa-bars"></i></button>
+            <a href="main_page_tours.html" class="header-title">FridgeTrotter</a>
+        </div>
+        <div class="header-right-group">
+            <button id="notifications-btn" class="header-btn">
+                <i class="far fa-bell"></i>
+                <span class="badge-dot"></span>
+            </button>
+            <button id="chat-toggle-btn" class="header-btn"><i class="far fa-comments"></i></button>
+            <a href="my_profile.html" class="header-btn"><i class="far fa-user"></i></a>
+        </div>
+    </div>
+    <div class="header-nav-row">
+        <div class="nav-container">
+            <a href="main_page_tours.html" class="nav-tab" data-page="tours">Тури</a>
+            <a href="forum.html" class="nav-tab" data-page="forum">Форум</a>
+            <a href="companions.html" class="nav-tab" data-page="companions">Пошук компанії</a>
+        </div>
+    </div>
+</header>
 
-</body>
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+<div id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+        <h2 class="text-2xl font-normal">Меню</h2>
+        <button id="sidebar-close-btn" class="sidebar-close-btn"><i class="fas fa-times"></i></button>
+    </div>
+
+    <nav class="sidebar-nav">
+        <ul class="sidebar-menu-group">
+            <li><a href="main_page_tours.html" class="sidebar-link"><i class="fas fa-home"></i> Головна</a></li>
+            <li><a href="my_profile.html" class="sidebar-link"><i class="far fa-user"></i> Мій профіль</a></li>
+            <li><button id="agent-mode-btn" class="sidebar-link"><i class="fas fa-briefcase"></i> Режим турагента</button></li>
+        </ul>
+
+        <div class="sidebar-separator"></div>
+
+        <ul class="sidebar-menu-group">
+            <li><button id="auth-btn" class="sidebar-link"><i class="fas fa-sign-in-alt"></i> Реєстрація/Вхід</button></li>
+            <li><button id="bug-report-btn" class="sidebar-link"><i class="fas fa-exclamation-circle"></i> Повідомити про помилку</button></li>
+            <li><button id="privacy-policy-btn" class="sidebar-link"><i class="fas fa-shield-alt"></i> Політика конфіденційності</button></li>
+        </ul>
+
+        <div class="sidebar-separator"></div>
+
+        <ul class="sidebar-menu-group">
+            <li><button id="logout-btn" class="sidebar-link"><i class="fas fa-sign-out-alt"></i> Вийти</button></li>
+        </ul>
+    </nav>
+</div>
+
+<div id="auth-modal" class="modal-backdrop">
+    <div class="modal-content max-w-md">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]">Вхід / Реєстрація</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="flex border-b mb-4">
+                <button class="flex-1 py-2 font-bold text-[#48192E] border-b-2 border-[#48192E]">Вхід</button>
+                <button class="flex-1 py-2 text-gray-500">Реєстрація</button>
+            </div>
+            <div class="space-y-4">
+                <input type="email" placeholder="Email" class="w-full border p-2 rounded-md">
+                <input type="password" placeholder="Пароль" class="w-full border p-2 rounded-md">
+                <button class="btn-solid w-full">Увійти</button>
+                <p class="text-center text-sm text-gray-500 cursor-pointer">Забули пароль?</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="agent-mode-modal" class="modal-backdrop">
+    <div class="modal-content max-w-md">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]"><i class="fas fa-briefcase mr-2"></i> Кабінет турагента</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body space-y-3">
+            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
+                <div class="bg-[#48192E] text-white w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition"><i class="fas fa-plus"></i></div>
+                <div>
+                    <div class="font-bold text-[#281822]">Зареєструвати агенцію</div>
+                    <div class="text-xs text-gray-500">Створити новий бізнес-акаунт</div>
+                </div>
+            </button>
+            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#2D4952] transition flex items-center gap-3 group">
+                <div class="bg-[#2D4952] text-white w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition"><i class="fas fa-user-cog"></i></div>
+                <div>
+                    <div class="font-bold text-[#281822]">Акаунт та налаштування</div>
+                    <div class="text-xs text-gray-500">Керування профілем агенції</div>
+                </div>
+            </button>
+            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
+                <div class="bg-white border-2 border-[#48192E] text-[#48192E] w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-[#48192E] group-hover:text-white transition"><i class="fas fa-plane"></i></div>
+                <div>
+                    <div class="font-bold text-[#281822]">Додати тур</div>
+                    <div class="text-xs text-gray-500"><span class="text-[#48192E] font-bold">Платна послуга</span> • Просувайте свої тури</div>
+                </div>
+            </button>
+            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#2D4952] transition flex items-center gap-3 group">
+                <div class="bg-white border-2 border-[#2D4952] text-[#2D4952] w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-[#2D4952] group-hover:text-white transition"><i class="fas fa-magnet"></i></div>
+                <div>
+                    <div class="font-bold text-[#281822]">Додати магніт</div>
+                    <div class="text-xs text-gray-500">Створити власний або замовити дизайн</div>
+                </div>
+            </button>
+            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
+                <div class="bg-gray-100 text-[#281822] w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-gray-200 transition"><i class="fas fa-pen"></i></div>
+                <div>
+                    <div class="font-bold text-[#281822]">Додати пост</div>
+                    <div class="text-xs text-gray-500">Поділіться новинами в блозі</div>
+                </div>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="privacy-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]">Політика конфіденційності</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body text-sm text-gray-600 leading-relaxed">
+            <h4 class="font-bold mb-2">1. Збір інформації</h4>
+            <p class="mb-4">Ми збираємо інформацію...</p>
+        </div>
+    </div>
+</div>
+
+<div id="bug-report-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]">Повідомити про помилку</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body space-y-4">
+            <textarea class="w-full border p-2 rounded-md h-32" placeholder="Опишіть проблему..."></textarea>
+            <button class="btn-solid w-full">Надіслати</button>
+        </div>
+    </div>
+</div>
+
+<div id="notifications-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]"><i class="far fa-bell mr-2"></i> Повідомлення</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body space-y-4">
+            <div class="flex gap-3 p-3 bg-[#f9fafb] rounded-lg border border-gray-100">
+                <div class="bg-[#48192E] text-[#D3CBC4] p-2 rounded-full h-fit"><i class="far fa-comment-alt"></i></div>
+                <div>
+                    <h4 class="font-bold text-sm">Нове повідомлення</h4>
+                    <span class="text-xs text-gray-400">5 хв тому</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="chat-window" class="chat-window">
+    <div class="chat-header">
+        <span class="font-bold">Чат</span>
+        <button id="chat-close-btn" class="text-white hover:text-gray-300"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="chat-body" id="chat-body">
+        <div class="message-bubble other">Привіт! Як справи?</div>
+    </div>
+    <div class="chat-footer">
+        <input type="text" placeholder="Напишіть повідомлення..." class="flex-1 border p-2 rounded-md text-sm outline-none">
+        <button class="bg-[#48192E] text-white p-2 rounded-md"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+

@@ -117,6 +117,15 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Agent Mode
+    const agentBtn = document.getElementById('agent-mode-btn');
+    if (agentBtn) {
+        agentBtn.addEventListener('click', () => {
+            closeSidebar();
+            openModal('agent-mode-modal');
+        });
+    }
+
     // Privacy Policy
     const privacyBtn = document.getElementById('privacy-policy-btn');
     if (privacyBtn) {
