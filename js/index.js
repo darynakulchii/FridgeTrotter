@@ -21,6 +21,50 @@ document.addEventListener('DOMContentLoaded', () => {
     if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
 
+    // === VIEW TOGGLE LOGIC (Tours vs Agencies) ===
+    const btnViewAgencies = document.getElementById('btn-view-agencies');
+    const btnViewTours = document.getElementById('btn-view-tours');
+    const agenciesView = document.getElementById('agencies-view');
+    const toursView = document.getElementById('tours-view');
+    const pageTitle = document.getElementById('page-title');
+
+    if (btnViewAgencies && btnViewTours) {
+        btnViewAgencies.addEventListener('click', () => {
+            agenciesView.classList.remove('hidden');
+            agenciesView.classList.add('flex');
+            toursView.classList.add('hidden');
+            toursView.classList.remove('grid');
+
+            btnViewAgencies.classList.add('active');
+            btnViewAgencies.classList.remove('btn-rating');
+            btnViewAgencies.classList.add('btn-solid');
+
+            btnViewTours.classList.add('inactive');
+            btnViewTours.classList.remove('btn-solid');
+            btnViewTours.classList.add('btn-rating');
+
+            if(pageTitle) pageTitle.innerText = "Рейтинг тур агенцій";
+        });
+
+        btnViewTours.addEventListener('click', () => {
+            toursView.classList.remove('hidden');
+            toursView.classList.add('grid');
+            agenciesView.classList.add('hidden');
+            agenciesView.classList.remove('flex');
+
+            btnViewTours.classList.remove('inactive');
+            btnViewTours.classList.add('btn-solid');
+            btnViewTours.classList.remove('btn-rating');
+
+            btnViewAgencies.classList.remove('active');
+            btnViewAgencies.classList.remove('btn-solid');
+            btnViewAgencies.classList.add('btn-rating');
+
+            if(pageTitle) pageTitle.innerText = "Популярні тури";
+        });
+    }
+
+
     // === MODAL UTILS ===
     function openModal(modalId) {
         const modal = document.getElementById(modalId);
@@ -47,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // === SPECIFIC MODALS ===
+    // === SPECIFIC MODALS & BUTTONS ===
 
     // Notifications
     const notifBtn = document.getElementById('notifications-btn');
@@ -64,6 +108,33 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Auth (Login/Register)
+    const authBtn = document.getElementById('auth-btn');
+    if (authBtn) {
+        authBtn.addEventListener('click', () => {
+            closeSidebar();
+            openModal('auth-modal');
+        });
+    }
+
+    // Privacy Policy
+    const privacyBtn = document.getElementById('privacy-policy-btn');
+    if (privacyBtn) {
+        privacyBtn.addEventListener('click', () => {
+            closeSidebar();
+            openModal('privacy-modal');
+        });
+    }
+
+    // Logout (Simulation)
+    const logoutBtn = document.getElementById('logout-btn');
+    if(logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            alert("Ви вийшли з акаунту");
+            closeSidebar();
+        });
+    }
+
     // Chat Window
     const chatToggleBtn = document.getElementById('chat-toggle-btn');
     const chatWindow = document.getElementById('chat-window');
@@ -71,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (chatToggleBtn && chatWindow) {
         chatToggleBtn.addEventListener('click', (e) => {
-            e.preventDefault(); // Prevent navigation if it's an anchor
+            e.preventDefault();
             chatWindow.classList.toggle('active');
         });
     }
@@ -86,12 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const tourTriggers = document.querySelectorAll('.tour-card-trigger');
     const tourModal = document.getElementById('tour-details-modal');
 
-    // Mock data for tours (in a real app this would come from an API or data attr)
     const toursData = {
         '1': {
             title: 'Тропічний рай на Мальдівах',
             image: 'https://images.unsplash.com/photo-1514282401047-d77a7149ba6a?auto=format&fit=crop&w=1200&q=80',
-            desc: 'Незабутній відпочинок на білосніжних пляжах...',
+            desc: 'Незабутній відпочинок на білосніжних пляжах з кришталево чистою водою. Ідеально для медового місяця або релаксу.',
             loc: 'Мальдіви',
             price: '45 000 ₴',
             duration: '7 днів'
@@ -99,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
         '2': {
             title: 'Гірські пригоди в Карпатах',
             image: 'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80',
-            desc: 'Піші походи, захоплюючі краєвиди...',
+            desc: 'Піші походи, захоплюючі краєвиди та свіже гірське повітря. Відвідайте Говерлу та озеро Синевир.',
             loc: 'Карпати, Україна',
             price: '12 000 ₴',
             duration: '5 днів'
@@ -108,26 +178,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (tourModal) {
         tourTriggers.forEach(card => {
-            const btn = card.querySelector('.btn-solid'); // Button inside card
-            // Or make whole card clickable
-            if(btn) {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent bubbling if card has other links
-                    const id = card.getAttribute('data-tour-id');
-                    const data = toursData[id];
+            card.addEventListener('click', (e) => {
+                const id = card.getAttribute('data-tour-id');
+                const data = toursData[id];
 
-                    if (data) {
-                        document.getElementById('modal-tour-title').innerText = data.title;
-                        document.getElementById('modal-tour-image').src = data.image;
-                        document.getElementById('modal-tour-desc').innerText = data.desc;
-                        document.getElementById('modal-tour-loc').innerText = data.loc;
-                        document.getElementById('modal-tour-price').innerText = data.price;
-                        document.getElementById('modal-tour-duration').innerText = data.duration;
+                if (data) {
+                    document.getElementById('modal-tour-title').innerText = data.title;
+                    document.getElementById('modal-tour-image').src = data.image;
+                    document.getElementById('modal-tour-desc').innerText = data.desc;
+                    document.getElementById('modal-tour-loc').innerText = data.loc;
+                    document.getElementById('modal-tour-price').innerText = data.price;
+                    document.getElementById('modal-tour-duration').innerText = data.duration;
 
-                        openModal('tour-details-modal');
-                    }
-                });
-            }
+                    openModal('tour-details-modal');
+                }
+            });
         });
     }
 

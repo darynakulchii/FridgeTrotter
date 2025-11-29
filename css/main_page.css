@@ -204,21 +204,102 @@ body {
     font-family: var(--font-main);
 }
 
-/* === САЙДБАР === */
-.sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; display: none; }
+/* === САЙДБАР (ОНОВЛЕНО) === */
+.sidebar-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; display: none;
+}
 .sidebar-overlay.is-visible { display: block; }
+
 .sidebar {
-    position: fixed; top: 0; left: 0; height: 100%; width: 280px;
-    background: var(--color-header-bg); color: var(--color-text-light);
-    padding: 2rem; z-index: 100; transform: translateX(-100%); transition: 0.3s;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 280px;
+    background-color: #281822; /* Темний фон з макету */
+    color: #D3CBC4;
+    padding: 2rem;
+    z-index: 100;
+    transform: translateX(-100%);
+    transition: 0.3s;
+    display: flex;
+    flex-direction: column;
 }
 .sidebar.is-open { transform: translateX(0); }
-.sidebar-nav ul { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
-.sidebar-link { color: var(--color-text-light); text-decoration: none; font-size: 1.1rem; display: flex; align-items: center; gap: 1rem; }
-.sidebar-link:hover { color: white; }
-.sidebar-close-btn { background: none; border: none; color: white; font-size: 1.5rem; float: right; cursor: pointer;}
 
-/* === МОДАЛЬНІ ВІКНА (Загальні) === */
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem; /* Більший відступ заголовка */
+}
+
+.sidebar-header h2 {
+    font-size: 1.5rem;
+    font-weight: 400; /* Тонший шрифт */
+    margin: 0;
+    color: #D3CBC4;
+}
+
+.sidebar-close-btn {
+    background: none;
+    border: none;
+    color: #D3CBC4;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+.sidebar-close-btn:hover { opacity: 1; }
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.sidebar-menu-group {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem; /* Відступ між пунктами */
+}
+
+.sidebar-link {
+    color: #D3CBC4;
+    text-decoration: none;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    transition: color 0.2s;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    width: 100%;
+    text-align: left;
+}
+.sidebar-link:hover { color: white; }
+
+/* Фіксована ширина для іконок для рівного вирівнювання тексту */
+.sidebar-link i {
+    width: 24px;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+/* Розділювач */
+.sidebar-separator {
+    height: 1px;
+    background-color: rgba(211, 203, 196, 0.15);
+    margin: 0.5rem 0;
+}
+
+/* === МОДАЛЬНІ ВІКНА === */
 .modal-backdrop {
     position: fixed;
     inset: 0;
