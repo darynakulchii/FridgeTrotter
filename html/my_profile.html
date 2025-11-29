@@ -7,6 +7,37 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../css/main_page.css">
+    <style>
+        .profile-title { color: #281822; font-size: 1.8rem; font-weight: 700; }
+        .tab-btn { background: transparent; border: none; padding: 0.5rem 1rem; cursor: pointer; color: #281822; border-radius: 6px; transition: 0.2s; }
+        .tab-btn.active { background-color: #48192E; color: #D3CBC4; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Стилі для холодильника */
+        .fridge-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
+        @media(max-width:768px){ .fridge-layout{ grid-template-columns: 1fr; } }
+        .fridge-door {
+            background: linear-gradient(to bottom, rgba(211, 203, 196, 0.3), rgba(211, 203, 196, 0.1));
+            background-color: #D3CBC4;
+            height: 500px; border-radius: 12px; position: relative; border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
+        }
+        .magnet-item { padding: 10px; border-radius: 8px; background: #48192E; color: #D3CBC4; cursor: grab; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .magnet-on-fridge { position: absolute; cursor: grab; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+
+        /* Toggle Switch */
+        .toggle-switch { width: 40px; height: 20px; background: #ccc; border-radius: 20px; position: relative; cursor: pointer; transition: 0.2s; }
+        .toggle-switch.active { background: #48192E; }
+        .toggle-knob { width: 16px; height: 16px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.2s; }
+        .toggle-switch.active .toggle-knob { left: 22px; }
+
+        /* Color Option */
+        .color-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+        .color-option { border: 2px solid transparent; padding: 0.5rem; border-radius: 8px; cursor: pointer; text-align: center; }
+        .color-option.selected { border-color: #48192E; }
+        .color-preview { height: 60px; border-radius: 6px; margin-bottom: 0.5rem; }
+    </style>
 </head>
 <body>
 
@@ -18,206 +49,202 @@
         </div>
         <div class="header-right-group">
             <button class="header-btn"><i class="far fa-bell"></i></button>
-            <a href="chat.html" class="header-btn"><i class="far fa-comments"></i></a>
+            <a href="main_page_tours.html" class="header-btn"><i class="far fa-comments"></i></a>
             <a href="my_profile.html" class="header-btn"><i class="far fa-user"></i></a>
         </div>
     </div>
-    <div class="header-nav-row">
-        <a href="main_page_tours.html" class="nav-tab">Тури</a>
-        <a href="forum.html" class="nav-tab">Форум</a>
-        <a href="companions.html" class="nav-tab">Пошук компанії</a>
-    </div>
 </header>
 
-<div class="profile-container">
-    <div class="profile-header-card">
-        <h1 class="profile-title">Мій профіль</h1>
-
-        <nav class="profile-tabs">
+<div class="container-wide">
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
+        <h1 class="profile-title mb-6">Мій профіль</h1>
+        <nav class="flex flex-wrap gap-2">
             <button class="tab-btn active" onclick="switchTab('fridge')">Мій холодильник</button>
             <button class="tab-btn" onclick="switchTab('fridge-settings')">Налаштування холодильника</button>
-            <button class="tab-btn" onclick="switchTab('info')">Моя інформація</button>
-            <button class="tab-btn" onclick="switchTab('posts')">Мої пости</button>
+            <button class="tab-btn" onclick="switchTab('info')">Інформація</button>
+            <button class="tab-btn" onclick="switchTab('saved-tours')">Вибрані тури</button>
+            <button class="tab-btn" onclick="switchTab('saved-posts')">Збережені пости</button>
             <button class="tab-btn" onclick="switchTab('settings')">Налаштування</button>
         </nav>
     </div>
 
     <div id="tab-fridge" class="tab-content active">
         <div class="fridge-layout">
-            <div class="magnets-panel">
+            <div class="bg-white p-6 rounded-xl shadow-sm h-fit">
                 <h3 class="text-lg font-bold mb-4 text-[#281822]">Доступні магніти</h3>
                 <div id="magnets-list">
                     <div class="magnet-item" draggable="true" ondragstart="drag(event)" id="mag-fr-paris">
-                        <i class="fas fa-plane magnet-icon"></i>
-                        <div>
-                            <div class="font-bold text-sm">Франція</div>
-                            <div class="text-xs opacity-80">Париж</div>
-                        </div>
+                        <i class="fas fa-plane"></i> <div><div class="font-bold text-xs">Франція</div><div class="text-[10px]">Париж</div></div>
                     </div>
                     <div class="magnet-item bg-[#2D4952]" draggable="true" ondragstart="drag(event)" id="mag-it-rome">
-                        <i class="fas fa-coffee magnet-icon"></i>
-                        <div>
-                            <div class="font-bold text-sm">Італія</div>
-                            <div class="text-xs opacity-80">Рим</div>
-                        </div>
+                        <i class="fas fa-coffee"></i> <div><div class="font-bold text-xs">Італія</div><div class="text-[10px]">Рим</div></div>
                     </div>
                     <div class="magnet-item bg-[#48192E]" draggable="true" ondragstart="drag(event)" id="mag-jp-tokyo">
-                        <i class="fas fa-camera magnet-icon"></i>
-                        <div>
-                            <div class="font-bold text-sm">Японія</div>
-                            <div class="text-xs opacity-80">Токіо</div>
-                        </div>
-                    </div>
-                    <div class="magnet-item bg-[#2D4952]" draggable="true" ondragstart="drag(event)" id="mag-gr-athens">
-                        <i class="fas fa-umbrella-beach magnet-icon"></i>
-                        <div>
-                            <div class="font-bold text-sm">Греція</div>
-                            <div class="text-xs opacity-80">Афіни</div>
-                        </div>
+                        <i class="fas fa-camera"></i> <div><div class="font-bold text-xs">Японія</div><div class="text-[10px]">Токіо</div></div>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-4 text-center">Перетягніть магніт на холодильник</p>
             </div>
-
-            <div class="fridge-container">
-                <h3 class="text-lg font-bold mb-4 text-[#281822]">Мій холодильник</h3>
+            <div class="bg-white p-6 rounded-xl shadow-sm">
+                <h3 class="text-lg font-bold mb-4 text-[#281822]">Колекція подорожей</h3>
                 <div class="fridge-door" id="fridge-door" ondrop="drop(event)" ondragover="allowDrop(event)">
-                    <div class="fridge-handle"></div>
+                    <div class="absolute right-4 top-1/2 -translate-y-1/2 w-3 h-32 bg-[#281822] rounded-full shadow-lg opacity-80"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="tab-fridge-settings" class="tab-content">
-        <div class="settings-section">
+        <div class="bg-white p-6 rounded-xl shadow-sm max-w-2xl mx-auto">
             <h3 class="text-xl font-bold mb-4 text-[#281822]"><i class="fas fa-palette mr-2"></i> Колір холодильника</h3>
-            <p class="text-gray-500 mb-4">Виберіть колір дверцят вашого холодильника</p>
-
-            <div class="color-grid">
-                <div class="color-option selected" onclick="changeFridgeColor('#f3f3f3', this)">
-                    <div class="color-preview" style="background: #f3f3f3; border:1px solid #ddd;"></div>
-                    <span class="text-sm font-medium">Класичний білий</span>
+            <div class="color-grid mb-8">
+                <div class="color-option selected" onclick="changeFridgeColor('#D3CBC4', this)">
+                    <div class="color-preview" style="background: #D3CBC4;"></div><span class="text-sm">Класичний</span>
                 </div>
-                <div class="color-option" onclick="changeFridgeColor('#A7D7C5', this)">
-                    <div class="color-preview" style="background: #A7D7C5;"></div>
-                    <span class="text-sm font-medium">Ретро м'ята</span>
+                <div class="color-option" onclick="changeFridgeColor('#98D8C8', this)">
+                    <div class="color-preview" style="background: #98D8C8;"></div><span class="text-sm">М'ята</span>
                 </div>
-                <div class="color-option" onclick="changeFridgeColor('#E8D5B5', this)">
-                    <div class="color-preview" style="background: #E8D5B5;"></div>
-                    <span class="text-sm font-medium">Вінтаж бежевий</span>
-                </div>
-                <div class="color-option" onclick="changeFridgeColor('#B5CFE8', this)">
-                    <div class="color-preview" style="background: #B5CFE8;"></div>
-                    <span class="text-sm font-medium">Блакитна пастель</span>
-                </div>
-                <div class="color-option" onclick="changeFridgeColor('#F4B6C2', this)">
-                    <div class="color-preview" style="background: #F4B6C2;"></div>
-                    <span class="text-sm font-medium">Рожева мрія</span>
-                </div>
-                <div class="color-option" onclick="changeFridgeColor('#9CA3AF', this)">
-                    <div class="color-preview" style="background: #9CA3AF;"></div>
-                    <span class="text-sm font-medium">Сірий металік</span>
+                <div class="color-option" onclick="changeFridgeColor('#F4C2C2', this)">
+                    <div class="color-preview" style="background: #F4C2C2;"></div><span class="text-sm">Рожевий</span>
                 </div>
             </div>
-        </div>
-
-        <div class="settings-section">
             <h3 class="text-xl font-bold mb-4 text-[#281822]"><i class="fas fa-lock mr-2"></i> Конфіденційність</h3>
-            <p class="text-gray-500 mb-6">Налаштуйте, хто може бачити ваш холодильник</p>
-
-            <div class="settings-row">
-                <div>
-                    <div class="font-bold text-[#281822]">Публічний холодильник</div>
-                    <div class="text-sm text-gray-500">Дозволити всім користувачам переглядати ваш холодильник</div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center">
+                    <div><div class="font-bold">Публічний холодильник</div><div class="text-sm text-gray-500">Видно всім</div></div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
                 </div>
-                <div class="toggle-switch active" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
-            </div>
-
-            <div class="settings-row">
-                <div>
-                    <div class="font-bold text-[#281822]">Дозволити коментарі</div>
-                    <div class="text-sm text-gray-500">Користувачі можуть залишати коментарі під вашим холодильником</div>
+                <div class="flex justify-between items-center">
+                    <div><div class="font-bold">Дозволити коментарі</div></div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
                 </div>
-                <div class="toggle-switch active" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
-            </div>
-            <div class="settings-row">
-                <div>
-                    <div class="font-bold text-[#281822]">Показувати в профілі</div>
-                    <div class="text-sm text-gray-500">Відображати холодильник на головній сторінці профілю</div>
-                </div>
-                <div class="toggle-switch active" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
             </div>
         </div>
+    </div>
 
-        <button class="action-btn btn-solid mt-4">Зберегти налаштування</button>
+    <div id="tab-saved-tours" class="tab-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
+                <div class="h-48 relative">
+                    <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800" class="w-full h-full object-cover">
+                    <span class="absolute top-3 right-3 bg-[#48192E] text-white px-2 py-1 text-xs rounded">Культурний</span>
+                </div>
+                <div class="p-4 flex flex-col flex-grow">
+                    <h3 class="font-bold text-lg text-[#281822]">Тур по Японії</h3>
+                    <p class="text-sm text-gray-500 mb-2">Токіо, Кіото, Осака • 14 днів</p>
+                    <div class="mt-auto flex justify-between items-center pt-2">
+                        <span class="font-bold text-[#48192E]">85 000 ₴</span>
+                        <div class="flex gap-2">
+                            <button class="btn-solid text-sm py-1 px-3">Деталі</button>
+                            <button class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="far fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 flex flex-col">
+                <div class="h-48 relative">
+                    <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800" class="w-full h-full object-cover">
+                    <span class="absolute top-3 right-3 bg-[#48192E] text-white px-2 py-1 text-xs rounded">Пригодницький</span>
+                </div>
+                <div class="p-4 flex flex-col flex-grow">
+                    <h3 class="font-bold text-lg text-[#281822]">Альпійські вершини</h3>
+                    <p class="text-sm text-gray-500 mb-2">Швейцарія, Франція • 10 днів</p>
+                    <div class="mt-auto flex justify-between items-center pt-2">
+                        <span class="font-bold text-[#48192E]">95 000 ₴</span>
+                        <div class="flex gap-2">
+                            <button class="btn-solid text-sm py-1 px-3">Деталі</button>
+                            <button class="text-red-500 hover:bg-red-50 p-2 rounded"><i class="far fa-trash-alt"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-saved-posts" class="tab-content">
+        <div class="space-y-4">
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="flex justify-between items-start">
+                    <div class="flex gap-3">
+                        <div class="w-10 h-10 rounded-full bg-[#2D4952] text-white flex items-center justify-center font-bold">МК</div>
+                        <div>
+                            <h4 class="font-bold text-[#281822]">Марія Коваленко</h4>
+                            <div class="text-xs text-gray-500">1 день тому</div>
+                        </div>
+                    </div>
+                    <span class="bg-gray-100 px-2 py-1 rounded text-xs">Ісландія</span>
+                </div>
+                <h3 class="font-bold mt-2 text-lg">Топ-10 найкрасивіших місць Ісландії</h3>
+                <p class="text-sm text-gray-600 mt-1">Поділюся моїм списком must-see локацій в Ісландії...</p>
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-gray-50">
+                    <div class="text-xs text-gray-400">Збережено 2 дні тому</div>
+                    <button class="text-[#48192E] text-sm"><i class="far fa-bookmark mr-1"></i> Видалити</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="tab-info" class="tab-content">
-        <div class="bg-white p-8 rounded-xl text-center text-gray-500">Тут буде інформація про користувача</div>
+        <div class="bg-white p-8 rounded-xl text-center text-gray-500">Інформація про користувача...</div>
+    </div>
+    <div id="tab-settings" class="tab-content">
+        <div class="bg-white p-6 rounded-xl shadow-sm max-w-2xl mx-auto space-y-6">
+            <h3 class="text-xl font-bold text-[#281822]">Налаштування акаунту</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold mb-1">Змінити пароль</label>
+                    <input type="password" placeholder="Новий пароль" class="w-full border p-2 rounded bg-gray-50">
+                </div>
+                <div class="flex justify-between items-center pt-4 border-t">
+                    <div>
+                        <div class="font-bold">Email сповіщення</div>
+                        <div class="text-sm text-gray-500">Отримувати новини на пошту</div>
+                    </div>
+                    <div class="toggle-switch active" onclick="toggleSwitch(this)"><div class="toggle-knob"></div></div>
+                </div>
+                <button class="btn-solid w-full mt-4">Зберегти налаштування</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    // Простий JS для перемикання вкладок (можна винести в окремий файл)
     function switchTab(tabName) {
-        // Прибрати active у кнопок
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        // Знайти натиснуту кнопку і додати active (простий пошук за текстом або можна передати this)
         event.target.classList.add('active');
-
-        // Сховати всі секції
         document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        // Показати потрібну
         document.getElementById('tab-' + tabName).classList.add('active');
     }
 
-    // Drag and Drop Logic
-    function allowDrop(ev) {
-        ev.preventDefault();
-    }
-
-    function drag(ev) {
-        ev.dataTransfer.setData("text", ev.target.id);
-    }
-
+    // Drag & Drop
+    function allowDrop(ev) { ev.preventDefault(); }
+    function drag(ev) { ev.dataTransfer.setData("text", ev.target.id); }
     function drop(ev) {
         ev.preventDefault();
         var data = ev.dataTransfer.getData("text");
-        var originalElement = document.getElementById(data);
-
-        // Клонуємо елемент, щоб він залишився і в списку, або переміщуємо
-        // Тут ми просто переміщуємо для простоти, але додаємо стиль позиціонування
-        var nodeCopy = originalElement.cloneNode(true);
+        var original = document.getElementById(data);
+        var nodeCopy = original.cloneNode(true);
         nodeCopy.classList.add("magnet-on-fridge");
 
-        // Встановлюємо координати, куди впав магніт (відносно холодильника)
         var rect = ev.target.getBoundingClientRect();
-        var x = ev.clientX - rect.left - 50; // центруємо приблизно
-        var y = ev.clientY - rect.top - 25;
+        var x = ev.clientX - rect.left - 40;
+        var y = ev.clientY - rect.top - 20;
 
         nodeCopy.style.left = x + 'px';
         nodeCopy.style.top = y + 'px';
-
-        // Додаємо можливість перетягувати вже всередині холодильника
         nodeCopy.setAttribute('draggable', 'true');
         nodeCopy.ondragstart = drag;
+        // Note: For real dragging inside, we need more logic to update position
 
-        document.getElementById('fridge-door').appendChild(nodeCopy);
+        ev.target.appendChild(nodeCopy);
     }
 
-    // Зміна кольору холодильника
     function changeFridgeColor(color, element) {
         document.getElementById('fridge-door').style.backgroundColor = color;
-
-        // Оновлення селектора
         document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
         element.classList.add('selected');
     }
 
-    // Тоггли
-    function toggleSwitch(element) {
-        element.classList.toggle('active');
-    }
+    function toggleSwitch(element) { element.classList.toggle('active'); }
 </script>
 </body>
 </html>

@@ -18,8 +18,11 @@
             <a href="main_page_tours.html" class="header-title">FridgeTrotter</a>
         </div>
         <div class="header-right-group">
-            <button class="header-btn"><i class="far fa-bell"></i></button>
-            <a href="chat.html" class="header-btn"><i class="far fa-comments"></i></a>
+            <button id="notifications-btn" class="header-btn">
+                <i class="far fa-bell"></i>
+                <span class="badge-dot"></span>
+            </button>
+            <button id="chat-toggle-btn" class="header-btn"><i class="far fa-comments"></i></button>
             <a href="my_profile.html" class="header-btn"><i class="far fa-user"></i></a>
         </div>
     </div>
@@ -43,6 +46,7 @@
             <li><a href="main_page_tours.html" class="sidebar-link"><i class="fas fa-home"></i> Головна</a></li>
             <li><a href="my_profile.html" class="sidebar-link"><i class="far fa-user"></i> Мій профіль</a></li>
             <li><a href="#" class="sidebar-link"><i class="fas fa-briefcase"></i> Режим турагента</a></li>
+            <li><button id="bug-report-btn" class="sidebar-link w-full text-left bg-transparent border-0 p-0 cursor-pointer"><i class="fas fa-exclamation-circle"></i> Повідомити про помилку</button></li>
         </ul>
     </nav>
 </div>
@@ -60,9 +64,7 @@
             <label class="filter-label"><i class="fas fa-search"></i> Пошук</label>
             <input type="text" placeholder="Країна, місто або назва туру" class="filter-input">
         </div>
-
         <div class="w-px h-10 bg-gray-200 mx-4 hidden md:block"></div>
-
         <div class="filter-item min-w-[200px]">
             <label class="filter-label"><i class="fas fa-filter"></i> Тип туру</label>
             <select class="filter-input cursor-pointer">
@@ -71,20 +73,10 @@
                 <option>Екскурсійні</option>
             </select>
         </div>
-
-        <div class="w-px h-10 bg-gray-200 mx-4 hidden md:block"></div>
-
-        <div class="filter-item min-w-[200px]">
-            <label class="filter-label"><i class="fas fa-sort"></i> Сортування</label>
-            <select class="filter-input cursor-pointer">
-                <option>За рейтингом туру</option>
-                <option>Ціна: за зростанням</option>
-            </select>
-        </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col h-full border border-gray-100">
+        <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col h-full border border-gray-100 tour-card-trigger" data-tour-id="1">
             <div class="h-64 relative">
                 <img src="https://images.unsplash.com/photo-1514282401047-d77a7149ba6a?auto=format&fit=crop&w=1200&q=80" alt="Мальдіви" class="w-full h-full object-cover">
                 <span class="absolute top-4 right-4 bg-[#281822] text-[#D3CBC4] px-3 py-1 rounded-md text-xs font-bold uppercase">Пляжний відпочинок</span>
@@ -99,7 +91,7 @@
             </div>
         </div>
 
-        <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col h-full border border-gray-100">
+        <div class="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition flex flex-col h-full border border-gray-100 tour-card-trigger" data-tour-id="2">
             <div class="h-64 relative">
                 <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80" alt="Карпати" class="w-full h-full object-cover">
                 <span class="absolute top-4 right-4 bg-[#281822] text-[#D3CBC4] px-3 py-1 rounded-md text-xs font-bold uppercase">Активний відпочинок</span>
@@ -115,6 +107,95 @@
         </div>
     </div>
 </main>
+
+<div id="notifications-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]"><i class="far fa-bell mr-2"></i> Повідомлення</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body space-y-4">
+            <div class="flex gap-3 p-3 bg-[#f9fafb] rounded-lg border border-gray-100">
+                <div class="bg-[#48192E] text-[#D3CBC4] p-2 rounded-full h-fit"><i class="far fa-comment-alt"></i></div>
+                <div>
+                    <h4 class="font-bold text-sm">Нове повідомлення від Марії</h4>
+                    <p class="text-sm text-gray-600">Привіт! Ти вже вирішив коли їдемо в Карпати?</p>
+                    <span class="text-xs text-gray-400">5 хв тому</span>
+                </div>
+            </div>
+            <div class="flex gap-3 p-3 bg-white rounded-lg border border-gray-100">
+                <div class="bg-[#2D4952] text-[#D3CBC4] p-2 rounded-full h-fit"><i class="far fa-heart"></i></div>
+                <div>
+                    <h4 class="font-bold text-sm">Андрій вподобав ваш пост</h4>
+                    <p class="text-sm text-gray-600">Ваш пост "Топ 5 місць у Львові" отримав нову реакцію</p>
+                    <span class="text-xs text-gray-400">1 год тому</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="bug-report-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]">Повідомити про помилку</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body space-y-4">
+            <div>
+                <label class="block text-sm font-bold text-[#281822] mb-1">Тип помилки</label>
+                <select class="w-full border p-2 rounded-md bg-white">
+                    <option>Інтерфейс</option>
+                    <option>Функціонал</option>
+                    <option>Контент</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-[#281822] mb-1">Опис</label>
+                <textarea class="w-full border p-2 rounded-md h-32" placeholder="Опишіть проблему..."></textarea>
+            </div>
+            <button class="btn-solid w-full">Надіслати</button>
+        </div>
+    </div>
+</div>
+
+<div id="chat-window" class="chat-window">
+    <div class="chat-header">
+        <span class="font-bold">Чат</span>
+        <button id="chat-close-btn" class="text-white hover:text-gray-300"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="chat-body" id="chat-body">
+        <div class="message-bubble other">Привіт! Як справи?</div>
+        <div class="message-bubble me">Привіт! Все чудово, планую подорож.</div>
+    </div>
+    <div class="chat-footer">
+        <input type="text" placeholder="Напишіть повідомлення..." class="flex-1 border p-2 rounded-md text-sm outline-none">
+        <button class="bg-[#48192E] text-white p-2 rounded-md"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<div id="tour-details-modal" class="modal-backdrop">
+    <div class="modal-content max-w-2xl">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]" id="modal-tour-title">Назва туру</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+            <img id="modal-tour-image" src="" class="w-full h-48 object-cover rounded-lg mb-4">
+            <p class="text-gray-600 mb-4" id="modal-tour-desc">Опис туру...</p>
+            <div class="grid grid-cols-2 gap-4 text-sm text-[#2D4952] mb-6">
+                <div><i class="fas fa-map-marker-alt mr-2"></i> <span id="modal-tour-loc">Локація</span></div>
+                <div><i class="far fa-calendar-alt mr-2"></i> <span id="modal-tour-duration">Тривалість</span></div>
+                <div><i class="fas fa-user-friends mr-2"></i> <span>2-4 особи</span></div>
+                <div><i class="fas fa-star mr-2"></i> <span>4.9</span></div>
+            </div>
+            <div class="flex justify-between items-center pt-4 border-t">
+                <span class="text-2xl font-bold text-[#48192E]" id="modal-tour-price">0 ₴</span>
+                <button class="btn-solid">Забронювати</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script type="module" src="../js/index.js"></script>
 </body>

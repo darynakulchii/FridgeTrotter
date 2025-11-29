@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-    /* Палітра з вашого React коду */
+    /* Палітра */
     --color-bg-main: #D3CBC4;       /* Основний фон сторінки */
     --color-header-bg: #281822;     /* Шапка */
     --color-text-light: #D3CBC4;    /* Текст в шапці */
@@ -68,8 +68,20 @@ body {
     border-radius: 6px;
     transition: background-color 0.2s;
     display: flex; align-items: center; justify-content: center;
+    position: relative;
 }
 .header-btn:hover { background-color: var(--color-accent); }
+
+/* Індикатор нових повідомлень */
+.badge-dot {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 8px;
+    height: 8px;
+    background-color: #ef4444; /* red-500 */
+    border-radius: 50%;
+}
 
 /* === НАВІГАЦІЯ === */
 .header-nav-row {
@@ -99,7 +111,7 @@ body {
     white-space: nowrap;
 }
 
-.nav-tab:hover { background-color: rgba(40, 24, 34, 0.2); } /* hover effect similar to React code */
+.nav-tab:hover { background-color: rgba(40, 24, 34, 0.2); }
 
 .nav-tab.active {
     background-color: var(--color-accent);
@@ -130,7 +142,6 @@ body {
 }
 
 /* === КНОПКИ === */
-/* Кнопка рейтингу (біла з обводкою) */
 .btn-rating {
     background-color: transparent;
     border: 2px solid var(--color-text-dark);
@@ -161,7 +172,7 @@ body {
 }
 .btn-solid:hover { background-color: var(--color-accent); }
 
-/* === ФІЛЬТРИ (Стиль картки) === */
+/* === ФІЛЬТРИ === */
 .filter-bar-card {
     background-color: var(--color-card-bg);
     border-radius: 12px;
@@ -193,7 +204,7 @@ body {
     font-family: var(--font-main);
 }
 
-/* Сайдбар */
+/* === САЙДБАР === */
 .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; display: none; }
 .sidebar-overlay.is-visible { display: block; }
 .sidebar {
@@ -207,59 +218,101 @@ body {
 .sidebar-link:hover { color: white; }
 .sidebar-close-btn { background: none; border: none; color: white; font-size: 1.5rem; float: right; cursor: pointer;}
 
-/* css/forum.css */
-.forum-card {
-    background: var(--color-card-bg);
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    transition: box-shadow 0.2s, transform 0.2s;
-    border: 1px solid rgba(0,0,0,0.05);
-    /* Нові стилі для сітки */
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-}
-
-.forum-card:hover {
-    box-shadow: 0 4px 6px rgba(0,0,0,0.08);
-    transform: translateY(-2px);
-}
-
-.avatar-circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    color: var(--color-text-light); /* #D3CBC4 */
-    display: flex;
+/* === МОДАЛЬНІ ВІКНА (Загальні) === */
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    display: none;
     align-items: center;
     justify-content: center;
-    font-size: 0.85rem;
-    font-weight: bold;
-    background-color: var(--color-nav-bg); /* #2D4952 */
-    flex-shrink: 0; /* Щоб аватар не стискався */
 }
-
-.tag-pill {
-    background-color: var(--color-bg-main); /* #D3CBC4 */
-    color: var(--color-text-dark);
-    padding: 4px 12px;
-    border-radius: 9999px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    height: fit-content;
-}
-
-.action-icon {
-    color: #6B7280;
-    font-size: 0.9rem;
+.modal-backdrop.active {
     display: flex;
+}
+.modal-content {
+    background-color: white;
+    border-radius: 12px;
+    max-width: 600px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    animation: modalSlideIn 0.2s ease-out;
+}
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 6px;
+}
+.modal-body {
+    padding: 1.5rem;
+}
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
     cursor: pointer;
-    transition: color 0.2s;
+    color: #6B7280;
 }
 
-.action-icon:hover {
-    color: var(--color-accent); /* #48192E */
+/* === ЧАТ (Floating Window) === */
+.chat-window {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    z-index: 200;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+.chat-window.active { display: flex; }
+.chat-header {
+    background: var(--color-header-bg);
+    color: var(--color-text-light);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    background: #f9fafb;
+}
+.chat-footer {
+    padding: 0.75rem;
+    border-top: 1px solid rgba(0,0,0,0.1);
+    display: flex;
+    gap: 0.5rem;
+}
+.message-bubble {
+    padding: 0.75rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    max-width: 80%;
+    font-size: 0.9rem;
+}
+.message-bubble.me {
+    background-color: var(--color-accent);
+    color: #D3CBC4;
+    margin-left: auto;
+}
+.message-bubble.other {
+    background-color: #e5e7eb;
+    color: var(--color-text-dark);
 }
