@@ -5,7 +5,7 @@
 -- 1. КОРИСТУВАЧІ ТА ПРОФІЛІ (USERS & PROFILES)
 --------------------------------------------------------------------------------
 
-DROP TABLE IF EXISTS user_saved_tours, user_saved_posts, user_fridge_magnets, fridge_settings, user_stats, user_profiles, posts, comments, post_likes, companion_ads, companion_ad_tags, tags, messages, tours, tour_categories, agencies, users, magnets CASCADE;
+DROP TABLE IF EXISTS user_saved_tours, user_saved_posts, user_fridge_magnets, fridge_settings, user_stats, user_profiles, posts, comments, post_likes, companion_ads, companion_ad_tags, user_interests, messages, conversations, tours, tour_categories, agencies, users, magnets CASCADE;
 
 
 CREATE TABLE users (
@@ -25,7 +25,7 @@ CREATE TABLE user_profiles (
                                location VARCHAR(255),
                                date_of_birth DATE,
                                bio TEXT,
-                               travel_interests VARCHAR(500),
+    -- travel_interests ВИДАЛЕНО, буде використовуватись таблиця зв'язку
                                profile_image_url VARCHAR(500)
 );
 
@@ -142,7 +142,23 @@ CREATE TABLE user_saved_posts (
 );
 
 --------------------------------------------------------------------------------
--- 5. ПОШУК КОМПАНІЇ (COMPANIONS)
+-- 5. ТЕГИ ТА ІНТЕРЕСИ (TAGS & INTERESTS)
+--------------------------------------------------------------------------------
+
+CREATE TABLE tags (
+                      tag_id SERIAL PRIMARY KEY,
+                      tag_name VARCHAR(100) UNIQUE NOT NULL -- Наприклад, 'Гори', 'Гастрономія', 'budget_low'
+);
+
+-- Таблиця для зв'язку інтересів з профілем користувача
+CREATE TABLE user_interests (
+                                user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                                tag_id INT NOT NULL REFERENCES tags(tag_id) ON DELETE CASCADE,
+                                PRIMARY KEY (user_id, tag_id)
+);
+
+--------------------------------------------------------------------------------
+-- 6. ПОШУК КОМПАНІЇ (COMPANIONS)
 --------------------------------------------------------------------------------
 
 CREATE TABLE companion_ads (
@@ -153,14 +169,9 @@ CREATE TABLE companion_ads (
                                end_date DATE NOT NULL,
                                min_group_size INT DEFAULT 1 CHECK (min_group_size >= 1),
                                max_group_size INT CHECK (max_group_size >= min_group_size),
-                               budget_level VARCHAR(50), -- Низький, Середній, Високий
+    -- budget_level ВИДАЛЕНО, буде використовуватись companion_ad_tags
                                description TEXT,
                                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE tags (
-                      tag_id SERIAL PRIMARY KEY,
-                      tag_name VARCHAR(100) UNIQUE NOT NULL -- Наприклад, 'Гори', 'Гастрономія'
 );
 
 CREATE TABLE companion_ad_tags (
@@ -170,16 +181,24 @@ CREATE TABLE companion_ad_tags (
 );
 
 --------------------------------------------------------------------------------
--- 6. ПОВІДОМЛЕННЯ (MESSAGES)
+-- 7. ПОВІДОМЛЕННЯ (MESSAGES)
 --------------------------------------------------------------------------------
 
+-- Таблиця розмов (ЗБЕРЕЖЕНО ЯК ОКРЕМА ТАБЛИЦЯ, ЩОБ ЛЕГШЕ КЕРУВАТИ ЧАТОМ)
+CREATE TABLE conversations (
+                               conversation_id SERIAL PRIMARY KEY,
+                               user_one_id INT REFERENCES users(user_id) ON DELETE CASCADE NOT NULL,
+                               user_two_id INT REFERENCES users(user_id) ON DELETE CASCADE NOT NULL,
+                               created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                               CONSTRAINT check_user_order CHECK (user_one_id < user_two_id),
+                               CONSTRAINT unique_user_pair UNIQUE (user_one_id, user_two_id)
+);
+
+-- Таблиця повідомлень (СПРОЩЕНА: без receiver_id, оскільки є conversation_id)
 CREATE TABLE messages (
                           message_id SERIAL PRIMARY KEY,
+                          conversation_id INT REFERENCES conversations(conversation_id) ON DELETE CASCADE NOT NULL,
                           sender_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-                          receiver_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                           content TEXT NOT NULL,
-                          sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                          is_read BOOLEAN DEFAULT FALSE,
-    -- Переконатися, що відправник і отримувач не є однією особою
-                          CHECK (sender_id <> receiver_id)
+                          sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
