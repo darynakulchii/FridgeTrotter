@@ -1,33 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const { authenticateToken } = require('../auth_middleware');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 // Секретний ключ для JWT. Краще зчитувати з process.env
 const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret_key_12345';
 
-/**
- * MIDDLEWARE ДЛЯ АВТЕНТИФІКАЦІЇ (перевірка JWT)
- * Експортується для використання іншими маршрутами.
- */
-const authenticateToken = (req, res, next) => {
-    // Очікуємо формат "Bearer TOKEN"
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (token == null) {
-        return res.status(401).json({ error: 'Необхідна автентифікація: відсутній токен.' });
-    }
-
-    jwt.verify(token, JWT_SECRET, (err, user) => {
-        if (err) {
-            return res.status(403).json({ error: 'Недійсний токен.' });
-        }
-        req.user = user; // Зберігаємо дані користувача в об'єкті запиту
-        next();
-    });
-};
 
 /**
  * POST /api/auth/register

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
-const { authenticateToken } = require('./auth'); // ВИПРАВЛЕНО: Коректний шлях до middleware
+const { authenticateToken } = require('../auth_middleware');
 const multer = require('multer');
 const streamifier = require('streamifier');
 const cloudinary = require('cloudinary').v2;
