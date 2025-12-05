@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db.js');
-const { authenticateToken } = require('auth.js');
+const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const { authenticateToken } = require('./auth'); // ВИПРАВЛЕНО: Коректний шлях до middleware
 const multer = require('multer');
 const streamifier = require('streamifier');
 const cloudinary = require('cloudinary').v2;
 
 const upload = multer(); // Налаштування multer для роботи з буфером
 
-// Допоміжна функція для завантаження буфера в Cloudinary
+// Допоміжна функція для завантаження буфера в Cloudinary (ЗБЕРЕЖЕНО ТУТ, оскільки Cloudinary util не створюється)
 const uploadToCloudinary = (fileBuffer) => {
     return new Promise((resolve, reject) => {
         let stream = cloudinary.uploader.upload_stream(
@@ -40,9 +40,9 @@ router.get('/profile', authenticateToken, async (req, res) => {
             us.countries_visited, us.cities_visited, us.followers_count,
             fs.fridge_color, fs.is_public AS fridge_is_public, fs.allow_comments AS fridge_allow_comments
         FROM users u
-        LEFT JOIN user_profiles up ON u.user_id = up.user_id
-        LEFT JOIN user_stats us ON u.user_id = us.user_id
-        LEFT JOIN fridge_settings fs ON u.user_id = fs.user_id
+                 LEFT JOIN user_profiles up ON u.user_id = up.user_id
+                 LEFT JOIN user_stats us ON u.user_id = us.user_id
+                 LEFT JOIN fridge_settings fs ON u.user_id = fs.user_id
         WHERE u.user_id = $1;
     `;
 
@@ -172,7 +172,7 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, r
 router.get('/:id/public', async (req, res) => {
     const targetUserId = req.params.id;
     // Оскільки цей маршрут може бути викликаний неавторизованим користувачем,
-    // req.user може бути відсутній.
+    // req.user може бути відсутній. Проте, якщо токен надіслано, він обробляється Express.
     const currentUserId = req.user ? req.user.userId : null;
 
     const query = `
@@ -185,9 +185,9 @@ router.get('/:id/public', async (req, res) => {
             us.countries_visited, us.cities_visited, us.followers_count,
             fs.fridge_color, fs.is_public AS fridge_is_public, fs.allow_comments AS fridge_allow_comments
         FROM users u
-        LEFT JOIN user_profiles up ON u.user_id = up.user_id
-        LEFT JOIN user_stats us ON u.user_id = us.user_id
-        LEFT JOIN fridge_settings fs ON u.user_id = fs.user_id
+                 LEFT JOIN user_profiles up ON u.user_id = up.user_id
+                 LEFT JOIN user_stats us ON u.user_id = us.user_id
+                 LEFT JOIN fridge_settings fs ON u.user_id = fs.user_id
         WHERE u.user_id = $1;
     `;
 
@@ -207,3 +207,4 @@ router.get('/:id/public', async (req, res) => {
 });
 
 module.exports = router;
+module.exports = { router };

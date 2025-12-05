@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db.js');
+const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret_key_12345';
 
 /**
  * MIDDLEWARE ДЛЯ АВТЕНТИФІКАЦІЇ (перевірка JWT)
- * Перевіряє наявність та валідність токена.
+ * Експортується для використання іншими маршрутами.
  */
 const authenticateToken = (req, res, next) => {
     // Очікуємо формат "Bearer TOKEN"
@@ -28,10 +28,6 @@ const authenticateToken = (req, res, next) => {
         next();
     });
 };
-
-module.exports = { authenticateToken, JWT_SECRET };
-
-///
 
 /**
  * POST /api/auth/register
@@ -130,4 +126,5 @@ router.post('/login', async (req, res) => {
     res.json({ message: 'Вхід успішний!', token, user: payload });
 });
 
-module.exports = router;
+module.exports = { router, authenticateToken };
+module.exports = { router };

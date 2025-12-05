@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db.js');
-const { authenticateToken } = require('auth.js');
+const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const { authenticateToken } = require('./auth'); // ВИПРАВЛЕНО: Коректний шлях до middleware
 
 /**
  * GET /api/companion/ads
@@ -10,13 +10,13 @@ const { authenticateToken } = require('auth.js');
 router.get('/ads', async (req, res) => {
     const { search, type, sort } = req.query;
     let query = `
-        SELECT 
+        SELECT
             ca.ad_id, ca.destination_country, ca.start_date, ca.end_date, ca.min_group_size, ca.max_group_size, ca.description, ca.created_at,
             up.first_name, up.last_name, up.profile_image_url AS author_avatar,
             EXTRACT(YEAR FROM age(up.date_of_birth)) AS author_age,
             (SELECT array_agg(t.tag_name) FROM companion_ad_tags cat JOIN tags t ON cat.tag_id = t.tag_id WHERE cat.ad_id = ca.ad_id) AS tags
         FROM companion_ads ca
-        JOIN user_profiles up ON ca.user_id = up.user_id
+                 JOIN user_profiles up ON ca.user_id = up.user_id
     `;
     const queryParams = [];
     let paramIndex = 1;
@@ -126,3 +126,4 @@ router.post('/ads', authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
+module.exports = { router };

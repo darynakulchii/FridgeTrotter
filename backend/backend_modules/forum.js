@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db.js');
-const { authenticateToken } = require('auth.js');
+const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const { authenticateToken } = require('./auth'); // ВИПРАВЛЕНО: Коректний шлях до middleware
 
 /**
  * GET /api/forum/posts
@@ -15,7 +15,7 @@ router.get('/posts', async (req, res) => {
             up.first_name, up.last_name, up.profile_image_url AS author_avatar,
             (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count
         FROM posts p
-        JOIN user_profiles up ON p.author_id = up.user_id
+                 JOIN user_profiles up ON p.author_id = up.user_id
         WHERE 1 = 1
     `;
     const queryParams = [];
@@ -85,8 +85,8 @@ router.get('/posts/saved', authenticateToken, async (req, res) => {
             p.post_id, p.title, p.content, p.category, p.created_at, p.likes_count,
             up.first_name, up.last_name, usp.saved_date
         FROM user_saved_posts usp
-        JOIN posts p ON usp.post_id = p.post_id
-        JOIN user_profiles up ON p.author_id = up.user_id
+                 JOIN posts p ON usp.post_id = p.post_id
+                 JOIN user_profiles up ON p.author_id = up.user_id
         WHERE usp.user_id = $1
         ORDER BY usp.saved_date DESC;
     `;
@@ -179,3 +179,4 @@ router.post('/posts/:id/like', authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
+module.exports = { router };

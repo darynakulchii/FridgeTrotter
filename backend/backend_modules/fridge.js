@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db.js');
-const { authenticateToken } = require('auth.js');
+const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const { authenticateToken } = require('./auth'); // ВИПРАВЛЕНО: Коректний шлях до middleware
 
 /**
  * GET /api/fridge/magnets/available
@@ -24,6 +24,7 @@ router.get('/magnets/available', authenticateToken, async (req, res) => {
  */
 router.get('/:userId/layout', async (req, res) => {
     const targetUserId = req.params.userId;
+    // req.user може бути null, якщо користувач не авторизований
     const currentUserId = req.user ? req.user.userId : null;
 
     // 1. Отримання налаштувань холодильника
@@ -39,7 +40,8 @@ router.get('/:userId/layout', async (req, res) => {
     const { is_public } = settingsResult.rows[0];
 
     // 2. Перевірка конфіденційності
-    if (!is_public && targetUserId !== currentUserId) {
+    // Порівняння ID має бути string vs string
+    if (!is_public && targetUserId.toString() !== currentUserId.toString()) {
         return res.status(403).json({ error: 'Холодильник є приватним.' });
     }
 
@@ -48,7 +50,7 @@ router.get('/:userId/layout', async (req, res) => {
             ufm.user_fridge_magnet_id, ufm.x_position, ufm.y_position, ufm.magnet_id,
             m.country, m.city, m.icon_class, m.color_group
         FROM user_fridge_magnets ufm
-        JOIN magnets m ON ufm.magnet_id = m.magnet_id
+                 JOIN magnets m ON ufm.magnet_id = m.magnet_id
         WHERE ufm.user_id = $1;
     `;
 
@@ -103,3 +105,4 @@ router.post('/save', authenticateToken, async (req, res) => {
 });
 
 module.exports = router;
+module.exports = { router };

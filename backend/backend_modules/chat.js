@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db.js');
-const { authenticateToken } = require('auth.js');
+const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const { authenticateToken } = require('./auth'); // ВИПРАВЛЕНО: Коректний шлях до middleware
 const { Server } = require('socket.io');
 
 /**
@@ -111,10 +111,6 @@ const initializeSocketIO = (httpServer) => {
     return io;
 };
 
-module.exports = { initializeSocketIO, ensureConversationExists };
-
-///
-
 /**
  * GET /api/chat/conversations
  * Отримання списку розмов користувача.
@@ -188,9 +184,7 @@ router.get('/conversations/:id/messages', authenticateToken, async (req, res) =>
 
 /**
  * POST /api/chat/messages
- * Надсилання нового повідомлення. Цей маршрут використовується ФРОНТЕНДОМ
- * як резервний або для логіки, що не потребує WebSocket.
- * Примітка: Логіка відправки через Socket.IO знаходиться в sockets/chat.js
+ * Надсилання нового повідомлення.
  */
 router.post('/messages', authenticateToken, async (req, res) => {
     const { receiver_id, content } = req.body;
@@ -204,7 +198,7 @@ router.post('/messages', authenticateToken, async (req, res) => {
     try {
         await client.query('BEGIN');
 
-        // Створення/отримання розмови (використовуємо функцію з модуля chat.js)
+        // Створення/отримання розмови
         const conversationId = await ensureConversationExists(sender_id, receiver_id);
 
         const messageResult = await client.query(`
@@ -224,4 +218,5 @@ router.post('/messages', authenticateToken, async (req, res) => {
     }
 });
 
-module.exports = router;
+module.exports = { initializeSocketIO, ensureConversationExists, router };
+module.exports = { router };

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db.js');
-const { authenticateToken } = require('auth.js');
+const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const { authenticateToken } = require('./auth'); // ВИПРАВЛЕНО: Коректний шлях до middleware
 
 /**
  * GET /api/tours/agencies
@@ -30,8 +30,8 @@ router.get('/', async (req, res) => {
     let query = `
         SELECT t.*, a.name AS agency_name, tc.name_ukr AS category_name
         FROM tours t
-        JOIN agencies a ON t.agency_id = a.agency_id
-        LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
+                 JOIN agencies a ON t.agency_id = a.agency_id
+                 LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
         WHERE 1 = 1
     `;
     const queryParams = [];
@@ -81,8 +81,8 @@ router.get('/:id', async (req, res) => {
     const query = `
         SELECT t.*, a.name AS agency_name, tc.name_ukr AS category_name
         FROM tours t
-        JOIN agencies a ON t.agency_id = a.agency_id
-        LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
+                 JOIN agencies a ON t.agency_id = a.agency_id
+                 LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
         WHERE t.tour_id = $1;
     `;
     try {
@@ -138,9 +138,9 @@ router.get('/saved', authenticateToken, async (req, res) => {
     const query = `
         SELECT t.*, a.name AS agency_name, tc.name_ukr AS category_name, ust.saved_date
         FROM user_saved_tours ust
-        JOIN tours t ON ust.tour_id = t.tour_id
-        JOIN agencies a ON t.agency_id = a.agency_id
-        LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
+                 JOIN tours t ON ust.tour_id = t.tour_id
+                 JOIN agencies a ON t.agency_id = a.agency_id
+                 LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
         WHERE ust.user_id = $1
         ORDER BY ust.saved_date DESC;
     `;
@@ -155,3 +155,4 @@ router.get('/saved', authenticateToken, async (req, res) => {
 
 
 module.exports = router;
+module.exports = { router };
