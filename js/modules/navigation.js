@@ -52,6 +52,13 @@ function initializeNavigationEvents() {
         }
     }
 
+    function closeModalById(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
     // Close buttons logic
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -88,6 +95,48 @@ function initializeNavigationEvents() {
         alert("Вихід виконано");
         closeSidebar();
     });
+
+    // --- AGENT SUB-MODALS ---
+    const agentRegisterBtn = document.getElementById('agent-btn-register');
+    if(agentRegisterBtn) {
+        agentRegisterBtn.addEventListener('click', () => {
+            closeModalById('agent-mode-modal'); // Close main agent menu
+            openModal('modal-agent-register'); // Open sub-modal
+        });
+    }
+
+    const agentAccountBtn = document.getElementById('agent-btn-account');
+    if(agentAccountBtn) {
+        agentAccountBtn.addEventListener('click', () => {
+            closeModalById('agent-mode-modal');
+            openModal('modal-agent-account');
+        });
+    }
+
+    const agentAddTourBtn = document.getElementById('agent-btn-add-tour');
+    if(agentAddTourBtn) {
+        agentAddTourBtn.addEventListener('click', () => {
+            closeModalById('agent-mode-modal');
+            openModal('modal-agent-add-tour');
+        });
+    }
+
+    const agentAddMagnetBtn = document.getElementById('agent-btn-add-magnet');
+    if(agentAddMagnetBtn) {
+        agentAddMagnetBtn.addEventListener('click', () => {
+            closeModalById('agent-mode-modal');
+            openModal('modal-agent-add-magnet');
+        });
+    }
+
+    const agentAddPostBtn = document.getElementById('agent-btn-add-post');
+    if(agentAddPostBtn) {
+        agentAddPostBtn.addEventListener('click', () => {
+            closeModalById('agent-mode-modal');
+            openModal('modal-agent-add-post');
+        });
+    }
+
 
     // --- CHAT ---
     const chatToggleBtn = document.getElementById('chat-toggle-btn');

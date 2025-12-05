@@ -81,41 +81,200 @@
             <button class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body space-y-3">
-            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
+            <button id="agent-btn-register" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
                 <div class="bg-[#48192E] text-white w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition"><i class="fas fa-plus"></i></div>
                 <div>
                     <div class="font-bold text-[#281822]">Зареєструвати агенцію</div>
                     <div class="text-xs text-gray-500">Створити новий бізнес-акаунт</div>
                 </div>
             </button>
-            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#2D4952] transition flex items-center gap-3 group">
+            <button id="agent-btn-account" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#2D4952] transition flex items-center gap-3 group">
                 <div class="bg-[#2D4952] text-white w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition"><i class="fas fa-user-cog"></i></div>
                 <div>
                     <div class="font-bold text-[#281822]">Акаунт та налаштування</div>
                     <div class="text-xs text-gray-500">Керування профілем агенції</div>
                 </div>
             </button>
-            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
+            <button id="agent-btn-add-tour" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
                 <div class="bg-white border-2 border-[#48192E] text-[#48192E] w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-[#48192E] group-hover:text-white transition"><i class="fas fa-plane"></i></div>
                 <div>
                     <div class="font-bold text-[#281822]">Додати тур</div>
                     <div class="text-xs text-gray-500"><span class="text-[#48192E] font-bold">Платна послуга</span> • Просувайте свої тури</div>
                 </div>
             </button>
-            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#2D4952] transition flex items-center gap-3 group">
+            <button id="agent-btn-add-magnet" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#2D4952] transition flex items-center gap-3 group">
                 <div class="bg-white border-2 border-[#2D4952] text-[#2D4952] w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-[#2D4952] group-hover:text-white transition"><i class="fas fa-magnet"></i></div>
                 <div>
                     <div class="font-bold text-[#281822]">Додати магніт</div>
                     <div class="text-xs text-gray-500">Створити власний або замовити дизайн</div>
                 </div>
             </button>
-            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
+            <button id="agent-btn-add-post" class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
                 <div class="bg-gray-100 text-[#281822] w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-gray-200 transition"><i class="fas fa-pen"></i></div>
                 <div>
                     <div class="font-bold text-[#281822]">Додати пост</div>
                     <div class="text-xs text-gray-500">Поділіться новинами в блозі</div>
                 </div>
             </button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-agent-register" class="modal-backdrop">
+    <div class="modal-content max-w-md">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]">Реєстрація агенції</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Назва агенції</label>
+                <input type="text" placeholder="Travel Company LLC" class="w-full border p-2 rounded-md">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Номер ліцензії</label>
+                <input type="text" placeholder="№ 12345678" class="w-full border p-2 rounded-md">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Контактний телефон</label>
+                <input type="tel" placeholder="+380..." class="w-full border p-2 rounded-md">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Веб-сайт (опціонально)</label>
+                <input type="url" placeholder="https://" class="w-full border p-2 rounded-md">
+            </div>
+            <button class="btn-solid w-full">Зареєструвати</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-agent-account" class="modal-backdrop">
+    <div class="modal-content max-w-md">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]">Налаштування агенції</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body space-y-4">
+            <div class="flex items-center gap-4">
+                <div class="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center text-2xl text-gray-400"><i class="fas fa-building"></i></div>
+                <button class="text-[#48192E] text-sm border border-[#48192E] px-3 py-1 rounded hover:bg-gray-50">Змінити лого</button>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Опис профілю</label>
+                <textarea rows="3" placeholder="Розкажіть про вашу агенцію..." class="w-full border p-2 rounded-md"></textarea>
+            </div>
+            <div class="pt-2 border-t mt-4">
+                <button class="w-full text-left py-2 text-[#281822] hover:text-[#48192E] flex justify-between">
+                    Статистика переглядів <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+                <button class="w-full text-left py-2 text-[#281822] hover:text-[#48192E] flex justify-between">
+                    Історія платежів <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+            </div>
+            <button class="btn-solid w-full mt-2">Зберегти зміни</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-agent-add-tour" class="modal-backdrop">
+    <div class="modal-content max-w-lg">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]">Додати новий тур</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body space-y-4">
+            <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-md text-sm text-yellow-800">
+                <i class="fas fa-info-circle mr-1"></i> Публікація туру є платною послугою. Вартість: <b>200 грн</b>.
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Назва туру</label>
+                <input type="text" class="w-full border p-2 rounded-md">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-[#281822]">Ціна (грн)</label>
+                    <input type="number" class="w-full border p-2 rounded-md">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-[#281822]">Тривалість</label>
+                    <input type="text" placeholder="напр. 7 днів" class="w-full border p-2 rounded-md">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Локація</label>
+                <input type="text" placeholder="Країна, Місто" class="w-full border p-2 rounded-md">
+            </div>
+            <div class="border-2 border-dashed border-gray-300 rounded-md p-6 text-center text-gray-500 hover:bg-gray-50 cursor-pointer">
+                <i class="fas fa-cloud-upload-alt text-2xl mb-2"></i>
+                <p class="text-sm">Натисніть щоб завантажити фото</p>
+            </div>
+            <button class="btn-solid w-full">Оплатити та опублікувати</button>
+        </div>
+    </div>
+</div>
+
+<div id="modal-agent-add-magnet" class="modal-backdrop">
+    <div class="modal-content max-w-md">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]">Додати магніт</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body space-y-6">
+            <div class="text-center">
+                <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-[#48192E] text-2xl">
+                    <i class="fas fa-upload"></i>
+                </div>
+                <h4 class="font-bold mb-1">Завантажити свій дизайн</h4>
+                <p class="text-sm text-gray-500 mb-3">Якщо у вас вже є готове зображення магніту</p>
+                <button class="btn-solid w-full">Завантажити файл</button>
+            </div>
+
+            <div class="relative flex py-2 items-center">
+                <div class="flex-grow border-t border-gray-300"></div>
+                <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">АБО</span>
+                <div class="flex-grow border-t border-gray-300"></div>
+            </div>
+
+            <div class="text-center">
+                <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-[#2D4952] text-2xl">
+                    <i class="fas fa-paint-brush"></i>
+                </div>
+                <h4 class="font-bold mb-1">Замовити дизайн</h4>
+                <p class="text-sm text-gray-500 mb-3">Наші дизайнери створять унікальний магніт для вас (від 50 грн)</p>
+                <button class="border border-[#2D4952] text-[#2D4952] w-full py-2 rounded-lg font-bold hover:bg-gray-50">Оформити замовлення</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-agent-add-post" class="modal-backdrop">
+    <div class="modal-content max-w-lg">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]">Створити пост</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body space-y-4">
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Заголовок</label>
+                <input type="text" placeholder="Про що ви хочете розповісти?" class="w-full border p-2 rounded-md">
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Категорія</label>
+                <select class="w-full border p-2 rounded-md bg-white">
+                    <option>Новини агенції</option>
+                    <option>Гарячі пропозиції</option>
+                    <option>Поради туристам</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Текст</label>
+                <textarea rows="5" class="w-full border p-2 rounded-md"></textarea>
+            </div>
+            <div class="flex gap-2">
+                <button class="border border-gray-300 p-2 rounded-md hover:bg-gray-50"><i class="far fa-image"></i> Фото</button>
+                <button class="border border-gray-300 p-2 rounded-md hover:bg-gray-50"><i class="fas fa-map-marker-alt"></i> Локація</button>
+            </div>
+            <button class="btn-solid w-full">Опублікувати</button>
         </div>
     </div>
 </div>
@@ -177,4 +336,3 @@
         <button class="bg-[#48192E] text-white p-2 rounded-md"><i class="fas fa-paper-plane"></i></button>
     </div>
 </div>
-

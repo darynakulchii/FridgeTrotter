@@ -1,0 +1,37 @@
+services:
+  backend:
+    build: ./backend # Припускаючи, що ваш бекенд у цій папці
+    ports:
+      - "3000:3000" # Порт Node.js
+    environment:
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASSWORD: mysecretpassword
+      DB_DATABASE: fridgetrotter # ЗМІНІТЬ: використовуйте ім'я бази для туризму
+      # Налаштування Cloudinary (скопіюйте їх із UniHome)
+      CLOUDINARY_CLOUD_NAME: 'dpkbwlkfx'
+      CLOUDINARY_API_KEY: '434715286878721'
+      CLOUDINARY_API_SECRET: 'fMjYqN6wgd08AOUJlcPyFBXnHV4'
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: fridgetrotter # ЗМІНІТЬ: ім'я бази
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db_init:/docker-entrypoint-initdb.d # Ця папка створить схему
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d fridgetrotter"] # ЗМІНІТЬ: ім'я бази
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:
