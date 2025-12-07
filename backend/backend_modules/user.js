@@ -206,5 +206,4 @@ router.get('/:id/public', async (req, res) => {
     }
 });
 
-module.exports = router;
 module.exports = { router };

@@ -219,4 +219,3 @@ router.post('/messages', authenticateToken, async (req, res) => {
 });
 
 module.exports = { initializeSocketIO, ensureConversationExists, router };
-module.exports = { router };
