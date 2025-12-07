@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const pool = require('../db');
 const { authenticateToken } = require('../auth_middleware');
 
 /**
@@ -43,14 +43,13 @@ router.get('/ads', async (req, res) => {
 
     query += ` ${whereClause}`;
 
-    // Сортування
-    if (sort === 'nearest_date') {
-        query += ` ORDER BY ca.start_date ASC`;
-    } else if (sort === 'budget_asc') {
-        // Тут потрібна логіка сортування за бюджетом, якщо теги бюджету числові
-        query += ` ORDER BY ca.created_at DESC`; // Заглушка
+    // сортування
+    if (sort === 'budget_asc') {
+        query += ` ORDER BY ca.budget_level ASC`;
+    } else if (sort === 'budget_desc') {
+        query += ` ORDER BY ca.budget_level DESC`;
     } else {
-        query += ` ORDER BY ca.created_at DESC`; // Нові спочатку
+        query += ` ORDER BY ca.created_at DESC`;
     }
 
     try {

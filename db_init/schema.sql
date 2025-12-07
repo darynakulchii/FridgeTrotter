@@ -25,7 +25,7 @@ CREATE TABLE user_profiles (
                                location VARCHAR(255),
                                date_of_birth DATE,
                                bio TEXT,
-    -- travel_interests ВИДАЛЕНО, буде використовуватись таблиця зв'язку
+                               travel_interests VARCHAR(500),
                                profile_image_url VARCHAR(500)
 );
 
@@ -169,7 +169,7 @@ CREATE TABLE companion_ads (
                                end_date DATE NOT NULL,
                                min_group_size INT DEFAULT 1 CHECK (min_group_size >= 1),
                                max_group_size INT CHECK (max_group_size >= min_group_size),
-    -- budget_level ВИДАЛЕНО, буде використовуватись companion_ad_tags
+                               budget_level NUMERIC(10, 2) DEFAULT 0,
                                description TEXT,
                                created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
