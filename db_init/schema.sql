@@ -233,3 +233,14 @@ INSERT INTO magnets (country, city, icon_class, color_group) VALUES
                                                                  ('Велика Британія', 'Лондон', 'bus', 'burgundy'),
                                                                  ('США', 'Нью-Йорк', 'building', 'teal')
 ON CONFLICT (country, city) DO NOTHING;
+
+CREATE TABLE notifications (
+                               notification_id SERIAL PRIMARY KEY,
+                               user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                               message TEXT NOT NULL,
+                               link_url VARCHAR(500),
+                               is_read BOOLEAN DEFAULT FALSE,
+                               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_notifications_user_id ON notifications (user_id);

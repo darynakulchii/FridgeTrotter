@@ -397,3 +397,90 @@ body {
     background-color: #e5e7eb;
     color: var(--color-text-dark);
 }
+
+
+
+/* Стилі сповіщень */
+.notification-modal-content {
+    max-width: 400px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.notifications-list {
+    overflow-y: auto;
+    max-height: 60vh;
+}
+
+.notification-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 1rem;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s;
+    text-decoration: none;
+    color: inherit;
+    gap: 1rem;
+}
+
+.notification-item:hover {
+    background-color: #fafafa;
+}
+
+.notification-item.unread {
+    background-color: #f0fdfa; /* Світло-тіловий відтінок */
+    border-left: 3px solid #2D4952;
+}
+
+.notification-icon-box {
+    width: 36px;
+    height: 36px;
+    background-color: #e5e7eb;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #4b5563;
+    flex-shrink: 0;
+}
+
+.notification-item.unread .notification-icon-box {
+    background-color: #2D4952;
+    color: #fff;
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-text {
+    font-size: 0.9rem;
+    color: #281822;
+    margin-bottom: 4px;
+    line-height: 1.4;
+}
+
+.notification-time {
+    font-size: 0.75rem;
+    color: #9ca3af;
+}
+
+/* Бейдж на кнопці в навігації */
+.badge-dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    min-width: 18px;
+    height: 18px;
+    background-color: #ef4444;
+    border-radius: 9px;
+    display: none; /* Ховаємо за замовчуванням */
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    border: 2px solid #281822; /* Колір хедера для обводки */
+}

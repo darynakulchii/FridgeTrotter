@@ -1,8 +1,11 @@
 import './modules/auth.js';
 import './modules/chat.js';
 import './modules/agent.js';
+import { initNotifications } from './modules/notifications.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    initNotifications();
 
     // === SIDEBAR LOGIC ===
     const menuToggleBtn = document.getElementById('menu-toggle-btn');

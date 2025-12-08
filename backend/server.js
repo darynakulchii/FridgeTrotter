@@ -15,6 +15,7 @@ const { router: forumRouter } = require('./backend_modules/forum');
 const { router: fridgeRouter } = require('./backend_modules/fridge');
 const { router: companionRouter } = require('./backend_modules/companion');
 const { initializeSocketIO, router: chatRouter } = require('./backend_modules/chat');
+const { router: notificationsRouter } = require('./backend_modules/notifications');
 
 // =================================================================
 // 1. КОНФІГУРАЦІЯ ТА СЕРВЕР
@@ -61,6 +62,7 @@ app.use('/api/forum', forumRouter);
 app.use('/api/fridge', fridgeRouter);
 app.use('/api/companion', companionRouter);
 app.use('/api/chat', chatRouter);
+app.use('/api/notifications', notificationsRouter);
 
 
 // =================================================================

@@ -45,12 +45,8 @@
             <li><button id="bug-report-btn" class="sidebar-link"><i class="fas fa-exclamation-circle"></i> Повідомити про помилку</button></li>
             <li><button id="privacy-policy-btn" class="sidebar-link"><i class="fas fa-shield-alt"></i> Політика конфіденційності</button></li>
         </ul>
-
-        <!-- Окрема кнопка "Вийти" видалена -->
     </nav>
 </div>
-
-<!-- Модальне вікно auth-modal видалено, оскільки використовуються login.html та register.html -->
 
 <div id="agent-mode-modal" class="modal-backdrop">
     <div class="modal-content max-w-md">
@@ -284,19 +280,26 @@
 </div>
 
 <div id="notifications-modal" class="modal-backdrop">
-    <div class="modal-content">
+    <div class="modal-content notification-modal-content">
         <div class="modal-header">
-            <h3 class="text-xl font-bold text-[#281822]"><i class="far fa-bell mr-2"></i> Повідомлення</h3>
+            <h3 class="text-xl font-bold text-[#281822]">
+                <i class="far fa-bell mr-2"></i> Сповіщення
+            </h3>
             <button class="modal-close-btn">&times;</button>
         </div>
-        <div class="modal-body space-y-4">
-            <div class="flex gap-3 p-3 bg-[#f9fafb] rounded-lg border border-gray-100">
-                <div class="bg-[#48192E] text-[#D3CBC4] p-2 rounded-full h-fit"><i class="far fa-comment-alt"></i></div>
-                <div>
-                    <h4 class="font-bold text-sm">Нове повідомлення</h4>
-                    <span class="text-xs text-gray-400">5 хв тому</span>
+
+        <div class="modal-body p-0">
+            <div id="notifications-list" class="notifications-list">
+                <div class="p-4 text-center text-gray-500">
+                    <i class="fas fa-spinner fa-spin"></i> Завантаження...
                 </div>
             </div>
+        </div>
+
+        <div class="modal-footer border-t border-gray-100 p-3 text-center bg-gray-50 rounded-b-xl">
+            <button id="mark-all-read-btn" class="text-sm text-[#2D4952] font-semibold hover:text-[#48192E]">
+                Позначити всі як прочитані
+            </button>
         </div>
     </div>
 </div>
