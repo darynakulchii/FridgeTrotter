@@ -174,7 +174,7 @@
         }
         .form-input:focus { border-color: #48192E; background: white; }
 
-        .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 2rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 2rem; }
         .stat-box { background: #F3F4F6; border-radius: 12px; padding: 1.5rem; text-align: center; }
         .stat-number { font-size: 1.8rem; font-weight: 400; color: #48192E; margin-bottom: 0.25rem; }
         .stat-label { font-size: 0.9rem; color: #6B7280; }
@@ -189,7 +189,7 @@
         .btn-burgundy-solid { background: #48192E; color: #D3CBC4; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; border: none; cursor: pointer; }
     </style>
 </head>
-<body ondrop="removeMagnet(event)" ondragover="allowDrop(event)">
+<body>
 
 <script type="module" src="../js/modules/navigation.js"></script>
 
@@ -197,31 +197,32 @@
     <div class="profile-header-card">
         <h1 class="profile-title">Мій профіль</h1>
         <div class="nav-pills">
-            <button class="nav-pill active" onclick="switchTab('fridge')">Мій холодильник</button>
-            <button class="nav-pill" onclick="switchTab('fridge-settings')">Налаштування холодильника</button>
-            <button class="nav-pill" onclick="switchTab('info')">Моя інформація</button>
-            <button class="nav-pill" onclick="switchTab('my-posts')">Мої пости</button>
-            <button class="nav-pill" onclick="switchTab('saved-tours')">Вибрані тури</button>
-            <button class="nav-pill" onclick="switchTab('saved-posts')">Вибрані пости</button>
-            <button class="nav-pill" onclick="switchTab('settings')">Налаштування</button>
+            <!-- Використовуємо data-tab замість onclick -->
+            <button class="nav-pill active" data-tab="fridge">Мій холодильник</button>
+            <button class="nav-pill" data-tab="fridge-settings">Налаштування холодильника</button>
+            <button class="nav-pill" data-tab="info">Моя інформація</button>
+            <button class="nav-pill" data-tab="my-posts">Мої пости</button>
+            <button class="nav-pill" data-tab="saved-tours">Вибрані тури</button>
+            <button class="nav-pill" data-tab="saved-posts">Вибрані пости</button>
+            <button class="nav-pill" data-tab="settings">Налаштування</button>
         </div>
     </div>
 
-    <!-- ВКЛАДКА: ХОЛОДИЛЬНИК -->
     <div id="tab-fridge" class="tab-content active">
         <div class="fridge-container">
             <div class="magnet-panel-card">
                 <h3 class="text-lg font-normal mb-6 text-[#281822]">Доступні магніти</h3>
 
-                <div class="magnet-btn burgundy" draggable="true" ondragstart="drag(event)" id="mag-fr" data-icon="plane" data-country="Франція" data-city="Париж"> <i class="fas fa-plane text-xl"></i> <div> <div class="font-bold text-sm">Франція</div> <div class="text-xs opacity-80">Париж</div> </div> </div>
-                <div class="magnet-btn burgundy" draggable="true" ondragstart="drag(event)" id="mag-jp" data-icon="camera" data-country="Японія" data-city="Токіо">
+                <!-- Видалено onclick та ondragstart, додано draggable="true" для роботи JS -->
+                <div class="magnet-btn burgundy" draggable="true" id="mag-fr" data-icon="plane" data-country="Франція" data-city="Париж"> <i class="fas fa-plane text-xl"></i> <div> <div class="font-bold text-sm">Франція</div> <div class="text-xs opacity-80">Париж</div> </div> </div>
+                <div class="magnet-btn burgundy" draggable="true" id="mag-jp" data-icon="camera" data-country="Японія" data-city="Токіо">
                     <i class="fas fa-camera text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Японія</div>
                         <div class="text-xs opacity-80">Токіо</div>
                     </div>
                 </div>
-                <div class="magnet-btn burgundy" draggable="true" ondragstart="drag(event)" id="mag-ch" data-icon="mountain" data-country="Швейцарія" data-city="Цюріх">
+                <div class="magnet-btn burgundy" draggable="true" id="mag-ch" data-icon="mountain" data-country="Швейцарія" data-city="Цюріх">
                     <i class="fas fa-mountain text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Швейцарія</div>
@@ -229,21 +230,21 @@
                     </div>
                 </div>
 
-                <div class="magnet-btn teal" draggable="true" ondragstart="drag(event)" id="mag-it" data-icon="coffee" data-country="Італія" data-city="Рим">
+                <div class="magnet-btn teal" draggable="true" id="mag-it" data-icon="coffee" data-country="Італія" data-city="Рим">
                     <i class="fas fa-coffee text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Італія</div>
                         <div class="text-xs opacity-80">Рим</div>
                     </div>
                 </div>
-                <div class="magnet-btn teal" draggable="true" ondragstart="drag(event)" id="mag-gr" data-icon="umbrella-beach" data-country="Греція" data-city="Афіни">
+                <div class="magnet-btn teal" draggable="true" id="mag-gr" data-icon="umbrella-beach" data-country="Греція" data-city="Афіни">
                     <i class="fas fa-umbrella-beach text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Греція</div>
                         <div class="text-xs opacity-80">Афіни</div>
                     </div>
                 </div>
-                <div class="magnet-btn teal" draggable="true" ondragstart="drag(event)" id="mag-es" data-icon="map-marker-alt" data-country="Іспанія" data-city="Барселона">
+                <div class="magnet-btn teal" draggable="true" id="mag-es" data-icon="map-marker-alt" data-country="Іспанія" data-city="Барселона">
                     <i class="fas fa-map-marker-alt text-xl"></i>
                     <div>
                         <div class="font-bold text-sm">Іспанія</div>
@@ -256,49 +257,46 @@
 
             <div class="fridge-wrapper-card">
                 <h3 class="text-lg font-normal mb-6 text-[#281822]">Мій холодильник</h3>
-                <div class="fridge-view" id="fridge-door" ondrop="dropOnFridge(event)" ondragover="allowDrop(event)">
+                <!-- Видалено inline події -->
+                <div class="fridge-view" id="fridge-door">
                     <div class="fridge-handle"></div>
                     <div id="fridge-placeholder" class="fridge-placeholder">
                         <p class="mb-1 text-lg">Перетягніть магніти сюди</p>
                         <p class="text-sm">Збирайте колекцію ваших подорожей</p>
                     </div>
                 </div>
-                <!-- Кнопка збереження холодильника -->
-                <div class="mt-4 flex justify-end">
-                    <button id="btn-save-fridge" class="btn-burgundy-solid">Зберегти розташування магнітів</button>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- ВКЛАДКА: НАЛАШТУВАННЯ ХОЛОДИЛЬНИКА -->
     <div id="tab-fridge-settings" class="tab-content">
         <div class="settings-card">
             <div class="settings-title"><i class="fas fa-palette"></i> Колір холодильника</div>
             <p class="settings-desc">Виберіть колір дверцят вашого холодильника</p>
 
             <div class="color-grid mb-8">
-                <div class="color-option selected" onclick="changeFridgeColor('#f3f4f6', this)">
+                <!-- Видалено onclick, JS використовує клас .color-option -->
+                <div class="color-option selected">
                     <div class="color-preview" style="background: #f3f4f6;"></div>
                     <div class="text-center text-sm">Класичний білий</div>
                 </div>
-                <div class="color-option" onclick="changeFridgeColor('#98D8C8', this)">
+                <div class="color-option">
                     <div class="color-preview" style="background: #98D8C8;"></div>
                     <div class="text-center text-sm">Ретро м'ята</div>
                 </div>
-                <div class="color-option" onclick="changeFridgeColor('#E8DCC4', this)">
+                <div class="color-option">
                     <div class="color-preview" style="background: #E8DCC4;"></div>
                     <div class="text-center text-sm">Вінтаж бежевий</div>
                 </div>
-                <div class="color-option" onclick="changeFridgeColor('#B5D3E7', this)">
+                <div class="color-option">
                     <div class="color-preview" style="background: #B5D3E7;"></div>
                     <div class="text-center text-sm">Блакитна пастель</div>
                 </div>
-                <div class="color-option" onclick="changeFridgeColor('#F4C2C2', this)">
+                <div class="color-option">
                     <div class="color-preview" style="background: #F4C2C2;"></div>
                     <div class="text-center text-sm">Рожева мрія</div>
                 </div>
-                <div class="color-option" onclick="changeFridgeColor('#A8B5B2', this)">
+                <div class="color-option">
                     <div class="color-preview" style="background: #A8B5B2;"></div>
                     <div class="text-center text-sm">Сірий металік</div>
                 </div>
@@ -314,35 +312,51 @@
                     <div class="font-bold text-[#281822] text-sm">Публічний холодильник</div>
                     <div class="text-sm text-gray-500">Дозволити всім користувачам переглядати ваш холодильник</div>
                 </div>
-                <div class="toggle-switch active" onclick="this.classList.toggle('active')"><div class="toggle-knob"></div></div>
+                <div class="toggle-switch active"><div class="toggle-knob"></div></div>
             </div>
             <div class="switch-row">
                 <div>
                     <div class="font-bold text-[#281822] text-sm">Дозволити коментарі</div>
                     <div class="text-sm text-gray-500">Користувачі можуть залишати коментарі під вашим холодильником</div>
                 </div>
-                <div class="toggle-switch active" onclick="this.classList.toggle('active')"><div class="toggle-knob"></div></div>
+                <div class="toggle-switch active"><div class="toggle-knob"></div></div>
             </div>
+            <div class="switch-row">
+                <div>
+                    <div class="font-bold text-[#281822] text-sm">Показувати в профілі</div>
+                    <div class="text-sm text-gray-500">Відображати холодильник на головній сторінці профілю</div>
+                </div>
+                <div class="toggle-switch active"><div class="toggle-knob"></div></div>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-title"><i class="far fa-eye"></i> Відображення</div>
+            <p class="settings-desc">Додаткові налаштування вигляду</p>
+
+            <label class="font-bold text-[#281822] text-sm block mb-2">Розмір магнітів</label>
+            <div class="flex gap-2 mb-6">
+                <button class="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">Маленькі</button>
+                <button class="px-4 py-2 bg-[#281822] text-white rounded-md text-sm">Середні</button>
+                <button class="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">Великі</button>
+            </div>
+
+            <button class="btn-burgundy-solid">Зберегти налаштування</button>
         </div>
     </div>
 
-    <!-- ВКЛАДКА: ІНФОРМАЦІЯ (Оновлена) -->
     <div id="tab-info" class="tab-content">
         <div class="info-section">
             <h3 class="text-lg font-normal mb-1 text-[#281822]">Профіль користувача</h3>
             <p class="text-sm text-gray-500 mb-6">Ця інформація буде видна іншим користувачам</p>
 
             <div class="flex items-center gap-6 mb-8">
-                <!-- Аватар (Динамічний) -->
-                <img id="profile-avatar-img" src="" class="avatar-circle-lg object-cover hidden" alt="Avatar">
-                <div id="profile-avatar-placeholder" class="avatar-circle-lg">?</div>
-
+                <div class="avatar-circle-lg">ОП</div>
                 <div>
                     <div class="font-bold text-[#281822] mb-2 text-sm">Аватар</div>
                     <div class="flex gap-2">
-                        <!-- Кнопка завантаження -->
-                        <button id="btn-upload-avatar" class="btn-burgundy-outline text-xs">Завантажити фото</button>
-                        <input type="file" id="avatar-input" class="hidden" accept="image/*">
+                        <button class="btn-burgundy-outline text-xs">Завантажити фото</button>
+                        <button class="text-[#48192E] border border-[#48192E] rounded-lg px-3 py-1.5 text-xs hover:bg-red-50">Видалити</button>
                     </div>
                 </div>
             </div>
@@ -353,41 +367,35 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                     <label class="form-label"><i class="far fa-user mr-1"></i> Ім'я</label>
-                    <!-- Додано ID -->
-                    <input type="text" id="profile-firstname" class="form-input" placeholder="Ваше ім'я">
-                </div>
-                <div>
-                    <label class="form-label"><i class="far fa-user mr-1"></i> Прізвище</label>
-                    <!-- Додано ID -->
-                    <input type="text" id="profile-lastname" class="form-input" placeholder="Ваше прізвище">
+                    <input type="text" class="form-input" value="Олександр Петренко">
                 </div>
                 <div>
                     <label class="form-label"><i class="far fa-envelope mr-1"></i> Email</label>
-                    <!-- Додано ID та readonly -->
-                    <input type="email" id="profile-email" class="form-input bg-gray-100" readonly>
+                    <input type="email" class="form-input" value="oleksandr.petrenko@email.com">
                 </div>
                 <div>
                     <label class="form-label"><i class="fas fa-map-marker-alt mr-1"></i> Місцезнаходження</label>
-                    <!-- Додано ID -->
-                    <input type="text" id="profile-location" class="form-input">
+                    <input type="text" class="form-input" value="Київ, Україна">
                 </div>
                 <div>
                     <label class="form-label"><i class="far fa-calendar mr-1"></i> Дата народження</label>
                     <div class="relative">
-                        <!-- Додано ID -->
-                        <input type="date" id="profile-dob" class="form-input">
+                        <input type="text" class="form-input" value="15.05.1995">
+                        <i class="far fa-calendar absolute right-3 top-3 text-gray-400"></i>
                     </div>
                 </div>
                 <div class="md:col-span-2">
+                    <label class="form-label"><i class="fas fa-globe mr-1"></i> Веб-сайт</label>
+                    <input type="text" class="form-input" value="fridgetrotter.com/oleksandr">
+                </div>
+                <div class="md:col-span-2">
                     <label class="form-label">Про себе</label>
-                    <!-- Додано ID -->
-                    <textarea id="profile-bio" class="form-input" rows="3"></textarea>
-                    <div class="text-xs text-gray-400 mt-1">Коротко розкажіть про себе</div>
+                    <textarea class="form-input" rows="3">Люблю подорожі та нові враження. Відвідав 15 країн і не збираюся зупинятися!</textarea>
+                    <div class="text-xs text-gray-400 mt-1">76/500 символів</div>
                 </div>
                 <div class="md:col-span-2">
                     <label class="form-label">Інтереси в подорожах</label>
-                    <!-- Додано ID -->
-                    <input type="text" id="profile-interests" class="form-input" placeholder="Гори, культура, гастрономія">
+                    <input type="text" class="form-input" value="Гори, культура, гастрономія">
                 </div>
             </div>
         </div>
@@ -395,52 +403,149 @@
         <div class="info-section">
             <h3 class="text-lg font-normal text-[#281822]">Статистика подорожей</h3>
             <div class="stats-grid">
-                <!-- Додано ID до блоків статистики -->
-                <div class="stat-box"><div class="stat-number" id="stat-countries">0</div><div class="stat-label">Країн відвідано</div></div>
-                <div class="stat-box"><div class="stat-number" id="stat-cities">0</div><div class="stat-label">Міст відвідано</div></div>
-                <div class="stat-box"><div class="stat-number" id="stat-followers">0</div><div class="stat-label">Підписники</div></div>
+                <div class="stat-box"><div class="stat-number">15</div><div class="stat-label">Країн відвідано</div></div>
+                <div class="stat-box"><div class="stat-number">32</div><div class="stat-label">Міст відвідано</div></div>
+                <div class="stat-box"><div class="stat-number">8</div><div class="stat-label">Активні тури</div></div>
+                <div class="stat-box"><div class="stat-number">124</div><div class="stat-label">Підписники</div></div>
             </div>
 
             <div class="flex gap-3 mt-8">
-                <!-- Кнопка збереження профілю -->
-                <button id="btn-save-profile" class="btn-burgundy-solid">Зберегти зміни</button>
+                <button class="btn-burgundy-solid">Зберегти зміни</button>
+                <button class="bg-white border border-[#281822] text-[#281822] px-6 py-2 rounded-lg font-medium hover:bg-gray-50">Скасувати</button>
             </div>
         </div>
     </div>
 
-    <!-- ВКЛАДКА: МОЇ ПОСТИ -->
     <div id="tab-my-posts" class="tab-content">
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl text-[#281822] font-normal">Мої публікації</h2>
             <button class="btn-burgundy-solid">Створити новий пост</button>
         </div>
-        <!-- JS буде додавати пости сюди -->
+
+        <div class="post-card shadow-sm">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="avatar-circle bg-[#2D4952]">ОП</div>
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm">Олександр Петренко <span class="text-gray-400 font-normal text-xs mx-1">•</span> <span class="text-gray-500 font-normal text-sm">2 дні тому</span></div>
+                        <div class="text-sm text-[#281822] font-medium mt-0.5">Незабутня подорож до Карпат</div>
+                    </div>
+                </div>
+                <span class="text-xs bg-gray-200 px-3 py-1 rounded-full text-gray-600 font-medium">Україна</span>
+            </div>
+            <p class="text-gray-600 text-sm mb-4 leading-relaxed pl-[52px]">Нещодавно повернувся з чудової подорожі до Карпат. Відвідав озеро Синевир, гору Говерлу та автентичні гуцульські села. Рекомендую всім!</p>
+            <div class="flex justify-between items-center border-t border-gray-100 pt-3 pl-[52px]">
+                <div class="flex gap-4 text-gray-500 text-sm">
+                    <span class="flex items-center gap-1"><i class="far fa-thumbs-up"></i> 45</span>
+                    <span class="flex items-center gap-1"><i class="far fa-comment-alt"></i> 12</span>
+                </div>
+                <div class="flex gap-4 text-sm">
+                    <button class="text-[#2D4952] hover:text-[#48192E] flex items-center gap-1"><i class="far fa-edit"></i> Редагувати</button>
+                    <button class="text-[#48192E] hover:text-red-600 flex items-center gap-1"><i class="far fa-trash-alt"></i> Видалити</button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- ВКЛАДКА: ЗБЕРЕЖЕНІ ТУРИ -->
     <div id="tab-saved-tours" class="tab-content">
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h2 class="text-2xl text-[#281822] font-normal">Вибрані тури</h2>
+                <p class="text-gray-500 text-sm mt-1">4 тури збережено</p>
             </div>
             <button class="bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Очистити всі</button>
         </div>
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- JS буде додавати тури сюди -->
+            <div class="tour-card-saved shadow-md flex flex-col h-full overflow-hidden p-0">
+                <div class="relative h-48">
+                    <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800" alt="Japan" class="w-full h-full object-cover m-0 rounded-none">
+                    <span class="absolute top-3 right-3 bg-[#48192E] text-white text-xs px-2 py-1 rounded font-medium">Культурний</span>
+                    <button class="absolute top-3 left-3 bg-white w-8 h-8 flex items-center justify-center rounded-md shadow text-[#48192E]"><i class="fas fa-bookmark"></i></button>
+                </div>
+                <div class="p-5 flex flex-col flex-grow">
+                    <h3 class="text-lg font-bold text-[#281822] mb-1">Тур по Японії</h3>
+                    <p class="text-sm text-gray-500 mb-4">Відкрийте для себе землю висхідного сонця</p>
+                    <div class="space-y-2 text-sm text-[#2D4952] mb-4">
+                        <div class="flex items-center gap-2"><i class="fas fa-map-marker-alt w-4 text-center"></i> Токіо, Кіото, Осака</div>
+                        <div class="flex items-center gap-2"><i class="far fa-calendar w-4 text-center"></i> 14 днів</div>
+                        <div class="flex items-center gap-2"><i class="fas fa-user-friends w-4 text-center"></i> 10-15 осіб</div>
+                        <div class="flex items-center gap-2"><i class="fas fa-star w-4 text-center text-[#48192E]"></i> 4.9</div>
+                    </div>
+                    <div class="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
+                        <span class="text-xl font-bold text-[#48192E]">85 000 ₴</span>
+                        <div class="flex gap-2">
+                            <button class="bg-[#2D4952] text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-[#1a2e33]">Деталі</button>
+                            <button class="border border-[#48192E] text-[#48192E] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-50">Видалити</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tour-card-saved shadow-md flex flex-col h-full overflow-hidden p-0">
+                <div class="relative h-48">
+                    <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800" alt="Alps" class="w-full h-full object-cover m-0 rounded-none">
+                    <span class="absolute top-3 right-3 bg-[#48192E] text-white text-xs px-2 py-1 rounded font-medium">Пригодницький</span>
+                    <button class="absolute top-3 left-3 bg-white w-8 h-8 flex items-center justify-center rounded-md shadow text-[#48192E]"><i class="fas fa-bookmark"></i></button>
+                </div>
+                <div class="p-5 flex flex-col flex-grow">
+                    <h3 class="text-lg font-bold text-[#281822] mb-1">Альпійські вершини</h3>
+                    <p class="text-sm text-gray-500 mb-4">Підкорення найвищих гір Європи</p>
+                    <div class="space-y-2 text-sm text-[#2D4952] mb-4">
+                        <div class="flex items-center gap-2"><i class="fas fa-map-marker-alt w-4 text-center"></i> Швейцарія, Франція</div>
+                        <div class="flex items-center gap-2"><i class="far fa-calendar w-4 text-center"></i> 10 днів</div>
+                        <div class="flex items-center gap-2"><i class="fas fa-user-friends w-4 text-center"></i> 6-8 осіб</div>
+                        <div class="flex items-center gap-2"><i class="fas fa-star w-4 text-center text-[#48192E]"></i> 4.8</div>
+                    </div>
+                    <div class="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
+                        <span class="text-xl font-bold text-[#48192E]">95 000 ₴</span>
+                        <div class="flex gap-2">
+                            <button class="bg-[#2D4952] text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-[#1a2e33]">Деталі</button>
+                            <button class="border border-[#48192E] text-[#48192E] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-50">Видалити</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ВКЛАДКА: ЗБЕРЕЖЕНІ ПОСТИ -->
     <div id="tab-saved-posts" class="tab-content">
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h2 class="text-2xl text-[#281822] font-normal">Вибрані пости</h2>
+                <p class="text-gray-500 text-sm mt-1">5 постів збережено</p>
+            </div>
+            <button class="bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Очистити всі</button>
+        </div>
+
+        <div class="post-card shadow-sm">
+            <div class="flex justify-between items-start mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="avatar-circle bg-[#2D4952]">МК</div>
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm">Марія Коваленко <span class="text-gray-400 font-normal text-xs mx-1">•</span> <span class="text-gray-500 font-normal text-sm">1 день тому</span></div>
+                        <div class="text-sm text-[#281822] font-medium mt-0.5">Топ-10 найкрасивіших місць Ісландії</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="text-xs bg-gray-200 px-3 py-1 rounded-full text-gray-600 font-medium">Ісландія</span>
+                    <i class="fas fa-bookmark text-[#48192E]"></i>
+                </div>
+            </div>
+            <p class="text-gray-600 text-sm mb-4 leading-relaxed pl-[52px]">Поділюся моїм списком must-see локацій в Ісландії. Від водоспадів до гейзерів, від льодовиків до чорних пляжів - все що вразило мене найбільше!</p>
+            <div class="flex justify-between items-center border-t border-gray-100 pt-3 pl-[52px]">
+                <div class="flex gap-4 text-gray-500 text-sm">
+                    <span class="flex items-center gap-1"><i class="far fa-thumbs-up"></i> 156</span>
+                    <span class="flex items-center gap-1"><i class="far fa-comment-alt"></i> 34</span>
+                </div>
+                <div class="flex gap-3 text-sm items-center">
+                    <span class="text-xs text-gray-400 mr-2">Збережено 2 дні тому</span>
+                    <button class="border border-[#48192E] text-[#48192E] px-4 py-1 rounded-md text-sm font-medium hover:bg-red-50">Видалити</button>
+                </div>
             </div>
         </div>
-        <!-- JS буде додавати пости сюди -->
     </div>
 
-    <!-- ВКЛАДКА: НАЛАШТУВАННЯ АКАУНТУ -->
     <div id="tab-settings" class="tab-content">
         <div class="settings-card">
             <div class="settings-title"><i class="fas fa-lock-open"></i> Безпека акаунту</div>
@@ -455,12 +560,116 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Новий пароль</label>
                     <input type="password" placeholder="Введіть новий пароль" class="w-full border p-2.5 rounded-md bg-gray-50 outline-none focus:border-[#48192E]">
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Підтвердити пароль</label>
+                    <input type="password" placeholder="Повторіть новий пароль" class="w-full border p-2.5 rounded-md bg-gray-50 outline-none focus:border-[#48192E]">
+                </div>
             </div>
             <button class="btn-burgundy-solid mb-8">Змінити пароль</button>
+
+            <div class="flex justify-between items-center pt-6 border-t border-gray-100">
+                <div>
+                    <div class="font-bold text-[#281822] text-sm flex items-center gap-2"><i class="fas fa-shield-alt"></i> Двофакторна автентифікація</div>
+                    <div class="text-sm text-gray-500">Додайте додатковий рівень захисту вашого акаунту</div>
+                </div>
+                <button class="border border-[#281822] text-[#281822] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-gray-50">Увімкнути</button>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-title"><i class="far fa-bell"></i> Сповіщення</div>
+            <p class="settings-desc">Виберіть, які сповіщення ви хочете отримувати</p>
+
+            <div class="space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm flex items-center gap-2"><i class="far fa-envelope"></i> Email сповіщення</div>
+                        <div class="text-sm text-gray-500">Отримувати сповіщення на email</div>
+                    </div>
+                    <div class="toggle-switch active"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm flex items-center gap-2"><i class="fas fa-mobile-alt"></i> Push сповіщення</div>
+                        <div class="text-sm text-gray-500">Отримувати push-сповіщення в браузері</div>
+                    </div>
+                    <div class="toggle-switch active"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm">Нові підписники</div>
+                        <div class="text-sm text-gray-500">Сповіщення про нових підписників</div>
+                    </div>
+                    <div class="toggle-switch active"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm flex items-center gap-2"><i class="far fa-comment"></i> Нові коментарі</div>
+                        <div class="text-sm text-gray-500">Сповіщення про коментарі до ваших постів</div>
+                    </div>
+                    <div class="toggle-switch active"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm">Нові повідомлення</div>
+                        <div class="text-sm text-gray-500">Сповіщення про особисті повідомлення</div>
+                    </div>
+                    <div class="toggle-switch active"><div class="toggle-knob"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-title"><i class="far fa-eye"></i> Конфіденційність</div>
+            <p class="settings-desc">Контролюйте видимість вашого профілю</p>
+
+            <div class="space-y-6">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm flex items-center gap-2"><i class="fas fa-globe"></i> Публічний профіль</div>
+                        <div class="text-sm text-gray-500">Ваш профіль видно всім користувачам</div>
+                    </div>
+                    <div class="toggle-switch active"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm">Показувати email</div>
+                        <div class="text-sm text-gray-500">Відображати email адресу в профілі</div>
+                    </div>
+                    <div class="toggle-switch"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm">Показувати місцезнаходження</div>
+                        <div class="text-sm text-gray-500">Відображати ваше місто в профілі</div>
+                    </div>
+                    <div class="toggle-switch active"><div class="toggle-knob"></div></div>
+                </div>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-[#281822] text-sm">Дозволити повідомлення</div>
+                        <div class="text-sm text-gray-500">Інші користувачі можуть надсилати вам повідомлення</div>
+                    </div>
+                    <div class="toggle-switch active"><div class="toggle-knob"></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="settings-card">
+            <div class="settings-title"><i class="far fa-moon"></i> Вигляд</div>
+            <p class="settings-desc">Налаштуйте зовнішній вигляд додатку</p>
+
+            <label class="font-bold text-[#281822] text-sm block mb-2">Мова інтерфейсу</label>
+            <div class="flex gap-2">
+                <button class="bg-[#48192E] text-white px-4 py-1.5 rounded-md text-sm font-medium">Українська</button>
+                <button class="bg-white border border-gray-300 text-[#281822] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-gray-50">English</button>
+            </div>
         </div>
 
         <div class="settings-card">
             <div class="settings-title text-red-700">Небезпечна зона</div>
+            <p class="settings-desc">Незворотні дії з вашим акаунтом</p>
+
             <div class="bg-red-50 p-4 rounded-lg flex justify-between items-center border border-red-100">
                 <div>
                     <div class="font-bold text-[#281822] text-sm">Видалити акаунт</div>
@@ -469,112 +678,16 @@
                 <button class="border border-[#48192E] text-[#48192E] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-100">Видалити</button>
             </div>
         </div>
+
+        <div class="flex gap-3 mt-8">
+            <button class="btn-burgundy-solid">Зберегти налаштування</button>
+            <button class="bg-white border border-[#281822] text-[#281822] px-6 py-2 rounded-lg font-medium hover:bg-gray-50">Скасувати</button>
+        </div>
     </div>
 
 </main>
 
-<script type="module" src="../js/modules/profile.js"></script>
 <script type="module" src="../js/index.js"></script>
-
-<script>
-    // --- ВНУТРІШНЯ ЛОГІКА ІНТЕРФЕЙСУ ТА DRAG-N-DROP ---
-
-    function switchTab(tabName) {
-        document.querySelectorAll('.nav-pill').forEach(btn => btn.classList.remove('active'));
-        // Fix: Use strict check for tabName including quotes to avoid partial matches (e.g. 'settings' matching 'fridge-settings')
-        const targetBtn = Array.from(document.querySelectorAll('.nav-pill')).find(b => b.getAttribute('onclick')?.includes(`'${tabName}'`));
-        if(targetBtn) targetBtn.classList.add('active');
-
-        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-        document.getElementById('tab-' + tabName)?.classList.add('active');
-    }
-
-    // Drag & Drop Logic
-    function allowDrop(ev) { ev.preventDefault(); }
-
-    function drag(ev) {
-        // Передаємо ID елемента, який перетягуємо
-        ev.dataTransfer.setData("text", ev.currentTarget.id);
-    }
-
-    function dropOnFridge(ev) {
-        ev.preventDefault();
-        ev.stopPropagation();
-
-        var data = ev.dataTransfer.getData("text");
-        if(!data) return;
-
-        var original = document.getElementById(data);
-        if (!original) return;
-
-        var rect = ev.currentTarget.getBoundingClientRect();
-        var x = ev.clientX - rect.left;
-        var y = ev.clientY - rect.top;
-
-        // 1. Якщо це новий магніт з панелі
-        if (original.classList.contains('magnet-btn')) {
-            var nodeCopy = document.createElement('div');
-            nodeCopy.id = "magnet-on-fridge-" + new Date().getTime();
-            nodeCopy.classList.add("magnet-on-fridge");
-
-            // Копіюємо класи кольору
-            if(original.classList.contains('burgundy')) nodeCopy.classList.add('burgundy');
-            else if(original.classList.contains('teal')) nodeCopy.classList.add('teal');
-
-            const iconClass = original.getAttribute('data-icon');
-            const city = original.getAttribute('data-city');
-            const country = original.getAttribute('data-country');
-
-            // ВАЖЛИВО: Зберігаємо дані в dataset для JS-логіки збереження
-            nodeCopy.dataset.city = city;
-            nodeCopy.dataset.country = country;
-            nodeCopy.dataset.iconClass = iconClass;
-
-            nodeCopy.innerHTML = `<i class="fas fa-${iconClass}"></i><div class="magnet-city">${city}</div><div class="magnet-country">${country}</div>`;
-
-            // Центруємо магніт відносно курсору (35px - половина ширини/висоти)
-            nodeCopy.style.left = (x - 35) + 'px';
-            nodeCopy.style.top = (y - 35) + 'px';
-
-            nodeCopy.setAttribute('draggable', 'true');
-            nodeCopy.ondragstart = drag;
-
-            ev.currentTarget.appendChild(nodeCopy);
-
-            document.getElementById('fridge-placeholder').classList.add('hidden');
-        }
-        // 2. Якщо переміщуємо вже існуючий магніт
-        else if (original.classList.contains('magnet-on-fridge')) {
-            original.style.left = (x - 35) + 'px';
-            original.style.top = (y - 35) + 'px';
-        }
-    }
-
-    function removeMagnet(ev) {
-        ev.preventDefault();
-        var data = ev.dataTransfer.getData("text");
-        if(!data) return;
-
-        var element = document.getElementById(data);
-
-        // Видаляємо тільки якщо це магніт на холодильнику (а не кнопка в меню)
-        if (element && element.classList.contains('magnet-on-fridge')) {
-            element.remove();
-
-            const fridge = document.getElementById('fridge-door');
-            const remainingMagnets = fridge.querySelectorAll('.magnet-on-fridge');
-            if (remainingMagnets.length === 0) {
-                document.getElementById('fridge-placeholder').classList.remove('hidden');
-            }
-        }
-    }
-
-    function changeFridgeColor(color, element) {
-        document.getElementById('fridge-door').style.backgroundColor = color;
-        document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
-        element.classList.add('selected');
-    }
-</script>
-<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<script type="module" src="../js/modules/profile.js"></script>
 </body>
 </html>

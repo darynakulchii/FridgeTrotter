@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const pool = require('../db');
 const { authenticateToken } = require('../auth_middleware');
 
 /**
  * GET /api/fridge/magnets/available
- * Отримання всіх доступних магнітів зі словника.
  */
 router.get('/magnets/available', authenticateToken, async (req, res) => {
     const query = `SELECT * FROM magnets ORDER BY country, city;`;
@@ -20,29 +19,27 @@ router.get('/magnets/available', authenticateToken, async (req, res) => {
 
 /**
  * GET /api/fridge/:userId/layout
- * Отримання розміщення магнітів користувача.
  */
 router.get('/:userId/layout', async (req, res) => {
     const targetUserId = req.params.userId;
-    // req.user може бути null, якщо користувач не авторизований
     const currentUserId = req.user ? req.user.userId : null;
 
-    // 1. Отримання налаштувань холодильника
+    // Перевірка налаштувань (публічність)
     const settingsQuery = `
         SELECT is_public FROM fridge_settings WHERE user_id = $1;
     `;
     const settingsResult = await pool.query(settingsQuery, [targetUserId]);
 
     if (settingsResult.rows.length === 0) {
-        return res.status(404).json({ error: 'Налаштування холодильника не знайдено.' });
-    }
-
-    const { is_public } = settingsResult.rows[0];
-
-    // 2. Перевірка конфіденційності
-    // Порівняння ID має бути string vs string
-    if (!is_public && targetUserId.toString() !== currentUserId.toString()) {
-        return res.status(403).json({ error: 'Холодильник є приватним.' });
+        // Якщо налаштувань немає, вважаємо приватним за замовчуванням
+        if (targetUserId.toString() !== (currentUserId || '').toString()) {
+            return res.status(404).json({ error: 'Налаштування не знайдено.' });
+        }
+    } else {
+        const { is_public } = settingsResult.rows[0];
+        if (!is_public && targetUserId.toString() !== (currentUserId || '').toString()) {
+            return res.status(403).json({ error: 'Холодильник є приватним.' });
+        }
     }
 
     const query = `
@@ -58,17 +55,16 @@ router.get('/:userId/layout', async (req, res) => {
         const result = await pool.query(query, [targetUserId]);
         res.json({ magnets: result.rows });
     } catch (error) {
-        console.error('Помилка отримання магнітів холодильника:', error);
+        console.error('Помилка отримання магнітів:', error);
         res.status(500).json({ error: 'Помилка сервера.' });
     }
 });
 
 /**
  * POST /api/fridge/save
- * Збереження позицій магнітів (видаляє старі та вставляє нові).
  */
 router.post('/save', authenticateToken, async (req, res) => {
-    const { magnetsData } = req.body; // Очікуємо масив [{ magnet_id, x_position, y_position }, ...]
+    const { magnetsData } = req.body;
     const userId = req.user.userId;
 
     const client = await pool.connect();
@@ -81,7 +77,6 @@ router.post('/save', authenticateToken, async (req, res) => {
 
         // 2. Вставити нові записи
         if (magnetsData && magnetsData.length > 0) {
-            // Формуємо рядок значень для масової вставки
             const values = magnetsData.map(magnet =>
                 `(${userId}, ${magnet.magnet_id}, ${magnet.x_position}, ${magnet.y_position})`
             ).join(',');
