@@ -67,6 +67,7 @@ CREATE TABLE user_fridge_magnets (
                                      UNIQUE (user_id, magnet_id)
 );
 
+
 --------------------------------------------------------------------------------
 -- 3. ТУРИ ТА АГЕНЦІЇ (TOURS & AGENCIES)
 --------------------------------------------------------------------------------
@@ -202,3 +203,23 @@ CREATE TABLE messages (
                           content TEXT NOT NULL,
                           sent_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS user_followers (
+                                              follower_id INT REFERENCES users(user_id) ON DELETE CASCADE, -- Хто підписався
+                                              following_id INT REFERENCES users(user_id) ON DELETE CASCADE, -- На кого підписався
+                                              created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                                              PRIMARY KEY (follower_id, following_id),
+                                              CONSTRAINT check_self_follow CHECK (follower_id != following_id)
+);
+
+-- Додаємо доступні магніти
+INSERT INTO magnets (country, city, icon_class, color_group) VALUES
+                                                                 ('Франція', 'Париж', 'plane', 'burgundy'),
+                                                                 ('Японія', 'Токіо', 'camera', 'burgundy'),
+                                                                 ('Швейцарія', 'Цюріх', 'mountain', 'burgundy'),
+                                                                 ('Італія', 'Рим', 'coffee', 'teal'),
+                                                                 ('Греція', 'Афіни', 'umbrella-beach', 'teal'),
+                                                                 ('Іспанія', 'Барселона', 'map-marker-alt', 'teal'),
+                                                                 ('Велика Британія', 'Лондон', 'bus', 'burgundy'),
+                                                                 ('США', 'Нью-Йорк', 'building', 'teal')
+ON CONFLICT (country, city) DO NOTHING;

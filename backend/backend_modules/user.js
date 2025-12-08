@@ -5,9 +5,11 @@ const { authenticateToken } = require('../auth_middleware');
 const multer = require('multer');
 const streamifier = require('streamifier');
 const cloudinary = require('cloudinary').v2;
+const bcrypt = require('bcrypt'); // Додано для роботи з паролями
 
 const upload = multer();
 
+// Допоміжна функція для завантаження на Cloudinary
 const uploadToCloudinary = (fileBuffer) => {
     return new Promise((resolve, reject) => {
         let stream = cloudinary.uploader.upload_stream(
@@ -24,7 +26,12 @@ const uploadToCloudinary = (fileBuffer) => {
     });
 };
 
+// ==========================================
+// 1. ОТРИМАННЯ ТА ОНОВЛЕННЯ ПРОФІЛЮ
+// ==========================================
+
 // GET /api/user/profile
+// Отримує всі дані профілю, налаштування та статистику
 router.get('/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
 
@@ -56,6 +63,7 @@ router.get('/profile', authenticateToken, async (req, res) => {
 });
 
 // PUT /api/user/profile
+// Оновлює текстові дані профілю та налаштування приватності/холодильника
 router.put('/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const {
@@ -84,7 +92,7 @@ router.put('/profile', authenticateToken, async (req, res) => {
             firstName, lastName, location, dateOfBirth, bio, travelInterests, userId
         ]);
 
-        // 2. Оновлення users
+        // 2. Оновлення users (налаштування приватності)
         const userUpdateQuery = `
             UPDATE users
             SET
@@ -114,6 +122,10 @@ router.put('/profile', authenticateToken, async (req, res) => {
         client.release();
     }
 });
+
+// ==========================================
+// 2. ЗАВАНТАЖЕННЯ АВАТАРА
+// ==========================================
 
 // POST /api/user/avatar
 router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
@@ -147,6 +159,157 @@ router.post('/avatar', authenticateToken, upload.single('avatar'), async (req, r
     } catch (error) {
         console.error('Помилка обробки аватара:', error.message || error);
         res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+// ==========================================
+// 3. БЕЗПЕКА (ПАРОЛЬ ТА АКАУНТ)
+// ==========================================
+
+// PUT /api/user/password
+// Зміна пароля
+router.put('/password', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: 'Введіть поточний та новий пароль.' });
+    }
+
+    if (newPassword.length < 6) {
+        return res.status(400).json({ error: 'Новий пароль має містити мінімум 6 символів.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        // Отримуємо хеш поточного пароля
+        const userRes = await client.query('SELECT password_hash FROM users WHERE user_id = $1', [userId]);
+
+        if (userRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Користувача не знайдено.' });
+        }
+
+        const user = userRes.rows[0];
+
+        // Перевіряємо старий пароль
+        const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+        if (!isMatch) {
+            return res.status(403).json({ error: 'Невірний поточний пароль.' });
+        }
+
+        // Хешуємо новий пароль
+        const newHash = await bcrypt.hash(newPassword, 10);
+
+        // Оновлюємо в БД
+        await client.query('UPDATE users SET password_hash = $1 WHERE user_id = $2', [newHash, userId]);
+
+        res.json({ message: 'Пароль успішно змінено.' });
+    } catch (error) {
+        console.error('Помилка зміни пароля:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    } finally {
+        client.release();
+    }
+});
+
+// DELETE /api/user/account
+// Видалення акаунту
+router.delete('/account', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+
+    try {
+        // Завдяки ON DELETE CASCADE в схемі бази даних,
+        // видалення юзера автоматично видалить профіль, магніти, налаштування і т.д.
+        await pool.query('DELETE FROM users WHERE user_id = $1', [userId]);
+
+        res.json({ message: 'Акаунт успішно видалено.' });
+    } catch (error) {
+        console.error('Помилка видалення акаунту:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+// ==========================================
+// 4. СОЦІАЛЬНА ВЗАЄМОДІЯ (ПІДПИСКИ)
+// ==========================================
+
+// POST /api/user/follow/:id
+// Підписатися на користувача
+router.post('/follow/:id', authenticateToken, async (req, res) => {
+    const followerId = req.user.userId; // Хто підписується (я)
+    const followingId = req.params.id;  // На кого підписуються
+
+    if (followerId.toString() === followingId.toString()) {
+        return res.status(400).json({ error: 'Не можна підписатись на себе.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Додаємо запис у таблицю підписок (якщо ще немає)
+        // Примітка: Таблиця user_followers має бути створена в БД
+        const insertRes = await client.query(`
+            INSERT INTO user_followers (follower_id, following_id) 
+            VALUES ($1, $2)
+            ON CONFLICT DO NOTHING
+            RETURNING *;
+        `, [followerId, followingId]);
+
+        // 2. Якщо вставка відбулася (тобто раніше не були підписані), оновлюємо лічильник
+        if (insertRes.rows.length > 0) {
+            await client.query(`
+                UPDATE user_stats 
+                SET followers_count = (SELECT COUNT(*) FROM user_followers WHERE following_id = $1) 
+                WHERE user_id = $1;
+            `, [followingId]);
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: 'Ви успішно підписалися.', followed: true });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Помилка підписки:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    } finally {
+        client.release();
+    }
+});
+
+// DELETE /api/user/follow/:id
+// Відписатися від користувача
+router.delete('/follow/:id', authenticateToken, async (req, res) => {
+    const followerId = req.user.userId;
+    const followingId = req.params.id;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Видаляємо запис
+        const deleteRes = await client.query(`
+            DELETE FROM user_followers 
+            WHERE follower_id = $1 AND following_id = $2
+            RETURNING *;
+        `, [followerId, followingId]);
+
+        // 2. Оновлюємо лічильник
+        if (deleteRes.rows.length > 0) {
+            await client.query(`
+                UPDATE user_stats 
+                SET followers_count = (SELECT COUNT(*) FROM user_followers WHERE following_id = $1) 
+                WHERE user_id = $1;
+            `, [followingId]);
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: 'Ви відписалися.', followed: false });
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Помилка відписки:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    } finally {
+        client.release();
     }
 });
 
