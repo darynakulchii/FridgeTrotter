@@ -20,14 +20,14 @@
     <div class="filter-bar-card">
         <div class="filter-item search">
             <label class="filter-label"><i class="fas fa-search"></i> Пошук</label>
-            <input type="text" placeholder="Що вас цікавить?" class="filter-input">
+            <input type="text" id="forum-search" placeholder="Що вас цікавить?" class="filter-input">
         </div>
 
         <div class="w-px h-10 bg-gray-200 mx-4 hidden md:block"></div>
 
         <div class="filter-item min-w-[200px]">
             <label class="filter-label"><i class="fas fa-filter"></i> Категорія</label>
-            <select class="filter-input cursor-pointer">
+            <select id="forum-category" class="filter-input cursor-pointer">
                 <option>Всі теми</option>
                 <option>Поради</option>
                 <option>Маршрути</option>
@@ -39,7 +39,7 @@
 
         <div class="filter-item min-w-[200px]">
             <label class="filter-label"><i class="fas fa-sort"></i> Сортування</label>
-            <select class="filter-input cursor-pointer">
+            <select id="forum-sort" class="filter-input cursor-pointer">
                 <option>Останні</option>
                 <option>Популярні</option>
                 <option>Без відповідей</option>
@@ -47,59 +47,14 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="forum-card">
-            <div class="flex justify-between mb-3">
-                <div class="flex items-center gap-3">
-                    <div class="avatar-circle">ОК</div>
-                    <div class="flex flex-col">
-                        <span class="font-bold text-[#281822] text-sm">Олена Коваленко</span>
-                        <span class="text-gray-400 text-xs">2 години тому</span>
-                    </div>
-                </div>
-                <span class="tag-pill">Азія</span>
-            </div>
-
-            <div class="flex-grow">
-                <h3 class="font-bold text-lg mb-2 text-[#281822] hover:text-[#48192E] cursor-pointer transition">Поради для подорожі до Японії навесні</h3>
-                <p class="text-gray-600 text-sm mb-4 leading-relaxed">Привіт! Хочу поділитися своїм досвідом подорожі до Японії. Це було неймовірно! Особливо раджу відвідати Кіото в період цвітіння сакури...</p>
-            </div>
-
-            <div class="flex gap-6 border-t border-gray-100 pt-3 mt-auto">
-                <span class="action-icon"><i class="far fa-thumbs-up"></i> 24</span>
-                <span class="action-icon"><i class="far fa-comment-alt"></i> 12</span>
-                <span class="action-icon ml-auto"><i class="far fa-bookmark"></i></span>
-            </div>
-        </div>
-
-        <div class="forum-card">
-            <div class="flex justify-between mb-3">
-                <div class="flex items-center gap-3">
-                    <div class="avatar-circle bg-[#48192E]">АМ</div>
-                    <div class="flex flex-col">
-                        <span class="font-bold text-[#281822] text-sm">Андрій Мельник</span>
-                        <span class="text-gray-400 text-xs">5 годин тому</span>
-                    </div>
-                </div>
-                <span class="tag-pill">Спорядження</span>
-            </div>
-
-            <div class="flex-grow">
-                <h3 class="font-bold text-lg mb-2 text-[#281822] hover:text-[#48192E] cursor-pointer transition">Який рюкзак обрати для трекінгу в Карпатах?</h3>
-                <p class="text-gray-600 text-sm mb-4 leading-relaxed">Планую похід на 5 днів. Вагаюся між Osprey та Deuter. Хто що може порадити для новачків? Важлива вентиляція спини.</p>
-            </div>
-
-            <div class="flex gap-6 border-t border-gray-100 pt-3 mt-auto">
-                <span class="action-icon"><i class="far fa-thumbs-up"></i> 8</span>
-                <span class="action-icon"><i class="far fa-comment-alt"></i> 15</span>
-                <span class="action-icon ml-auto"><i class="far fa-bookmark"></i></span>
-            </div>
-        </div>
+    <div id="forum-posts-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     </div>
+
 </main>
 
-
+<script type="module" src="../js/modules/forum.js"></script>
 <script type="module" src="../js/modules/navigation.js"></script>
 <script type="module" src="../js/index.js"></script>
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 </body>
 </html>

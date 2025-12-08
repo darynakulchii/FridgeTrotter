@@ -1,4 +1,6 @@
 import './modules/auth.js';
+import './modules/chat.js';
+import './modules/agent.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 

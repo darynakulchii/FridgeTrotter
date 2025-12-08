@@ -56,19 +56,49 @@
 <div id="auth-modal" class="modal-backdrop">
     <div class="modal-content max-w-md">
         <div class="modal-header">
-            <h3 class="text-xl font-bold text-[#281822]">Вхід / Реєстрація</h3>
+            <h3 class="text-xl font-bold text-[#281822]">Особистий кабінет</h3>
             <button class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body">
-            <div class="flex border-b mb-4">
-                <button class="flex-1 py-2 font-bold text-[#48192E] border-b-2 border-[#48192E]">Вхід</button>
-                <button class="flex-1 py-2 text-gray-500">Реєстрація</button>
+            <div class="flex border-b mb-6">
+                <button id="tab-login" class="flex-1 py-2 font-bold text-[#48192E] border-b-2 border-[#48192E] transition-colors">Вхід</button>
+                <button id="tab-register" class="flex-1 py-2 text-gray-500 hover:text-[#281822] transition-colors">Реєстрація</button>
             </div>
-            <div class="space-y-4">
-                <input type="email" id="login-email" placeholder="Email" class="w-full border p-2 rounded-md">
-                <input type="password" id="login-password" placeholder="Пароль" class="w-full border p-2 rounded-md">
-                <button id="login-submit-btn" class="btn-solid w-full">Увійти</button>
-            </div>
+
+            <form id="modal-form-login" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-[#281822] mb-1">Email</label>
+                    <input type="email" id="modal-login-email" placeholder="name@example.com" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#281822] mb-1">Пароль</label>
+                    <input type="password" id="modal-login-password" placeholder="••••••••" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]" required>
+                </div>
+                <button type="submit" class="btn-solid w-full">Увійти</button>
+            </form>
+
+            <form id="modal-form-register" class="space-y-4 hidden">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-[#281822] mb-1">Ім'я</label>
+                        <input type="text" id="modal-reg-firstname" placeholder="Іван" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-[#281822] mb-1">Прізвище</label>
+                        <input type="text" id="modal-reg-lastname" placeholder="Петренко" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]" required>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#281822] mb-1">Email</label>
+                    <input type="email" id="modal-reg-email" placeholder="name@example.com" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-[#281822] mb-1">Пароль</label>
+                    <input type="password" id="modal-reg-password" placeholder="Мінімум 6 символів" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]" required>
+                </div>
+                <button type="submit" class="btn-solid w-full">Зареєструватися</button>
+            </form>
+
         </div>
     </div>
 </div>
