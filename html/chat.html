@@ -1,11 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+    <title>Мої повідомлення - FridgeTrotter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/main_page.css">
+    <link rel="stylesheet" href="../css/chat_page.css"> </head>
+<body class="bg-[#D3CBC4]">
+
+<main class="container-wide chat-page-main">
+    <div class="chat-container">
+        <aside class="conversations-sidebar">
+            <div class="search-bar">
+                <i class="fas fa-search text-gray-400"></i>
+                <input type="text" id="conversation-search" placeholder="Пошук...">
+            </div>
+
+            <div id="conversations-list" class="conversations-list">
+                <p class="text-center text-gray-500 py-4"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>
+            </div>
+        </aside>
+
+        <section class="chat-area">
+            <div id="chat-header" class="chat-area-header">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden">
+                        <i class="fas fa-user text-gray-500"></i>
+                    </div>
+                    <h3 class="font-bold text-[#281822]">Оберіть розмову</h3>
+                </div>
+            </div>
+
+            <div id="messages-container" class="messages-container">
+                <div class="empty-chat-state">
+                    <i class="far fa-comments text-4xl text-gray-400 mb-2"></i>
+                    <p>Оберіть співрозмовника зліва, щоб почати спілкування.</p>
+                </div>
+            </div>
+
+            <form id="message-form" class="message-input-area" style="display: none;">
+                <input type="text" id="message-input" placeholder="Напишіть повідомлення..." autocomplete="off">
+                <button type="submit" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </section>
+    </div>
+</main>
 
 <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<script type="module" src="../js/modules/navigation.js"></script>
+<script type="module" src="../js/modules/chat.js"></script>
 </body>
 </html>
