@@ -9,32 +9,31 @@ export function initNotifications() {
     setupSocket();
     loadNotificationsCount(); // Завантажуємо кількість при старті
 
-    // Прив'язка кнопки відкриття (вона в навігації)
-    // Оскільки навігація може завантажуватись динамічно, використовуємо делегування або таймер,
-    // але в вашому коді navigation.js вже обробляє клік на 'notifications-btn'.
-    // Ми підпишемось на подію відкриття модалки, щоб завантажити список.
+    // ВИПРАВЛЕННЯ: Використовуємо делегування подій замість прямого пошуку елемента.
+    // Це дозволяє обробити клік навіть якщо кнопка завантажилася динамічно через fetch.
+    document.addEventListener('click', (e) => {
+        // Шукаємо найближчий елемент з ID notifications-btn (бо клік може бути по іконці всередині кнопки)
+        const btn = e.target.closest('#notifications-btn');
 
-    const notifBtn = document.getElementById('notifications-btn');
-    if (notifBtn) {
-        notifBtn.addEventListener('click', () => {
+        if (btn) {
+            // Якщо клікнули саме по цій кнопці - вантажимо список
             loadNotificationsList();
             markAsRead();
-        });
-    }
+        }
+    });
 
-    // Кнопка "Позначити всі як прочитані" в модалці
-    const markReadBtn = document.getElementById('mark-all-read-btn');
-    if (markReadBtn) {
-        markReadBtn.addEventListener('click', markAsRead);
-    }
+    // Те саме для кнопки "Позначити все як прочитане" (вона теж динамічна)
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('#mark-all-read-btn')) {
+            markAsRead();
+        }
+    });
 }
 
 function setupSocket() {
     if (typeof io === 'undefined') return;
 
-    // Використовуємо той самий сокет, якщо він вже ініціалізований в chat.js,
-    // або створюємо новий, якщо це глобальний скрипт.
-    // Для надійності тут окреме підключення, але socket.io менеджер зазвичай це оптимізує.
+    // Підключення до сокета
     socket = io('http://localhost:3000');
 
     socket.on('connect', () => {
@@ -43,13 +42,18 @@ function setupSocket() {
 
     socket.on('new_notification', (notification) => {
         console.log('New notification:', notification);
-        // Оновлюємо бейдж
-        updateBadgeCount(1, true); // true означає "додати до поточного"
+        updateBadgeCount(1, true);
 
-        // Якщо модалка відкрита, додаємо в список
+        // Якщо модалка відкрита, додаємо повідомлення в реальному часі
         const list = document.getElementById('notifications-list');
         const modal = document.getElementById('notifications-modal');
+
+        // Перевіряємо, чи модалка активна
         if (modal && modal.classList.contains('active') && list) {
+            // Прибираємо повідомлення "Немає нових сповіщень", якщо воно було
+            const emptyMsg = list.querySelector('.text-gray-400');
+            if (emptyMsg) emptyMsg.remove();
+
             const html = createNotificationHTML(notification);
             list.insertAdjacentHTML('afterbegin', html);
         }
@@ -59,8 +63,10 @@ function setupSocket() {
 // Завантаження списку
 async function loadNotificationsList() {
     const list = document.getElementById('notifications-list');
+    // Якщо список ще не відмалювався навігацією (малоймовірно при кліку, але можливо) - виходимо
     if (!list) return;
 
+    // Встановлюємо спінер програмно перед запитом
     list.innerHTML = '<div class="p-4 text-center text-gray-500"><i class="fas fa-spinner fa-spin"></i> Завантаження...</div>';
 
     try {
@@ -79,17 +85,16 @@ async function loadNotificationsList() {
             list.insertAdjacentHTML('beforeend', createNotificationHTML(notif));
         });
 
-        // Оновлюємо бейдж (хоча ми їх щойно відкрили, тому логічно буде 0 після закриття або виклику markAsRead)
-        // Але тут ми просто показуємо точну кількість з сервера
+        // Оновлюємо бейдж (скидаємо або ставимо актуальне)
         updateBadgeCount(data.unreadCount, false);
 
     } catch (error) {
         console.error(error);
-        list.innerHTML = '<div class="p-4 text-center text-red-500">Помилка завантаження</div>';
+        list.innerHTML = '<div class="p-4 text-center text-red-500">Помилка завантаження даних</div>';
     }
 }
 
-// Завантаження тільки кількості (для бейджа при старті)
+// Решта функцій без змін...
 async function loadNotificationsCount() {
     try {
         const response = await fetch(`${API_URL}/notifications`, { headers: getHeaders() });
@@ -104,21 +109,26 @@ async function markAsRead() {
             method: 'PATCH',
             headers: getHeaders()
         });
+        // Оновлюємо бейдж на 0
         updateBadgeCount(0);
 
-        // Візуально прибираємо клас unread
-        document.querySelectorAll('.notification-item.unread').forEach(el => {
-            el.classList.remove('unread');
-            const iconBox = el.querySelector('.notification-icon-box');
-            if(iconBox) {
-                iconBox.style.backgroundColor = '#e5e7eb';
-                iconBox.style.color = '#4b5563';
-            }
-        });
+        // Візуально прибираємо стиль непрочитаних
+        const list = document.getElementById('notifications-list');
+        if (list) {
+            list.querySelectorAll('.notification-item.unread').forEach(el => {
+                el.classList.remove('unread');
+                const iconBox = el.querySelector('.notification-icon-box');
+                if(iconBox) {
+                    iconBox.style.backgroundColor = '#e5e7eb';
+                    iconBox.style.color = '#4b5563';
+                }
+            });
+        }
     } catch (e) { console.error(e); }
 }
 
 function updateBadgeCount(count, isIncrement = false) {
+    // Оскільки навігація динамічна, шукаємо бейдж кожного разу
     const badge = document.querySelector('.badge-dot');
     if (!badge) return;
 
@@ -138,19 +148,17 @@ function createNotificationHTML(notif) {
     const time = new Date(notif.created_at).toLocaleString('uk-UA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
     const isUnread = !notif.is_read ? 'unread' : '';
 
-    // Вибір іконки залежно від тексту
     let icon = 'fa-bell';
     if (notif.message.includes('повідомлення')) icon = 'fa-comment-alt';
     if (notif.message.includes('лайк')) icon = 'fa-heart';
     if (notif.message.includes('тур')) icon = 'fa-plane';
 
-    // Якщо є посилання, робимо тег <a>, інакше <div>
     const tag = notif.link_url ? 'a' : 'div';
     const href = notif.link_url ? `href="${notif.link_url}"` : '';
 
     return `
         <${tag} ${href} class="notification-item ${isUnread}">
-            <div class="notification-icon-box">
+            <div class="notification-icon-box" style="${!notif.is_read ? 'background-color: #2D4952; color: #fff;' : ''}">
                 <i class="fas ${icon}"></i>
             </div>
             <div class="notification-content">

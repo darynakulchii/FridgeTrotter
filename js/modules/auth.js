@@ -2,6 +2,44 @@ import { API_URL } from '../api-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
+    // --- ЛОГІКА МОДАЛЬНОГО ВІКНА ПОЛІТИКИ (Тільки для register.html) ---
+    const privacyLink = document.getElementById('open-privacy-modal-link');
+    const privacyModal = document.getElementById('privacy-modal');
+    const closePrivacyBtn = document.getElementById('close-privacy-modal');
+    const acceptPrivacyBtn = document.getElementById('accept-privacy-btn');
+
+    if (privacyLink && privacyModal) {
+        // Відкрити модалку
+        privacyLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            privacyModal.classList.add('active');
+        });
+
+        // Закрити модалку (хрестик)
+        if (closePrivacyBtn) {
+            closePrivacyBtn.addEventListener('click', () => {
+                privacyModal.classList.remove('active');
+            });
+        }
+
+        // Закрити модалку (кнопка "Зрозуміло")
+        if (acceptPrivacyBtn) {
+            acceptPrivacyBtn.addEventListener('click', () => {
+                privacyModal.classList.remove('active');
+                // Опціонально: можна автоматично ставити галочку
+                const checkbox = document.getElementById('reg-consent');
+                if (checkbox) checkbox.checked = true;
+            });
+        }
+
+        // Закрити при кліку за межами
+        window.addEventListener('click', (e) => {
+            if (e.target === privacyModal) {
+                privacyModal.classList.remove('active');
+            }
+        });
+    }
+
     // --- 1. ОБРОБКА ФОРМИ ВХОДУ (login.html) ---
     const loginForm = document.getElementById('login-form');
 
@@ -59,6 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // === ВАЛІДАЦІЯ ЧЕКБОКСА ===
+            const consentCheckbox = document.getElementById('reg-consent');
+            if (consentCheckbox && !consentCheckbox.checked) {
+                alert('Будь ласка, підтвердіть згоду на обробку персональних даних.');
+                return; // Зупиняємо відправку форми
+            }
 
             // Збираємо дані (використовуємо IDs з register.html)
             const firstName = document.getElementById('reg-firstname').value;

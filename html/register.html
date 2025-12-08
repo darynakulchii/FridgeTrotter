@@ -6,17 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/main_page.css">
     <link rel="stylesheet" href="../css/auth.css">
 </head>
 <body class="bg-[#D3CBC4] flex items-center justify-center min-h-screen">
 
-<div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+<div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md my-8">
     <div class="text-center mb-6">
         <h1 class="text-2xl font-bold text-[#281822] mb-2">Створити акаунт</h1>
         <p class="text-gray-500">Приєднуйтесь до спільноти мандрівників</p>
     </div>
 
-    <!-- ID форми має бути register-form -->
     <form id="register-form" class="space-y-4">
         <div class="grid grid-cols-2 gap-4">
             <div>
@@ -46,7 +46,15 @@
             <p class="text-xs text-gray-500 mt-1">Мінімум 6 символів</p>
         </div>
 
-        <button type="submit" class="w-full bg-[#48192E] text-white py-2 rounded-md font-bold hover:bg-[#281822] transition duration-200">
+        <div class="flex items-start gap-2 mt-2">
+            <input type="checkbox" id="reg-consent" class="mt-1 accent-[#48192E] w-4 h-4 cursor-pointer">
+            <label for="reg-consent" class="text-xs text-gray-600 cursor-pointer select-none">
+                Я даю згоду на обробку персональних даних та погоджуюсь з
+                <a href="#" id="open-privacy-modal-link" class="text-[#48192E] font-bold underline hover:text-[#281822]">Політикою конфіденційності</a>.
+            </label>
+        </div>
+
+        <button type="submit" class="w-full bg-[#48192E] text-white py-2 rounded-md font-bold hover:bg-[#281822] transition duration-200 mt-2">
             Зареєструватися
         </button>
     </form>
@@ -58,6 +66,58 @@
 
     <div class="mt-2 text-center text-sm">
         <a href="main_page_tours.html" class="text-gray-500 hover:text-[#281822]">← На головну</a>
+    </div>
+</div>
+
+<div id="privacy-modal" class="modal-backdrop">
+    <div class="modal-content max-w-2xl h-[80vh] flex flex-col">
+        <div class="modal-header shrink-0">
+            <h3 class="text-xl font-bold text-[#281822]">Політика конфіденційності</h3>
+            <button class="modal-close-btn" id="close-privacy-modal">&times;</button>
+        </div>
+        <div class="modal-body overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4 p-6">
+            <p><strong>Останнє оновлення: 8 грудня 2025 року</strong></p>
+
+            <h4 class="font-bold text-[#281822] text-lg">1. Загальні положення</h4>
+            <p>Ця Політика конфіденційності описує, як FridgeTrotter збирає, використовує та розкриває вашу інформацію у зв'язку з використанням вами нашого веб-сайту. Реєструючись на сайті, ви погоджуєтесь з умовами цієї політики.</p>
+
+            <h4 class="font-bold text-[#281822] text-lg">2. Збір інформації</h4>
+            <p>Ми збираємо наступні типи інформації:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>Персональні дані:</strong> Ім'я, прізвище, адреса електронної пошти, дата народження, які ви надаєте під час реєстрації.</li>
+                <li><strong>Дані профілю:</strong> Інформація про ваші подорожі, відвідані країни, фотографії та біографія.</li>
+                <li><strong>Технічні дані:</strong> IP-адреса, тип браузера, дані про пристрій.</li>
+            </ul>
+
+            <h4 class="font-bold text-[#281822] text-lg">3. Використання інформації</h4>
+            <p>Ми використовуємо ваші дані для:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Надання послуг платформи (створення магнітів, пошук компаньйонів).</li>
+                <li>Персоналізації вашого досвіду користування.</li>
+                <li>Надсилання важливих сповіщень та оновлень.</li>
+                <li>Забезпечення безпеки акаунту.</li>
+            </ul>
+
+            <h4 class="font-bold text-[#281822] text-lg">4. Захист даних</h4>
+            <p>Ми вживаємо належних заходів безпеки для захисту від несанкціонованого доступу, зміни, розкриття або знищення ваших персональних даних. Паролі зберігаються у зашифрованому вигляді.</p>
+
+            <h4 class="font-bold text-[#281822] text-lg">5. Розкриття інформації третім сторонам</h4>
+            <p>Ми не продаємо і не передаємо ваші персональні дані третім сторонам, за винятком випадків, передбачених законодавством України, або для забезпечення функціонування сервісу (хостинг, технічна підтримка).</p>
+
+            <h4 class="font-bold text-[#281822] text-lg">6. Ваші права</h4>
+            <p>Ви маєте право:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Отримувати доступ до своїх даних.</li>
+                <li>Вимагати виправлення неточних даних.</li>
+                <li>Вимагати видалення свого акаунту та всіх пов'язаних даних.</li>
+            </ul>
+
+            <h4 class="font-bold text-[#281822] text-lg">7. Контакти</h4>
+            <p>Якщо у вас виникли запитання щодо цієї Політики, зв'яжіться з нами через форму підтримки або напишіть на email: privacy@fridgetrotter.com.</p>
+        </div>
+        <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl text-center shrink-0">
+            <button id="accept-privacy-btn" class="bg-[#48192E] text-white px-6 py-2 rounded-md font-bold hover:bg-[#281822] transition">Зрозуміло</button>
+        </div>
     </div>
 </div>
 
