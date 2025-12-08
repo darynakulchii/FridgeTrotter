@@ -1,3 +1,5 @@
+import './modules/auth.js';
+
 document.addEventListener('DOMContentLoaded', () => {
 
     // === SIDEBAR LOGIC ===

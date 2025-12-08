@@ -124,207 +124,10 @@
     </div>
 
     <div id="tours-view" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="tour-card tour-card-trigger cursor-pointer" data-tour-id="1">
-            <div class="tour-image-container">
-                <img src="https://images.unsplash.com/photo-1514282401047-d77a7149ba6a?auto=format&fit=crop&w=1200&q=80" alt="Мальдіви">
-                <span class="absolute top-4 right-4 bg-[#281822] text-[#D3CBC4] px-3 py-1 rounded-md text-xs font-bold uppercase">Пляжний відпочинок</span>
-            </div>
-            <div class="p-6 flex flex-col flex-grow">
-                <h3 class="text-xl font-bold text-[#281822] mb-1">Тропічний рай на Мальдівах</h3>
-                <p class="text-gray-500 mb-4 text-sm">Незабутній відпочинок на білосніжних пляжах з кришталево чистою водою...</p>
 
-                <div class="space-y-2 mb-6">
-                    <div class="flex items-center gap-2 text-sm text-[#2D4952]">
-                        <i class="fas fa-map-marker-alt w-4 text-center"></i> <span>Мальдіви</span>
-                    </div>
-                    <div class="flex items-center gap-2 text-sm text-[#2D4952]">
-                        <i class="far fa-calendar w-4 text-center"></i> <span>7 днів / 6 ночей</span>
-                    </div>
-                    <div class="flex items-center gap-2 text-sm text-[#2D4952]">
-                        <i class="fas fa-user-friends w-4 text-center"></i> <span>2-4 особи</span>
-                    </div>
-                    <div class="flex items-center gap-2 text-sm mt-1">
-                        <i class="fas fa-star text-[#48192E] w-4 text-center"></i>
-                        <span class="font-bold text-[#281822]">4.9</span>
-                        <span class="text-xs text-gray-500">• Travel Pro Ukraine</span>
-                    </div>
-                </div>
-
-                <div class="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
-                    <span class="text-2xl font-bold text-[#48192E]">45 000 ₴</span>
-                    <button class="btn-solid">Детальніше</button>
-                </div>
-            </div>
-        </div>
-
-        <div class="tour-card tour-card-trigger cursor-pointer" data-tour-id="2">
-            <div class="tour-image-container">
-                <img src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1200&q=80" alt="Карпати">
-                <span class="absolute top-4 right-4 bg-[#281822] text-[#D3CBC4] px-3 py-1 rounded-md text-xs font-bold uppercase">Активний відпочинок</span>
-            </div>
-            <div class="p-6 flex flex-col flex-grow">
-                <h3 class="text-xl font-bold text-[#281822] mb-1">Гірські пригоди в Карпатах</h3>
-                <p class="text-gray-500 mb-4 text-sm">Піші походи, захоплюючі краєвиди та свіже гірське повітря...</p>
-
-                <div class="space-y-2 mb-6">
-                    <div class="flex items-center gap-2 text-sm text-[#2D4952]">
-                        <i class="fas fa-map-marker-alt w-4 text-center"></i> <span>Карпати, Україна</span>
-                    </div>
-                    <div class="flex items-center gap-2 text-sm text-[#2D4952]">
-                        <i class="far fa-calendar w-4 text-center"></i> <span>5 днів / 4 ночі</span>
-                    </div>
-                    <div class="flex items-center gap-2 text-sm text-[#2D4952]">
-                        <i class="fas fa-user-friends w-4 text-center"></i> <span>4-8 осіб</span>
-                    </div>
-                    <div class="flex items-center gap-2 text-sm mt-1">
-                        <i class="fas fa-star text-[#48192E] w-4 text-center"></i>
-                        <span class="font-bold text-[#281822]">4.8</span>
-                        <span class="text-xs text-gray-500">• Adventure Time</span>
-                    </div>
-                </div>
-
-                <div class="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
-                    <span class="text-2xl font-bold text-[#48192E]">12 000 ₴</span>
-                    <button class="btn-solid">Детальніше</button>
-                </div>
-            </div>
-        </div>
     </div>
+
 </main>
-
-<div id="agent-mode-modal" class="modal-backdrop">
-    <div class="modal-content max-w-md">
-        <div class="modal-header">
-            <h3 class="text-xl font-bold text-[#281822]"><i class="fas fa-briefcase mr-2"></i> Кабінет турагента</h3>
-            <button class="modal-close-btn">&times;</button>
-        </div>
-        <div class="modal-body space-y-3">
-            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
-                <div class="bg-[#48192E] text-white w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition"><i class="fas fa-plus"></i></div>
-                <div>
-                    <div class="font-bold text-[#281822]">Зареєструвати агенцію</div>
-                    <div class="text-xs text-gray-500">Створити новий бізнес-акаунт</div>
-                </div>
-            </button>
-
-            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#2D4952] transition flex items-center gap-3 group">
-                <div class="bg-[#2D4952] text-white w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:scale-110 transition"><i class="fas fa-user-cog"></i></div>
-                <div>
-                    <div class="font-bold text-[#281822]">Акаунт та налаштування</div>
-                    <div class="text-xs text-gray-500">Керування профілем агенції</div>
-                </div>
-            </button>
-
-            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
-                <div class="bg-white border-2 border-[#48192E] text-[#48192E] w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-[#48192E] group-hover:text-white transition"><i class="fas fa-plane"></i></div>
-                <div>
-                    <div class="font-bold text-[#281822]">Додати тур</div>
-                    <div class="text-xs text-gray-500"><span class="text-[#48192E] font-bold">Платна послуга</span> • Просувайте свої тури</div>
-                </div>
-            </button>
-
-            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#2D4952] transition flex items-center gap-3 group">
-                <div class="bg-white border-2 border-[#2D4952] text-[#2D4952] w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-[#2D4952] group-hover:text-white transition"><i class="fas fa-magnet"></i></div>
-                <div>
-                    <div class="font-bold text-[#281822]">Додати магніт</div>
-                    <div class="text-xs text-gray-500">Створити власний або замовити дизайн</div>
-                </div>
-            </button>
-
-            <button class="w-full text-left p-3 rounded-lg border border-gray-200 hover:bg-gray-50 hover:border-[#48192E] transition flex items-center gap-3 group">
-                <div class="bg-gray-100 text-[#281822] w-10 h-10 rounded-lg flex items-center justify-center shrink-0 group-hover:bg-gray-200 transition"><i class="fas fa-pen"></i></div>
-                <div>
-                    <div class="font-bold text-[#281822]">Додати пост</div>
-                    <div class="text-xs text-gray-500">Поділіться новинами в блозі</div>
-                </div>
-            </button>
-        </div>
-    </div>
-</div>
-
-<div id="auth-modal" class="modal-backdrop">
-    <div class="modal-content max-w-md">
-        <div class="modal-header">
-            <h3 class="text-xl font-bold text-[#281822]">Вхід / Реєстрація</h3>
-            <button class="modal-close-btn">&times;</button>
-        </div>
-        <div class="modal-body">
-            <div class="flex border-b mb-4">
-                <button class="flex-1 py-2 font-bold text-[#48192E] border-b-2 border-[#48192E]">Вхід</button>
-                <button class="flex-1 py-2 text-gray-500">Реєстрація</button>
-            </div>
-            <div class="space-y-4">
-                <input type="email" placeholder="Email" class="w-full border p-2 rounded-md">
-                <input type="password" placeholder="Пароль" class="w-full border p-2 rounded-md">
-                <button class="btn-solid w-full">Увійти</button>
-                <p class="text-center text-sm text-gray-500 cursor-pointer">Забули пароль?</p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="privacy-modal" class="modal-backdrop">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="text-xl font-bold text-[#281822]">Політика конфіденційності</h3>
-            <button class="modal-close-btn">&times;</button>
-        </div>
-        <div class="modal-body text-sm text-gray-600 leading-relaxed">
-            <h4 class="font-bold mb-2">1. Збір інформації</h4>
-            <p class="mb-4">Ми збираємо інформацію, яку ви надаєте нам безпосередньо, наприклад, коли ви створюєте обліковий запис...</p>
-            <h4 class="font-bold mb-2">2. Використання даних</h4>
-            <p class="mb-4">Ми використовуємо зібрану інформацію для надання, підтримки та покращення наших послуг...</p>
-            <h4 class="font-bold mb-2">3. Безпека</h4>
-            <p>Ми вживаємо розумних заходів для захисту вашої особистої інформації від втрати, крадіжки та несанкціонованого доступу.</p>
-        </div>
-    </div>
-</div>
-
-<div id="notifications-modal" class="modal-backdrop">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="text-xl font-bold text-[#281822]"><i class="far fa-bell mr-2"></i> Повідомлення</h3>
-            <button class="modal-close-btn">&times;</button>
-        </div>
-        <div class="modal-body space-y-4">
-            <div class="flex gap-3 p-3 bg-[#f9fafb] rounded-lg border border-gray-100">
-                <div class="bg-[#48192E] text-[#D3CBC4] p-2 rounded-full h-fit"><i class="far fa-comment-alt"></i></div>
-                <div>
-                    <h4 class="font-bold text-sm">Нове повідомлення від Марії</h4>
-                    <p class="text-sm text-gray-600">Привіт! Ти вже вирішив коли їдемо в Карпати?</p>
-                    <span class="text-xs text-gray-400">5 хв тому</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="bug-report-modal" class="modal-backdrop">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 class="text-xl font-bold text-[#281822]">Повідомити про помилку</h3>
-            <button class="modal-close-btn">&times;</button>
-        </div>
-        <div class="modal-body space-y-4">
-            <textarea class="w-full border p-2 rounded-md h-32" placeholder="Опишіть проблему..."></textarea>
-            <button class="btn-solid w-full">Надіслати</button>
-        </div>
-    </div>
-</div>
-
-<div id="chat-window" class="chat-window">
-    <div class="chat-header">
-        <span class="font-bold">Чат</span>
-        <button id="chat-close-btn" class="text-white hover:text-gray-300"><i class="fas fa-times"></i></button>
-    </div>
-    <div class="chat-body" id="chat-body">
-        <div class="message-bubble other">Привіт! Як справи?</div>
-    </div>
-    <div class="chat-footer">
-        <input type="text" placeholder="Напишіть повідомлення..." class="flex-1 border p-2 rounded-md text-sm outline-none">
-        <button class="bg-[#48192E] text-white p-2 rounded-md"><i class="fas fa-paper-plane"></i></button>
-    </div>
-</div>
 
 <div id="tour-details-modal" class="modal-backdrop">
     <div class="modal-content max-w-2xl">
@@ -333,7 +136,7 @@
             <button class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body">
-            <img id="modal-tour-image" src="" class="w-full h-48 object-cover rounded-lg mb-4">
+            <img id="modal-tour-image" src="" class="w-full h-48 object-cover rounded-lg mb-4" alt="Фото туру">
             <p class="text-gray-600 mb-4" id="modal-tour-desc">Опис туру...</p>
             <div class="grid grid-cols-2 gap-4 text-sm text-[#2D4952] mb-6">
                 <div><i class="fas fa-map-marker-alt mr-2"></i> <span id="modal-tour-loc">Локація</span></div>
@@ -350,6 +153,7 @@
 </div>
 
 <script type="module" src="../js/modules/navigation.js"></script>
+<script type="module" src="../js/modules/tours.js"></script>
 <script type="module" src="../js/index.js"></script>
 </body>
 </html>
