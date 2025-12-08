@@ -2,13 +2,63 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Сторінка реєстрації</title>
+    <title>Реєстрація - FridgeTrotter</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="../css/auth.css">
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/auth.css">
 </head>
-<body>
+<body class="bg-[#D3CBC4] flex items-center justify-center min-h-screen">
+
+<div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+    <div class="text-center mb-6">
+        <h1 class="text-2xl font-bold text-[#281822] mb-2">Створити акаунт</h1>
+        <p class="text-gray-500">Приєднуйтесь до спільноти мандрівників</p>
+    </div>
+
+    <form id="register-form" class="space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-[#281822] mb-1">Ім'я</label>
+                <input type="text" id="reg-firstname" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]" placeholder="Іван" required>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-[#281822] mb-1">Прізвище</label>
+                <input type="text" id="reg-lastname" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]" placeholder="Петренко" required>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Email</label>
+            <div class="relative">
+                <i class="far fa-envelope absolute left-3 top-3 text-gray-400"></i>
+                <input type="email" id="reg-email" class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]" placeholder="name@example.com" required>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Пароль</label>
+            <div class="relative">
+                <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                <input type="password" id="reg-password" class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]" placeholder="••••••••" required>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Мінімум 6 символів</p>
+        </div>
+
+        <button type="submit" class="w-full bg-[#48192E] text-white py-2 rounded-md font-bold hover:bg-[#281822] transition duration-200">
+            Зареєструватися
+        </button>
+    </form>
+
+    <div class="mt-4 text-center text-sm">
+        <span class="text-gray-600">Вже є акаунт?</span>
+        <a href="login.html" class="text-[#48192E] font-bold hover:underline">Увійти</a>
+    </div>
+
+    <div class="mt-2 text-center text-sm">
+        <a href="main_page_tours.html" class="text-gray-500 hover:text-[#281822]">← На головну</a>
+    </div>
+</div>
 
 <script type="module" src="../js/modules/auth.js"></script>
 </body>
