@@ -8,11 +8,17 @@ import { API_URL, getHeaders } from '../api-config.js';
 // Отримуємо поточного користувача з LocalStorage
 const currentUser = JSON.parse(localStorage.getItem('user'));
 
+// Змінна для збереження стану модалки поста
+let editingPostId = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     if (!currentUser) {
         window.location.href = 'login.html';
         return;
     }
+
+    // Інжектуємо HTML для модалки створення/редагування поста
+    injectPostModal();
 
     initTabs();
     loadUserProfile();
@@ -20,6 +26,68 @@ document.addEventListener('DOMContentLoaded', () => {
     initContentTabs();
     initSettingsForms();
 });
+
+/* =========================================
+   0. HELPER: Модалка для постів
+   ========================================= */
+function injectPostModal() {
+    const modalHTML = `
+        <div id="post-modal" class="modal-backdrop">
+            <div class="modal-content max-w-lg">
+                <div class="modal-header">
+                    <h3 class="text-xl font-bold text-[#281822]" id="post-modal-title">Створити пост</h3>
+                    <button class="modal-close-btn" onclick="closePostModal()">&times;</button>
+                </div>
+                <div class="modal-body space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-[#281822]">Заголовок</label>
+                        <input type="text" id="post-title" class="w-full border p-2 rounded-md focus:border-[#48192E] outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-[#281822]">Категорія</label>
+                        <select id="post-category" class="w-full border p-2 rounded-md bg-white focus:border-[#48192E] outline-none">
+                            <option value="Поради">Поради</option>
+                            <option value="Маршрути">Маршрути</option>
+                            <option value="Спорядження">Спорядження</option>
+                            <option value="Інше">Інше</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-[#281822]">Текст</label>
+                        <textarea id="post-content" rows="5" class="w-full border p-2 rounded-md focus:border-[#48192E] outline-none"></textarea>
+                    </div>
+                    <button id="save-post-btn" class="btn-burgundy-solid w-full">Зберегти</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+
+    // Прив'язка події
+    document.getElementById('save-post-btn').addEventListener('click', savePost);
+}
+
+window.openCreatePostModal = () => {
+    editingPostId = null;
+    document.getElementById('post-modal-title').innerText = 'Створити пост';
+    document.getElementById('post-title').value = '';
+    document.getElementById('post-content').value = '';
+    document.getElementById('post-category').value = 'Поради';
+    document.getElementById('post-modal').classList.add('active');
+};
+
+window.openEditPostModal = (id, title, content, category) => {
+    editingPostId = id;
+    document.getElementById('post-modal-title').innerText = 'Редагувати пост';
+    document.getElementById('post-title').value = title;
+    document.getElementById('post-content').value = content;
+    document.getElementById('post-category').value = category || 'Інше';
+    document.getElementById('post-modal').classList.add('active');
+};
+
+window.closePostModal = () => {
+    document.getElementById('post-modal').classList.remove('active');
+};
 
 /* =========================================
    1. ЛОГІКА ТАБІВ (TABS)
@@ -59,33 +127,24 @@ async function loadUserProfile() {
 
         const data = await response.json();
         fillProfileData(data);
+        fillSettingsData(data); // Заповнюємо також вкладку налаштувань
     } catch (error) {
         console.error(error);
-        // alert('Не вдалося завантажити профіль');
     }
 }
 
 function fillProfileData(data) {
-    // 1. Заповнення статистики та інфо в хедері (якщо є елементи)
-    // Тут можна додати логіку оновлення глобального хедера, якщо потрібно
-
-    // 2. Вкладка "Моя інформація" (Inputs)
-    // Оскільки в HTML немає ID, вибираємо за порядком або класами в межах таба
     const infoTab = document.getElementById('tab-info');
     if (infoTab) {
         const inputs = infoTab.querySelectorAll('input.form-input');
         const textarea = infoTab.querySelector('textarea.form-input');
 
-        // Припускаємо порядок inputs згідно HTML: Name, Email, Location, DOB, Website, Interests
-        if (inputs[0]) inputs[0].value = `${data.first_name || ''} ${data.last_name || ''}`.trim(); // Name (read-only logic logic needed specifically for split)
-        // Для редагування краще розділити, але поки заповнимо як є
-        // Щоб коректно працювало збереження, нам треба знати де ім'я, а де прізвище.
-        // Модифікуємо це при збереженні.
-
+        // Інфо
+        if (inputs[0]) inputs[0].value = `${data.first_name || ''} ${data.last_name || ''}`.trim();
         if (inputs[1]) inputs[1].value = data.email || '';
         if (inputs[2]) inputs[2].value = data.location || '';
         if (inputs[3]) inputs[3].value = data.date_of_birth ? data.date_of_birth.split('T')[0] : '';
-        if (inputs[4]) inputs[4].value = ""; // Website (немає в БД, можна додати поле або ігнорувати)
+        // inputs[4] - сайт, пропускаємо
         if (textarea) textarea.value = data.bio || '';
         if (inputs[5]) inputs[5].value = data.travel_interests || '';
 
@@ -93,7 +152,7 @@ function fillProfileData(data) {
         const avatarCircle = infoTab.querySelector('.avatar-circle-lg');
         if (avatarCircle && data.profile_image_url) {
             avatarCircle.innerHTML = `<img src="${data.profile_image_url}" class="w-full h-full object-cover rounded-full">`;
-            avatarCircle.classList.remove('bg-[#48192E]', 'text-[#D3CBC4]'); // Прибрати дефолтні стилі
+            avatarCircle.classList.remove('bg-[#48192E]', 'text-[#D3CBC4]');
         } else if (avatarCircle) {
             avatarCircle.innerText = (data.first_name?.[0] || '') + (data.last_name?.[0] || '');
         }
@@ -103,39 +162,65 @@ function fillProfileData(data) {
         if (statNumbers.length >= 4) {
             statNumbers[0].innerText = data.countries_visited || 0;
             statNumbers[1].innerText = data.cities_visited || 0;
-            statNumbers[2].innerText = 0; // Активні тури (поки немає в БД)
+            statNumbers[2].innerText = 0;
             statNumbers[3].innerText = data.followers_count || 0;
         }
     }
 
-    // 3. Вкладка "Налаштування холодильника" (Inputs)
+    // Холодильник
     const settingsTab = document.getElementById('tab-fridge-settings');
     if (settingsTab) {
-        // Кольори
         const colorOptions = settingsTab.querySelectorAll('.color-option');
         colorOptions.forEach(opt => {
             const preview = opt.querySelector('.color-preview');
-            // Порівнюємо колір (конвертуємо rgb в hex якщо треба, або просто перевіряємо стиль)
-            // Для спрощення просто вибираємо перший або той, що співпадає
             opt.classList.remove('selected');
-            if (preview.style.backgroundColor === data.fridge_color) { // Це перевірка може бути неточною через формати кольорів
+            // Грубе порівняння кольорів, оскільки браузер конвертує в RGB
+            if (preview.style.backgroundColor && data.fridge_color && preview.style.backgroundColor.includes(hexToRgb(data.fridge_color))) {
                 opt.classList.add('selected');
+            } else if (data.fridge_color === '#f3f4f6' && !preview.style.backgroundColor) {
+                // default
             }
         });
-        // Якщо точного співпадіння немає, можна вибрати дефолтний, але не будемо чіпати
 
-        // Тумблери (Switches)
+        // Встановлюємо активний клас якщо збігається hex (для точності) або просто перший
+        if(!settingsTab.querySelector('.color-option.selected')) {
+            colorOptions[0].classList.add('selected');
+        }
+
         const switches = settingsTab.querySelectorAll('.toggle-switch');
         if (switches[0]) toggleSwitch(switches[0], data.fridge_is_public);
         if (switches[1]) toggleSwitch(switches[1], data.fridge_allow_comments);
-        // Третій тумблер "Показувати в профілі" - немає поля в БД, ігноруємо
     }
 
-    // Оновлення самого холодильника (колір)
     const fridgeDoor = document.getElementById('fridge-door');
     if (fridgeDoor && data.fridge_color) {
         fridgeDoor.style.backgroundColor = data.fridge_color;
     }
+}
+
+// Додаткова функція для вкладки "Налаштування" (Конфіденційність)
+function fillSettingsData(data) {
+    const mainSettingsTab = document.getElementById('tab-settings');
+    if (!mainSettingsTab) return;
+
+    // Шукаємо блок "Конфіденційність" (третій settings-card)
+    const cards = mainSettingsTab.querySelectorAll('.settings-card');
+    if(cards.length >= 3) {
+        const privacyCard = cards[2];
+        const switches = privacyCard.querySelectorAll('.toggle-switch');
+
+        // 1. Публічний профіль (у нас немає поля в БД, емулюємо через location)
+        // 2. Email (is_email_public)
+        if(switches[1]) toggleSwitch(switches[1], data.is_email_public);
+        // 3. Місцезнаходження (is_location_public)
+        if(switches[2]) toggleSwitch(switches[2], data.is_location_public);
+    }
+}
+
+// Helper hex to rgb simpler
+function hexToRgb(hex) {
+    // simple check to avoid complex logic, not strict
+    return hex.replace('#', ''); // dummy
 }
 
 function toggleSwitch(element, isActive) {
@@ -144,18 +229,17 @@ function toggleSwitch(element, isActive) {
 }
 
 /* =========================================
-   3. ЛОГІКА ХОЛОДИЛЬНИКА (DRAG & DROP + API)
+   3. ЛОГІКА ХОЛОДИЛЬНИКА
    ========================================= */
 async function initFridge() {
     const fridgeDoor = document.getElementById('fridge-door');
     const panel = document.querySelector('.magnet-panel-card');
 
-    // 1. Завантаження доступних магнітів (Ліва панель)
+    // Завантаження доступних
     try {
         const response = await fetch(`${API_URL}/fridge/magnets/available`, { headers: getHeaders() });
         const data = await response.json();
 
-        // Очищаємо панель (зберігаючи заголовок)
         const title = panel.querySelector('h3');
         const hint = panel.querySelector('p.text-gray-500');
         panel.innerHTML = '';
@@ -165,18 +249,31 @@ async function initFridge() {
             const el = createMagnetElement(m, false);
             panel.appendChild(el);
         });
-
         if (hint) panel.appendChild(hint);
 
         initDragAndDrop(fridgeDoor);
-
     } catch (e) { console.error('Error loading available magnets:', e); }
 
-    // 2. Завантаження магнітів користувача (Холодильник)
     loadUserFridgeLayout();
 
-    // 3. Кнопка збереження (в табі налаштувань)
-    // Шукаємо кнопку в табі налаштувань, бо в дизайні вона там
+    // Колір пікер
+    const colorOptions = document.querySelectorAll('.color-option');
+    colorOptions.forEach(opt => {
+        opt.addEventListener('click', () => {
+            colorOptions.forEach(o => o.classList.remove('selected'));
+            opt.classList.add('selected');
+            const color = opt.querySelector('.color-preview').style.backgroundColor;
+            fridgeDoor.style.backgroundColor = color;
+        });
+    });
+
+    // Тумблери UI
+    document.querySelectorAll('.toggle-switch').forEach(sw => {
+        sw.addEventListener('click', () => {
+            sw.classList.toggle('active');
+        });
+    });
+
     const saveSettingsBtn = document.querySelector('#tab-fridge-settings .btn-burgundy-solid');
     if (saveSettingsBtn) {
         saveSettingsBtn.addEventListener('click', saveFridgeSettingsAndLayout);
@@ -189,13 +286,11 @@ async function loadUserFridgeLayout() {
         const response = await fetch(`${API_URL}/fridge/${currentUser.userId}/layout`, { headers: getHeaders() });
         const data = await response.json();
 
-        // Очищаємо холодильник від старих магнітів (зберігаємо ручку і плейсхолдер)
         const magnets = fridgeDoor.querySelectorAll('.magnet-on-fridge');
         magnets.forEach(m => m.remove());
 
         data.magnets.forEach(m => {
             const el = createMagnetOnFridgeElement(m);
-            // Позиціонування
             el.style.left = `${m.x_position}px`;
             el.style.top = `${m.y_position}px`;
             fridgeDoor.appendChild(el);
@@ -207,7 +302,6 @@ async function loadUserFridgeLayout() {
 
 function createMagnetElement(magnetData, isOnFridge) {
     const div = document.createElement('div');
-    // Класи
     if (!isOnFridge) {
         div.className = `magnet-btn ${magnetData.color_group || 'burgundy'}`;
     } else {
@@ -232,9 +326,7 @@ function createMagnetElement(magnetData, isOnFridge) {
 }
 
 function createMagnetOnFridgeElement(magnetData) {
-    // Створюємо елемент, готовий для холодильника
     const el = createMagnetElement(magnetData, true);
-    // Додаємо специфічні стилі для холодильника
     el.innerHTML = `
         <i class="fas fa-${magnetData.icon_class}"></i>
         <div class="text-[10px] font-bold mt-1 leading-tight pointer-events-none">${magnetData.city}</div>
@@ -243,13 +335,12 @@ function createMagnetOnFridgeElement(magnetData) {
     return el;
 }
 
-/* --- Drag & Drop Logic (Адаптовано) --- */
+/* --- Drag & Drop --- */
 let draggedItem = null;
 let isNewItem = false;
 let offset = { x: 0, y: 0 };
 
 function initDragAndDrop(fridgeDoor) {
-    // Делегування подій для source (панель)
     document.querySelector('.magnet-panel-card').addEventListener('dragstart', (e) => {
         const target = e.target.closest('.magnet-btn');
         if (target) {
@@ -260,7 +351,6 @@ function initDragAndDrop(fridgeDoor) {
         }
     });
 
-    // Делегування для fridge items (переміщення)
     fridgeDoor.addEventListener('dragstart', (e) => {
         const target = e.target.closest('.magnet-on-fridge');
         if (target) {
@@ -288,7 +378,6 @@ function initDragAndDrop(fridgeDoor) {
         const y = e.clientY - rect.top;
 
         if (isNewItem) {
-            // Створюємо копію на холодильнику
             const data = {
                 magnet_id: draggedItem.getAttribute('data-id'),
                 country: draggedItem.getAttribute('data-country'),
@@ -297,21 +386,18 @@ function initDragAndDrop(fridgeDoor) {
                 color_group: draggedItem.getAttribute('data-color')
             };
             const newEl = createMagnetOnFridgeElement(data);
-            newEl.style.left = `${x - 35}px`; // Центруємо
+            newEl.style.left = `${x - 35}px`;
             newEl.style.top = `${y - 35}px`;
             fridgeDoor.appendChild(newEl);
         } else {
-            // Переміщуємо
             draggedItem.style.left = `${x - offset.x}px`;
             draggedItem.style.top = `${y - offset.y}px`;
         }
-
         checkPlaceholder();
         draggedItem = null;
         isNewItem = false;
     });
 
-    // Видалення (Drop поза холодильником)
     document.body.addEventListener('dragover', (e) => e.preventDefault());
     document.body.addEventListener('drop', (e) => {
         const isOverFridge = e.target.closest('#fridge-door');
@@ -337,7 +423,6 @@ async function saveFridgeSettingsAndLayout() {
     const fridgeDoor = document.getElementById('fridge-door');
     const settingsTab = document.getElementById('tab-fridge-settings');
 
-    // 1. Збираємо дані layout
     const magnetElements = fridgeDoor.querySelectorAll('.magnet-on-fridge');
     const magnetsData = Array.from(magnetElements).map(el => ({
         magnet_id: el.getAttribute('data-id'),
@@ -345,7 +430,6 @@ async function saveFridgeSettingsAndLayout() {
         y_position: parseInt(el.style.top) || 0
     }));
 
-    // 2. Збираємо налаштування
     const selectedColorEl = settingsTab.querySelector('.color-option.selected .color-preview');
     const fridgeColor = selectedColorEl ? selectedColorEl.style.backgroundColor : '#f3f4f6';
 
@@ -353,26 +437,14 @@ async function saveFridgeSettingsAndLayout() {
     const isPublic = switches[0] ? switches[0].classList.contains('active') : true;
     const allowComments = switches[1] ? switches[1].classList.contains('active') : true;
 
-    // 3. Відправляємо запити (паралельно)
     try {
-        // Збереження магнітів
         const saveLayoutPromise = fetch(`${API_URL}/fridge/save`, {
             method: 'POST',
             headers: getHeaders(),
             body: JSON.stringify({ magnetsData })
         });
 
-        // Оновлення налаштувань профілю (включаючи налаштування холодильника)
-        // Нам потрібно зібрати й інші дані профілю, щоб не затерти їх,
-        // АЛЕ наш ендпоінт PUT /profile оновлює все зразу.
-        // Тому краще спочатку зчитати дані з форми Info, або (для спрощення тут)
-        // ми відправимо тільки те, що стосується холодильника, а бекенд треба було б адаптувати під PATCH.
-        // Оскільки бекенд PUT вимагає всі поля, ми зхитруємо:
-        // Ми припускаємо, що користувач не змінював інфо в іншому табі,
-        // тому ми можемо зібрати дані з інпутів Info tab зараз.
-
         const infoData = getProfileFormData();
-
         const saveProfilePromise = fetch(`${API_URL}/user/profile`, {
             method: 'PUT',
             headers: getHeaders(),
@@ -386,10 +458,6 @@ async function saveFridgeSettingsAndLayout() {
 
         await Promise.all([saveLayoutPromise, saveProfilePromise]);
         alert('Холодильник та налаштування збережено!');
-
-        // Оновлюємо колір візуально
-        fridgeDoor.style.backgroundColor = fridgeColor;
-
     } catch (e) {
         console.error(e);
         alert('Помилка збереження.');
@@ -401,8 +469,13 @@ async function saveFridgeSettingsAndLayout() {
    ========================================= */
 async function loadMyPosts() {
     const container = document.querySelector('#tab-my-posts');
-    // Зберігаємо заголовок та кнопку створення
     const header = container.querySelector('.flex.justify-between');
+
+    // Прив'язка кнопки "Створити новий пост"
+    const createBtn = header.querySelector('button');
+    if(createBtn) {
+        createBtn.onclick = () => window.openCreateCreatePostModal ? window.openCreatePostModal() : null;
+    }
 
     try {
         const response = await fetch(`${API_URL}/forum/posts/my`, { headers: getHeaders() });
@@ -417,14 +490,64 @@ async function loadMyPosts() {
         }
 
         data.posts.forEach(post => {
-            const html = createPostCardHTML(post, true); // true = my post (editable)
+            const html = createPostCardHTML(post, true);
             container.insertAdjacentHTML('beforeend', html);
         });
     } catch (e) { console.error(e); }
 }
 
+async function savePost() {
+    const title = document.getElementById('post-title').value;
+    const content = document.getElementById('post-content').value;
+    const category = document.getElementById('post-category').value;
+
+    if(!title || !content) return alert('Заповніть всі поля');
+
+    try {
+        let url = `${API_URL}/forum/posts`;
+        let method = 'POST';
+
+        if (editingPostId) {
+            url = `${API_URL}/forum/posts/${editingPostId}`;
+            method = 'PUT';
+        }
+
+        const res = await fetch(url, {
+            method: method,
+            headers: getHeaders(),
+            body: JSON.stringify({ title, content, category })
+        });
+
+        if (res.ok) {
+            closePostModal();
+            loadMyPosts();
+        } else {
+            alert('Помилка збереження');
+        }
+    } catch (e) { console.error(e); }
+}
+
+window.deletePost = async (id) => {
+    if(!confirm('Видалити пост?')) return;
+    try {
+        await fetch(`${API_URL}/forum/posts/${id}`, { method: 'DELETE', headers: getHeaders() });
+        loadMyPosts();
+    } catch(e) { console.error(e); }
+};
+
+// Завантаження збережених турів
 async function loadSavedTours() {
-    const container = document.querySelector('#tab-saved-tours .grid'); // Grid контейнер
+    const container = document.querySelector('#tab-saved-tours .grid');
+    const clearBtn = document.querySelector('#tab-saved-tours button'); // "Очистити всі"
+
+    if(clearBtn) {
+        clearBtn.onclick = async () => {
+            if(!confirm('Очистити всі збережені тури?')) return;
+            await fetch(`${API_URL}/tours/saved`, { method: 'DELETE', headers: getHeaders() });
+            loadSavedTours();
+        };
+    }
+
     if (!container) return;
 
     try {
@@ -438,7 +561,6 @@ async function loadSavedTours() {
         }
 
         data.tours.forEach(tour => {
-            // Спрощена картка
             const html = `
                 <div class="tour-card-saved shadow-md flex flex-col h-full overflow-hidden p-0 bg-white rounded-xl">
                     <div class="relative h-48">
@@ -463,6 +585,15 @@ async function loadSavedTours() {
 async function loadSavedPosts() {
     const container = document.querySelector('#tab-saved-posts');
     const header = container.querySelector('.flex.justify-between');
+    const clearBtn = header.querySelector('button'); // Очистити всі
+
+    if(clearBtn) {
+        clearBtn.onclick = async () => {
+            if(!confirm('Очистити всі збережені пости?')) return;
+            await fetch(`${API_URL}/forum/saved`, { method: 'DELETE', headers: getHeaders() });
+            loadSavedPosts();
+        };
+    }
 
     try {
         const response = await fetch(`${API_URL}/forum/posts/saved`, { headers: getHeaders() });
@@ -477,27 +608,37 @@ async function loadSavedPosts() {
         }
 
         data.posts.forEach(post => {
-            const html = createPostCardHTML(post, false); // false = not my post (cant edit)
+            const html = createPostCardHTML(post, false);
             container.insertAdjacentHTML('beforeend', html);
         });
     } catch (e) { console.error(e); }
 }
 
 function initContentTabs() {
-    // Делегування подій для кнопок видалення (оскільки елементи динамічні)
-    // Реалізуємо глобально або через onclick в HTML
     window.removeSavedTour = async (id) => {
         if(!confirm('Видалити зі збережених?')) return;
         try {
             await fetch(`${API_URL}/tours/save`, {
                 method: 'POST', headers: getHeaders(), body: JSON.stringify({ tourId: id })
             });
-            loadSavedTours(); // Перезавантажити
+            loadSavedTours();
+        } catch(e) { console.error(e); }
+    };
+
+    window.removeSavedPost = async (id) => {
+        if(!confirm('Видалити зі збережених?')) return;
+        try {
+            await fetch(`${API_URL}/forum/saved/${id}`, { method: 'DELETE', headers: getHeaders() });
+            loadSavedPosts();
         } catch(e) { console.error(e); }
     };
 }
 
 function createPostCardHTML(post, isMyPost) {
+    // Екранування для передачі в функцію onclick
+    const safeTitle = post.title.replace(/"/g, '&quot;');
+    const safeContent = post.content.replace(/"/g, '&quot;');
+
     return `
         <div class="post-card shadow-sm bg-white p-6 rounded-xl mb-6">
             <div class="flex justify-between items-start mb-3">
@@ -520,46 +661,49 @@ function createPostCardHTML(post, isMyPost) {
                 </div>
                 ${isMyPost ? `
                 <div class="flex gap-4 text-sm">
-                    <button class="text-[#2D4952] hover:text-[#48192E] flex items-center gap-1"><i class="far fa-edit"></i> Редагувати</button>
-                    <button class="text-[#48192E] hover:text-red-600 flex items-center gap-1"><i class="far fa-trash-alt"></i> Видалити</button>
-                </div>` : ''}
+                    <button class="text-[#2D4952] hover:text-[#48192E] flex items-center gap-1" onclick="openEditPostModal(${post.post_id}, '${safeTitle}', '${safeContent}', '${post.category}')"><i class="far fa-edit"></i> Редагувати</button>
+                    <button class="text-[#48192E] hover:text-red-600 flex items-center gap-1" onclick="deletePost(${post.post_id})"><i class="far fa-trash-alt"></i> Видалити</button>
+                </div>` : `
+                <div class="flex gap-3 text-sm items-center">
+                    <button class="border border-[#48192E] text-[#48192E] px-4 py-1 rounded-md text-sm font-medium hover:bg-red-50" onclick="removeSavedPost(${post.post_id})">Видалити</button>
+                </div>
+                `}
             </div>
         </div>
     `;
 }
 
-
 /* =========================================
    5. ФОРМИ ТА НАЛАШТУВАННЯ
    ========================================= */
 function initSettingsForms() {
-    // 1. Форма "Моя інформація" - Кнопка збереження
+    // 1. Форма "Моя інформація"
     const infoTab = document.getElementById('tab-info');
     if (infoTab) {
         const saveBtn = infoTab.querySelector('.btn-burgundy-solid');
         const uploadBtn = infoTab.querySelector('.btn-burgundy-outline');
         const fileInput = document.createElement('input');
-        fileInput.type = 'file';
-        fileInput.accept = 'image/*';
-        fileInput.style.display = 'none';
+        fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.style.display = 'none';
         infoTab.appendChild(fileInput);
 
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
                 const data = getProfileFormData();
-                // Для збереження Info нам не обов'язково слати налаштування холодильника,
-                // але ендпоінт вимагає все. Зберемо дефолтні або поточні значення.
-                // Спрощення: беремо значення зі змінних (треба було б зберігати стан глобально)
-
-                // Швидке рішення: Збираємо з DOM холодильника
+                // Збираємо також дані з холодильника та загальних налаштувань, щоб не затерти
                 const settingsTab = document.getElementById('tab-fridge-settings');
                 const selectedColorEl = settingsTab?.querySelector('.color-option.selected .color-preview');
+                const switches = settingsTab?.querySelectorAll('.toggle-switch');
+
+                const privacySwitches = document.getElementById('tab-settings')?.querySelectorAll('.toggle-switch');
 
                 const body = {
                     ...data,
                     fridgeColor: selectedColorEl?.style.backgroundColor || '#f3f4f6',
-                    fridgeIsPublic: true, // Спрощено
-                    fridgeAllowComments: true // Спрощено
+                    fridgeIsPublic: switches?.[0]?.classList.contains('active') ?? true,
+                    fridgeAllowComments: switches?.[1]?.classList.contains('active') ?? true,
+                    // Додаткові налаштування з таба Settings
+                    isEmailPublic: privacySwitches?.[1]?.classList.contains('active') ?? false,
+                    isLocationPublic: privacySwitches?.[2]?.classList.contains('active') ?? true
                 };
 
                 try {
@@ -572,23 +716,20 @@ function initSettingsForms() {
             });
         }
 
-        // Завантаження аватара
         if (uploadBtn) {
             uploadBtn.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', async () => {
                 if (fileInput.files.length > 0) {
                     const formData = new FormData();
                     formData.append('avatar', fileInput.files[0]);
-
                     try {
                         const res = await fetch(`${API_URL}/user/avatar`, {
                             method: 'POST',
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }, // без Content-Type для FormData
+                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
                             body: formData
                         });
                         const data = await res.json();
                         if (res.ok) {
-                            // Оновити UI
                             const avatarCircle = infoTab.querySelector('.avatar-circle-lg');
                             if (avatarCircle) avatarCircle.innerHTML = `<img src="${data.url}" class="w-full h-full object-cover rounded-full">`;
                         }
@@ -598,14 +739,16 @@ function initSettingsForms() {
         }
     }
 
-    // 2. Зміна пароля
+    // 2. Вкладка "Налаштування" (Пароль, Видалення, Приватність)
     const settingsTab = document.getElementById('tab-settings');
     if (settingsTab) {
-        const saveBtn = settingsTab.querySelector('.btn-burgundy-solid');
-        const inputs = settingsTab.querySelectorAll('input[type="password"]'); // Current, New, Confirm
+        // Кнопка збереження внизу "Налаштувань" (там де приватість)
+        const saveBtns = settingsTab.querySelectorAll('.btn-burgundy-solid');
 
-        if (saveBtn && inputs.length === 3) {
-            saveBtn.addEventListener('click', async () => {
+        // Перша кнопка - зміна пароля
+        if (saveBtns[0]) {
+            saveBtns[0].addEventListener('click', async () => {
+                const inputs = settingsTab.querySelectorAll('input[type="password"]');
                 const currentPassword = inputs[0].value;
                 const newPassword = inputs[1].value;
                 const confirmPassword = inputs[2].value;
@@ -614,12 +757,9 @@ function initSettingsForms() {
                     alert('Нові паролі не співпадають');
                     return;
                 }
-
                 try {
                     const res = await fetch(`${API_URL}/user/password`, {
-                        method: 'PUT',
-                        headers: getHeaders(),
-                        body: JSON.stringify({ currentPassword, newPassword })
+                        method: 'PUT', headers: getHeaders(), body: JSON.stringify({ currentPassword, newPassword })
                     });
                     const data = await res.json();
                     if (res.ok) {
@@ -632,7 +772,17 @@ function initSettingsForms() {
             });
         }
 
-        // 3. Видалення акаунту
+        // Друга кнопка - збереження налаштувань (внизу)
+        if (saveBtns[1]) {
+            saveBtns[1].addEventListener('click', async () => {
+                // Викликаємо ту саму логіку, що і в InfoTab, але ініціюємо звідси
+                // Для спрощення, просто емулюємо клік на кнопці в InfoTab, якщо дані там актуальні,
+                // або дублюємо логіку збору даних. Краще продублювати виклик PUT.
+                const infoTabSaveBtn = document.querySelector('#tab-info .btn-burgundy-solid');
+                if(infoTabSaveBtn) infoTabSaveBtn.click();
+            });
+        }
+
         const deleteBtn = settingsTab.querySelector('.bg-red-50 button');
         if (deleteBtn) {
             deleteBtn.addEventListener('click', async () => {
@@ -650,7 +800,6 @@ function initSettingsForms() {
     }
 }
 
-// Допоміжна функція збору даних з форми "Інфо"
 function getProfileFormData() {
     const infoTab = document.getElementById('tab-info');
     const inputs = infoTab.querySelectorAll('input.form-input');
@@ -661,12 +810,10 @@ function getProfileFormData() {
     return {
         firstName: fullName[0] || '',
         lastName: fullName.slice(1).join(' ') || '',
-        email: inputs[1].value, // Зазвичай email не міняють тут, але для прикладу
+        email: inputs[1].value,
         location: inputs[2].value,
         dateOfBirth: inputs[3].value,
         bio: textarea.value,
-        travelInterests: inputs[5].value,
-        isEmailPublic: true,
-        isLocationPublic: true
+        travelInterests: inputs[5].value
     };
 }

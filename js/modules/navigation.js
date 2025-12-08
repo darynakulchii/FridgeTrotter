@@ -16,8 +16,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 }
             });
 
-            // 3. Ініціалізувати події (Сайдбар, Модалки)
+            // 3. Ініціалізувати події (Сайдбар, Модалки, Кнопки)
             initializeNavigationEvents();
+
+            // 4. Оновити стан кнопки входу (якщо користувач вже залогінений)
+            updateAuthButtonState();
         })
         .catch(error => console.error('Error loading navigation:', error));
 });
@@ -43,23 +46,54 @@ function initializeNavigationEvents() {
     if (sidebarCloseBtn) sidebarCloseBtn.addEventListener('click', closeSidebar);
     if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
 
-    // --- MODALS HELPER ---
-    function openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            closeSidebar(); // Закрити сайдбар, якщо відкриваємо з нього
-            modal.classList.add('active');
-        }
+    // --- КНОПКИ САЙДБАРУ ---
+
+    // Кнопка Входу/Реєстрації (веде на окрему сторінку)
+    const authBtn = document.getElementById('auth-btn');
+    if (authBtn) {
+        authBtn.addEventListener('click', () => {
+            // Перевіряємо, чи ми вже залогінені
+            const token = localStorage.getItem('token');
+            if (token) {
+                // Якщо залогінені - це кнопка виходу
+                if(confirm('Вийти з акаунту?')) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.href = 'main_page_tours.html';
+                }
+            } else {
+                // Якщо не залогінені - йдемо на сторінку входу
+                window.location.href = 'login.html';
+            }
+        });
     }
 
-    function closeModalById(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.remove('active');
-        }
-    }
+    // Інші кнопки (Модалки)
+    const modalButtons = [
+        { btnId: 'agent-mode-btn', modalId: 'agent-mode-modal' },
+        { btnId: 'bug-report-btn', modalId: 'bug-report-modal' },
+        { btnId: 'privacy-policy-btn', modalId: 'privacy-modal' },
+        { btnId: 'notifications-btn', modalId: 'notifications-modal' }
+    ];
 
-    // Close buttons logic
+    modalButtons.forEach(({ btnId, modalId }) => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+            btn.addEventListener('click', () => {
+                closeSidebar();
+                openModal(modalId);
+            });
+        }
+    });
+
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) logoutBtn.addEventListener('click', () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+    });
+
+    // Закриття модалок
     document.querySelectorAll('.modal-close-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const modal = e.target.closest('.modal-backdrop');
@@ -67,76 +101,11 @@ function initializeNavigationEvents() {
         });
     });
 
-    // Close on click outside
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal-backdrop')) {
             e.target.classList.remove('active');
         }
     });
-
-    // --- SPECIFIC BUTTONS ---
-    const authBtn = document.getElementById('auth-btn');
-    if (authBtn) authBtn.addEventListener('click', () => openModal('auth-modal'));
-
-    const agentBtn = document.getElementById('agent-mode-btn');
-    if (agentBtn) agentBtn.addEventListener('click', () => openModal('agent-mode-modal'));
-
-    const bugBtn = document.getElementById('bug-report-btn');
-    if (bugBtn) bugBtn.addEventListener('click', () => openModal('bug-report-modal'));
-
-    const privacyBtn = document.getElementById('privacy-policy-btn');
-    if (privacyBtn) privacyBtn.addEventListener('click', () => openModal('privacy-modal'));
-
-    const notifBtn = document.getElementById('notifications-btn');
-    if (notifBtn) notifBtn.addEventListener('click', () => openModal('notifications-modal'));
-
-    const logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) logoutBtn.addEventListener('click', () => {
-        alert("Вихід виконано");
-        closeSidebar();
-    });
-
-    // --- AGENT SUB-MODALS ---
-    const agentRegisterBtn = document.getElementById('agent-btn-register');
-    if(agentRegisterBtn) {
-        agentRegisterBtn.addEventListener('click', () => {
-            closeModalById('agent-mode-modal'); // Close main agent menu
-            openModal('modal-agent-register'); // Open sub-modal
-        });
-    }
-
-    const agentAccountBtn = document.getElementById('agent-btn-account');
-    if(agentAccountBtn) {
-        agentAccountBtn.addEventListener('click', () => {
-            closeModalById('agent-mode-modal');
-            openModal('modal-agent-account');
-        });
-    }
-
-    const agentAddTourBtn = document.getElementById('agent-btn-add-tour');
-    if(agentAddTourBtn) {
-        agentAddTourBtn.addEventListener('click', () => {
-            closeModalById('agent-mode-modal');
-            openModal('modal-agent-add-tour');
-        });
-    }
-
-    const agentAddMagnetBtn = document.getElementById('agent-btn-add-magnet');
-    if(agentAddMagnetBtn) {
-        agentAddMagnetBtn.addEventListener('click', () => {
-            closeModalById('agent-mode-modal');
-            openModal('modal-agent-add-magnet');
-        });
-    }
-
-    const agentAddPostBtn = document.getElementById('agent-btn-add-post');
-    if(agentAddPostBtn) {
-        agentAddPostBtn.addEventListener('click', () => {
-            closeModalById('agent-mode-modal');
-            openModal('modal-agent-add-post');
-        });
-    }
-
 
     // --- CHAT ---
     const chatToggleBtn = document.getElementById('chat-toggle-btn');
@@ -151,5 +120,21 @@ function initializeNavigationEvents() {
     }
     if (chatCloseBtn) {
         chatCloseBtn.addEventListener('click', () => chatWindow.classList.remove('active'));
+    }
+}
+
+function openModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) modal.classList.add('active');
+}
+
+// Функція оновлення вигляду кнопки входу
+function updateAuthButtonState() {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    const authBtn = document.getElementById('auth-btn');
+
+    if (authBtn && token && user) {
+        authBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> Вийти (${user.first_name})`;
     }
 }

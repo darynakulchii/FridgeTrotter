@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const pool = require('../db');
 const { authenticateToken } = require('../auth_middleware');
 
 /**
@@ -83,7 +83,8 @@ router.get('/posts/saved', authenticateToken, async (req, res) => {
     const query = `
         SELECT
             p.post_id, p.title, p.content, p.category, p.created_at, p.likes_count,
-            up.first_name, up.last_name, usp.saved_date
+            up.first_name, up.last_name, usp.saved_date,
+            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count
         FROM user_saved_posts usp
                  JOIN posts p ON usp.post_id = p.post_id
                  JOIN user_profiles up ON p.author_id = up.user_id
@@ -131,6 +132,89 @@ router.post('/posts', authenticateToken, async (req, res) => {
 });
 
 /**
+ * PUT /api/forum/posts/:id
+ * Редагування поста.
+ */
+router.put('/posts/:id', authenticateToken, async (req, res) => {
+    const postId = req.params.id;
+    const userId = req.user.userId;
+    const { title, content, category } = req.body;
+
+    try {
+        // Перевірка прав (чи є користувач автором)
+        const checkQuery = 'SELECT author_id FROM posts WHERE post_id = $1';
+        const checkResult = await pool.query(checkQuery, [postId]);
+
+        if (checkResult.rows.length === 0) return res.status(404).json({ error: 'Пост не знайдено' });
+        if (checkResult.rows[0].author_id !== userId) return res.status(403).json({ error: 'Немає прав' });
+
+        const updateQuery = `
+            UPDATE posts SET title = $1, content = $2, category = $3, updated_at = NOW()
+            WHERE post_id = $4
+        `;
+        await pool.query(updateQuery, [title, content, category, postId]);
+        res.json({ message: 'Пост оновлено' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+/**
+ * DELETE /api/forum/posts/:id
+ * Видалення свого поста.
+ */
+router.delete('/posts/:id', authenticateToken, async (req, res) => {
+    const postId = req.params.id;
+    const userId = req.user.userId;
+
+    try {
+        const checkQuery = 'SELECT author_id FROM posts WHERE post_id = $1';
+        const checkResult = await pool.query(checkQuery, [postId]);
+
+        if (checkResult.rows.length === 0) return res.status(404).json({ error: 'Пост не знайдено' });
+        if (checkResult.rows[0].author_id !== userId) return res.status(403).json({ error: 'Немає прав' });
+
+        await pool.query('DELETE FROM posts WHERE post_id = $1', [postId]);
+        res.json({ message: 'Пост видалено' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+/**
+ * DELETE /api/forum/saved
+ * Очищення всіх збережених постів.
+ */
+router.delete('/saved', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    try {
+        await pool.query('DELETE FROM user_saved_posts WHERE user_id = $1', [userId]);
+        res.json({ message: 'Всі збережені пости видалено.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+/**
+ * DELETE /api/forum/saved/:id
+ * Видалення одного збереженого поста.
+ */
+router.delete('/saved/:id', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const postId = req.params.id;
+    try {
+        await pool.query('DELETE FROM user_saved_posts WHERE user_id = $1 AND post_id = $2', [userId, postId]);
+        res.json({ message: 'Видалено зі збережених.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
+/**
  * POST /api/forum/posts/:id/like
  * Додавання/видалення лайка.
  */
@@ -150,16 +234,13 @@ router.post('/posts/:id/like', authenticateToken, async (req, res) => {
         let liked = false;
 
         if (checkResult.rows.length > 0) {
-            // Лайк існує -> видаляємо
             await client.query(queryDelete, [userId, postId]);
             liked = false;
         } else {
-            // Лайка немає -> додаємо
             await client.query(queryInsert, [userId, postId]);
             liked = true;
         }
 
-        // Оновлюємо лічильник likes_count у таблиці posts
         await client.query(`
             UPDATE posts
             SET likes_count = (SELECT COUNT(*) FROM post_likes WHERE post_id = $1)

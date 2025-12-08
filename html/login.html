@@ -16,11 +16,13 @@
         <p class="text-gray-500">Увійдіть у свій акаунт FridgeTrotter</p>
     </div>
 
+    <!-- ID форми має бути login-form -->
     <form id="login-form" class="space-y-4">
         <div>
             <label class="block text-sm font-medium text-[#281822] mb-1">Email</label>
             <div class="relative">
                 <i class="far fa-envelope absolute left-3 top-3 text-gray-400"></i>
+                <!-- ID поля має бути login-email-page -->
                 <input type="email" id="login-email-page" class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]" placeholder="name@example.com" required>
             </div>
         </div>
@@ -29,6 +31,7 @@
             <label class="block text-sm font-medium text-[#281822] mb-1">Пароль</label>
             <div class="relative">
                 <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                <!-- ID поля має бути login-password-page -->
                 <input type="password" id="login-password-page" class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]" placeholder="••••••••" required>
             </div>
         </div>
@@ -49,6 +52,5 @@
 </div>
 
 <script type="module" src="../js/modules/auth.js"></script>
-<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 </body>
 </html>

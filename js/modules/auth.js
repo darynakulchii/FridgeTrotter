@@ -2,156 +2,120 @@ import { API_URL } from '../api-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    checkAuthStatus(); // Перевіряємо при завантаженні, чи ми вже увійшли
+    // --- 1. ОБРОБКА ФОРМИ ВХОДУ (login.html) ---
+    const loginForm = document.getElementById('login-form');
 
-    // === 1. ЛОГІКА ПЕРЕМИКАННЯ ВКЛАДОК (Вхід / Реєстрація) ===
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-    const initModalLogic = setInterval(() => {
-        const tabLogin = document.getElementById('tab-login');
-        const tabRegister = document.getElementById('tab-register');
-        const formLogin = document.getElementById('modal-form-login');
-        const formRegister = document.getElementById('modal-form-register');
+            // Збираємо дані (використовуємо IDs з login.html)
+            const email = document.getElementById('login-email-page').value;
+            const password = document.getElementById('login-password-page').value;
+            const submitBtn = loginForm.querySelector('button[type="submit"]');
 
-        if (tabLogin && tabRegister && formLogin && formRegister) {
-            clearInterval(initModalLogic); // Зупиняємо перевірку, елементи знайдено
+            if(!email || !password) {
+                alert('Будь ласка, заповніть всі поля');
+                return;
+            }
 
-            // Перемикач на ВХІД
-            tabLogin.addEventListener('click', () => {
-                formLogin.classList.remove('hidden');
-                formRegister.classList.add('hidden');
+            // Блокуємо кнопку на час запиту
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Вхід...';
 
-                // Стилі активної вкладки
-                tabLogin.classList.add('text-[#48192E]', 'border-b-2', 'border-[#48192E]', 'font-bold');
-                tabLogin.classList.remove('text-gray-500');
+            try {
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
 
-                tabRegister.classList.remove('text-[#48192E]', 'border-b-2', 'border-[#48192E]', 'font-bold');
-                tabRegister.classList.add('text-gray-500');
-            });
+                const data = await response.json();
 
-            // Перемикач на РЕЄСТРАЦІЮ
-            tabRegister.addEventListener('click', () => {
-                formRegister.classList.remove('hidden');
-                formLogin.classList.add('hidden');
+                if (response.ok) {
+                    // Зберігаємо токен
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
 
-                // Стилі активної вкладки
-                tabRegister.classList.add('text-[#48192E]', 'border-b-2', 'border-[#48192E]', 'font-bold');
-                tabRegister.classList.remove('text-gray-500');
+                    // Перенаправляємо на профіль
+                    window.location.href = 'my_profile.html';
+                } else {
+                    alert(data.error || 'Помилка входу');
+                }
+            } catch (error) {
+                console.error(error);
+                alert('Помилка з\'єднання з сервером');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = originalBtnText;
+            }
+        });
+    }
 
-                tabLogin.classList.remove('text-[#48192E]', 'border-b-2', 'border-[#48192E]', 'font-bold');
-                tabLogin.classList.add('text-gray-500');
-            });
+    // --- 2. ОБРОБКА ФОРМИ РЕЄСТРАЦІЇ (register.html) ---
+    const registerForm = document.getElementById('register-form');
 
-            // === ОБРОБКА ФОРМИ ВХОДУ (МОДАЛКА) ===
-            formLogin.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('modal-login-email').value;
-                const password = document.getElementById('modal-login-password').value;
-                await performLogin(email, password);
-            });
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-            // === ОБРОБКА ФОРМИ РЕЄСТРАЦІЇ (МОДАЛКА) ===
-            formRegister.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const firstName = document.getElementById('modal-reg-firstname').value;
-                const lastName = document.getElementById('modal-reg-lastname').value;
-                const email = document.getElementById('modal-reg-email').value;
-                const password = document.getElementById('modal-reg-password').value;
+            // Збираємо дані (використовуємо IDs з register.html)
+            const firstName = document.getElementById('reg-firstname').value;
+            const lastName = document.getElementById('reg-lastname').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const submitBtn = registerForm.querySelector('button[type="submit"]');
 
-                if (password.length < 6) {
-                    alert("Пароль має містити мінімум 6 символів");
-                    return;
+            if (password.length < 6) {
+                alert("Пароль має містити мінімум 6 символів");
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = 'Реєстрація...';
+
+            try {
+                // 1. Реєструємо
+                const regResponse = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ first_name: firstName, last_name: lastName, email, password })
+                });
+
+                const regData = await regResponse.json();
+
+                if (!regResponse.ok) {
+                    throw new Error(regData.error || 'Помилка реєстрації');
                 }
 
-                await performRegister(firstName, lastName, email, password);
-            });
-        }
-    }, 500); // Перевіряємо кожні 0.5 сек
+                // 2. Якщо успішно - одразу логінимо
+                const loginResponse = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
 
-    // === 2. ФУНКЦІЇ API ===
+                const loginData = await loginResponse.json();
 
-    async function performLogin(email, password) {
-        try {
-            const response = await fetch(`${API_URL}/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                localStorage.setItem('token', data.token);
-                localStorage.setItem('user', JSON.stringify(data.user));
-
-                alert('Вхід успішний!');
-                closeAuthModal();
-                checkAuthStatus(); // Оновлюємо UI
-                window.location.reload(); // Перезавантажуємо сторінку для оновлення даних
-            } else {
-                alert(data.error || 'Помилка входу');
-            }
-        } catch (error) {
-            console.error(error);
-            alert('Помилка з\'єднання');
-        }
-    }
-
-    async function performRegister(firstName, lastName, email, password) {
-        try {
-            const response = await fetch(`${API_URL}/auth/register`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    first_name: firstName, last_name: lastName, email, password
-                })
-            });
-            const data = await response.json();
-
-            if (response.ok) {
-                alert('Реєстрація успішна! Автоматичний вхід...');
-                await performLogin(email, password); // Одразу логінимо користувача
-            } else {
-                alert(data.error || 'Помилка реєстрації');
-            }
-        } catch (error) {
-            console.error(error);
-            alert('Помилка з\'єднання');
-        }
-    }
-
-    // === 3. ДОПОМІЖНІ ФУНКЦІЇ ===
-
-    function closeAuthModal() {
-        const modal = document.getElementById('auth-modal');
-        if (modal) modal.classList.remove('active');
-    }
-
-    function checkAuthStatus() {
-        const token = localStorage.getItem('token');
-        const user = JSON.parse(localStorage.getItem('user'));
-
-        // Знаходимо елементи в навігації (чекаємо інтервал, якщо вони ще не завантажились)
-        const checkNav = setInterval(() => {
-            const authBtn = document.getElementById('auth-btn'); // Кнопка в сайдбарі "Вхід/Реєстрація"
-            const profileLink = document.querySelector('a[href="my_profile.html"]');
-
-            // Якщо токен є - ми залогінені
-            if (token && user) {
-                if(authBtn) {
-                    authBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> Вийти (${user.first_name})`;
-                    // Змінюємо поведінку кнопки на Logout
-                    authBtn.replaceWith(authBtn.cloneNode(true)); // Видаляємо старі лісенери
-                    const newBtn = document.getElementById('auth-btn');
-                    newBtn.addEventListener('click', () => {
-                        if(confirm('Вийти з акаунту?')) {
-                            localStorage.removeItem('token');
-                            localStorage.removeItem('user');
-                            window.location.reload();
-                        }
-                    });
+                if (loginResponse.ok) {
+                    localStorage.setItem('token', loginData.token);
+                    localStorage.setItem('user', JSON.stringify(loginData.user));
+                    alert('Реєстрація успішна! Ласкаво просимо.');
+                    window.location.href = 'my_profile.html';
+                } else {
+                    // Якщо реєстрація пройшла, а авто-логін ні (рідкісний випадок)
+                    alert('Реєстрація успішна. Будь ласка, увійдіть.');
+                    window.location.href = 'login.html';
                 }
-            }
 
-            if(authBtn) clearInterval(checkNav); // Якщо знайшли кнопку - стоп
-        }, 500);
+            } catch (error) {
+                console.error(error);
+                alert(error.message || 'Помилка з\'єднання');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerText = 'Зареєструватися';
+            }
+        });
     }
 });

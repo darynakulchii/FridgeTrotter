@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db'); // ВИПРАВЛЕНО: Коректний шлях до DB модуля
+const pool = require('../db');
 const { authenticateToken } = require('../auth_middleware');
 
 /**
@@ -23,7 +23,6 @@ router.get('/agencies', async (req, res) => {
 
 /**
  * GET /api/tours
- * Отримання списку турів з фільтрацією та сортуванням.
  */
 router.get('/', async (req, res) => {
     const { search, category, sort } = req.query;
@@ -57,10 +56,9 @@ router.get('/', async (req, res) => {
     } else if (sort === 'price_desc') {
         query += ` ORDER BY t.price_uah DESC`;
     } else if (sort === 'popular') {
-        // Використовуємо рейтинг або інший показник популярності
         query += ` ORDER BY t.rating DESC`;
     } else {
-        query += ` ORDER BY t.tour_id DESC`; // Нові спочатку
+        query += ` ORDER BY t.tour_id DESC`;
     }
 
     try {
@@ -74,7 +72,6 @@ router.get('/', async (req, res) => {
 
 /**
  * GET /api/tours/:id
- * Деталі туру.
  */
 router.get('/:id', async (req, res) => {
     const tourId = req.params.id;
@@ -99,7 +96,6 @@ router.get('/:id', async (req, res) => {
 
 /**
  * POST /api/tours/save
- * Додавання/видалення туру зі збережених.
  */
 router.post('/save', authenticateToken, async (req, res) => {
     const { tourId } = req.body;
@@ -130,8 +126,22 @@ router.post('/save', authenticateToken, async (req, res) => {
 });
 
 /**
+ * DELETE /api/tours/saved
+ * Очистити всі збережені тури
+ */
+router.delete('/saved', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    try {
+        await pool.query('DELETE FROM user_saved_tours WHERE user_id = $1', [userId]);
+        res.json({ message: 'Всі збережені тури видалено.' });
+    } catch (error) {
+        console.error('Помилка очищення турів:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+/**
  * GET /api/tours/saved
- * Отримання збережених турів поточного користувача.
  */
 router.get('/saved', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
