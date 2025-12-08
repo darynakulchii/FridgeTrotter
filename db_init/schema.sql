@@ -212,6 +212,16 @@ CREATE TABLE IF NOT EXISTS user_followers (
                                               CONSTRAINT check_self_follow CHECK (follower_id != following_id)
 );
 
+CREATE TABLE IF NOT EXISTS post_images (
+                                           image_id SERIAL PRIMARY KEY,
+                                           post_id INT NOT NULL REFERENCES posts(post_id) ON DELETE CASCADE,
+                                           image_url TEXT NOT NULL,
+                                           created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Індекс для швидкого пошуку зображень по ID поста
+CREATE INDEX IF NOT EXISTS idx_post_images_post_id ON post_images(post_id);
+
 -- Додаємо доступні магніти
 INSERT INTO magnets (country, city, icon_class, color_group) VALUES
                                                                  ('Франція', 'Париж', 'plane', 'burgundy'),

@@ -2,22 +2,57 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { authenticateToken } = require('../auth_middleware');
+const multer = require('multer');
+const streamifier = require('streamifier');
+const cloudinary = require('cloudinary').v2;
+
+// Налаштування multer для обробки файлів у пам'яті
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 }, // Ліміт 5MB на файл
+});
+
+// Допоміжна функція для завантаження на Cloudinary
+const uploadToCloudinary = (fileBuffer) => {
+    return new Promise((resolve, reject) => {
+        let stream = cloudinary.uploader.upload_stream(
+            { folder: 'fridgetrotter/posts', resource_type: 'image' },
+            (error, result) => {
+                if (result) {
+                    resolve(result);
+                } else {
+                    console.error("Cloudinary upload error:", error);
+                    reject(error);
+                }
+            }
+        );
+        streamifier.createReadStream(fileBuffer).pipe(stream);
+    });
+};
 
 /**
  * GET /api/forum/posts
- * Отримання списку постів з фільтрацією та сортуванням.
+ * Отримання списку постів з зображеннями.
  */
 router.get('/posts', async (req, res) => {
     const { search, category, sort } = req.query;
+
+    // Основний запит з агрегацією зображень
     let query = `
         SELECT
             p.post_id, p.title, p.content, p.category, p.created_at, p.likes_count,
             up.first_name, up.last_name, up.profile_image_url AS author_avatar,
-            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count
+            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count,
+            COALESCE(
+                ARRAY_AGG(pi.image_url) FILTER (WHERE pi.image_url IS NOT NULL), 
+                '{}'
+            ) AS images
         FROM posts p
                  JOIN user_profiles up ON p.author_id = up.user_id
+                 LEFT JOIN post_images pi ON p.post_id = pi.post_id
         WHERE 1 = 1
     `;
+
     const queryParams = [];
     let paramIndex = 1;
 
@@ -33,13 +68,19 @@ router.get('/posts', async (req, res) => {
         paramIndex++;
     }
 
+    // Групування обов'язкове при використанні агрегатних функцій (ARRAY_AGG)
+    query += ` GROUP BY p.post_id, up.user_id`;
+
     // Сортування
     if (sort === 'popular') {
         query += ` ORDER BY p.likes_count DESC, p.created_at DESC`;
     } else if (sort === 'unanswered') {
+        // Тут складніше сортувати через підзапит в SELECT, тому краще дублювати логіку COUNT або використати CTE
+        // Для спрощення сортуємо по created_at, якщо sort специфічний, або можна додати comments_count в GROUP BY
+        // Але найпростіше для "unanswered" - це сортування в JS або спрощений SQL:
         query += ` ORDER BY comments_count ASC, p.created_at DESC`;
     } else {
-        query += ` ORDER BY p.created_at DESC`; // Останні
+        query += ` ORDER BY p.created_at DESC`; // Default: Newest first
     }
 
     try {
@@ -60,9 +101,15 @@ router.get('/posts/my', authenticateToken, async (req, res) => {
     const query = `
         SELECT
             p.post_id, p.title, p.content, p.category, p.created_at, p.likes_count,
-            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count
+            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count,
+            COALESCE(
+                            ARRAY_AGG(pi.image_url) FILTER (WHERE pi.image_url IS NOT NULL),
+                            '{}'
+            ) AS images
         FROM posts p
+                 LEFT JOIN post_images pi ON p.post_id = pi.post_id
         WHERE p.author_id = $1
+        GROUP BY p.post_id
         ORDER BY p.created_at DESC;
     `;
     try {
@@ -84,11 +131,17 @@ router.get('/posts/saved', authenticateToken, async (req, res) => {
         SELECT
             p.post_id, p.title, p.content, p.category, p.created_at, p.likes_count,
             up.first_name, up.last_name, usp.saved_date,
-            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count
+            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count,
+            COALESCE(
+                            ARRAY_AGG(pi.image_url) FILTER (WHERE pi.image_url IS NOT NULL),
+                            '{}'
+            ) AS images
         FROM user_saved_posts usp
                  JOIN posts p ON usp.post_id = p.post_id
                  JOIN user_profiles up ON p.author_id = up.user_id
+                 LEFT JOIN post_images pi ON p.post_id = pi.post_id
         WHERE usp.user_id = $1
+        GROUP BY p.post_id, up.user_id, usp.saved_date
         ORDER BY usp.saved_date DESC;
     `;
     try {
@@ -101,39 +154,110 @@ router.get('/posts/saved', authenticateToken, async (req, res) => {
 });
 
 /**
- * POST /api/forum/posts
- * Створення нового поста.
+ * GET /api/forum/posts/:id
+ * Отримання одного поста.
  */
-router.post('/posts', authenticateToken, async (req, res) => {
-    const { title, content, category } = req.body;
-    const authorId = req.user.userId;
-
-    if (!title || !content) {
-        return res.status(400).json({ error: 'Необхідно вказати заголовок та контент.' });
-    }
-
+router.get('/posts/:id', async (req, res) => {
+    const postId = req.params.id;
     const query = `
-        INSERT INTO posts (author_id, title, content, category)
-        VALUES ($1, $2, $3, $4)
-        RETURNING post_id, created_at;
+        SELECT
+            p.post_id, p.title, p.content, p.category, p.created_at, p.likes_count,
+            up.first_name, up.last_name, up.profile_image_url AS author_avatar,
+            (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count,
+            COALESCE(
+                            ARRAY_AGG(pi.image_url) FILTER (WHERE pi.image_url IS NOT NULL),
+                            '{}'
+            ) AS images
+        FROM posts p
+                 JOIN user_profiles up ON p.author_id = up.user_id
+                 LEFT JOIN post_images pi ON p.post_id = pi.post_id
+        WHERE p.post_id = $1
+        GROUP BY p.post_id, up.user_id;
     `;
-
     try {
-        const result = await pool.query(query, [authorId, title, content, category || 'Загальна']);
-        res.status(201).json({
-            message: 'Пост успішно створено.',
-            postId: result.rows[0].post_id,
-            created_at: result.rows[0].created_at
-        });
+        const result = await pool.query(query, [postId]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Пост не знайдено.' });
+        }
+        res.json({ post: result.rows[0] });
     } catch (error) {
-        console.error('Помилка створення поста:', error);
+        console.error('Помилка отримання поста:', error);
         res.status(500).json({ error: 'Помилка сервера.' });
     }
 });
 
 /**
+ * POST /api/forum/posts
+ * Створення нового поста (з підтримкою фото).
+ */
+router.post('/posts', authenticateToken, upload.array('images', 5), async (req, res) => {
+    const { title, content, category } = req.body;
+    const authorId = req.user.userId;
+    const files = req.files; // Масив файлів
+
+    if (!title || !content) {
+        return res.status(400).json({ error: 'Необхідно вказати заголовок та контент.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Створення запису про пост
+        const postQuery = `
+            INSERT INTO posts (author_id, title, content, category)
+            VALUES ($1, $2, $3, $4)
+            RETURNING post_id, created_at;
+        `;
+        const postResult = await client.query(postQuery, [authorId, title, content, category || 'Загальна']);
+        const postId = postResult.rows[0].post_id;
+        const createdAt = postResult.rows[0].created_at;
+
+        const imageUrls = [];
+
+        // 2. Завантаження зображень (якщо є)
+        if (files && files.length > 0) {
+            // Паралельне завантаження на Cloudinary
+            const uploadPromises = files.map(file => uploadToCloudinary(file.buffer));
+            const uploadResults = await Promise.all(uploadPromises);
+
+            // Збір URL
+            uploadResults.forEach(result => imageUrls.push(result.secure_url));
+
+            // Збереження URL у БД
+            const imageInsertQuery = `
+                INSERT INTO post_images (post_id, image_url)
+                VALUES ($1, $2);
+            `;
+
+            // Послідовна вставка (можна оптимізувати через один INSERT, але так безпечніше для помилок)
+            for (const url of imageUrls) {
+                await client.query(imageInsertQuery, [postId, url]);
+            }
+        }
+
+        await client.query('COMMIT');
+
+        res.status(201).json({
+            message: 'Пост успішно створено.',
+            postId: postId,
+            created_at: createdAt,
+            images: imageUrls
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Помилка створення поста:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    } finally {
+        client.release();
+    }
+});
+
+/**
  * PUT /api/forum/posts/:id
- * Редагування поста.
+ * Редагування поста (Тільки текст).
+ * Для редагування фото потрібен окремий складніший логічний блок (видалення старих/додавання нових).
  */
 router.put('/posts/:id', authenticateToken, async (req, res) => {
     const postId = req.params.id;
@@ -141,7 +265,7 @@ router.put('/posts/:id', authenticateToken, async (req, res) => {
     const { title, content, category } = req.body;
 
     try {
-        // Перевірка прав (чи є користувач автором)
+        // Перевірка прав
         const checkQuery = 'SELECT author_id FROM posts WHERE post_id = $1';
         const checkResult = await pool.query(checkQuery, [postId]);
 
@@ -174,6 +298,9 @@ router.delete('/posts/:id', authenticateToken, async (req, res) => {
 
         if (checkResult.rows.length === 0) return res.status(404).json({ error: 'Пост не знайдено' });
         if (checkResult.rows[0].author_id !== userId) return res.status(403).json({ error: 'Немає прав' });
+
+        // ON DELETE CASCADE в схемі БД видалить також записи з post_images, comments, likes тощо.
+        // Зображення на Cloudinary залишаться (для їх видалення потрібен окремий виклик cloudinary API).
 
         await pool.query('DELETE FROM posts WHERE post_id = $1', [postId]);
         res.json({ message: 'Пост видалено' });
