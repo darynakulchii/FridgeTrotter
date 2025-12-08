@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Кабінет агента</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Основні стилі -->
+    <link rel="stylesheet" href="../css/main_page.css">
+    <link rel="stylesheet" href="../css/agent.css">
+</head>
+<body>
+
+<!-- === ХЕДЕР === -->
+<header class="main-header">
+    <div class="header-top">
+        <div class="header-left-group">
+            <button id="menu-toggle" class="header-btn"><i class="fas fa-bars"></i></button>
+            <a href="../index.html" class="header-title">FridgeTrotter</a>
+        </div>
+        <div class="header-right-group">
+            <button class="header-btn"><i class="fas fa-bell"></i><span class="badge-dot"></span></button>
+            <button class="header-btn"><i class="fas fa-envelope"></i><span class="badge-dot"></span></button>
+            <button class="header-btn"><i class="fas fa-user"></i></button>
+        </div>
+    </div>
+    <div class="header-nav-row">
+        <div class="nav-container">
+            <a href="../tours.html" class="nav-tab">Тури</a>
+            <a href="../forum.html" class="nav-tab">Форум</a>
+            <a href="../search_company.html" class="nav-tab">Пошук компанії</a>
+        </div>
+    </div>
+</header>
+
+<!-- === САЙДБАР (для мобільного меню) === -->
+<div class="sidebar-overlay"></div>
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h2>Меню</h2>
+        <button class="sidebar-close-btn">&times;</button>
+    </div>
+    <nav class="sidebar-nav">
+        <ul class="sidebar-menu-group">
+            <li><a href="../tours.html" class="sidebar-link"><i class="fas fa-plane"></i> Тури</a></li>
+            <li><a href="../forum.html" class="sidebar-link"><i class="fas fa-comments"></i> Форум</a></li>
+            <li><a href="../search_company.html" class="sidebar-link"><i class="fas fa-search"></i> Пошук компанії</a></li>
+        </ul>
+    </nav>
+</div>
+
+<main class="container-wide mt-8">
+    <h1 class="text-3xl font-bold mb-6 text-[#281822]">Кабінет турагента</h1>
+
+    <!-- Дані агенції -->
+    <div id="agency-section" class="bg-white rounded-xl p-6 shadow-sm border border-[#2D4952]/20 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-[#281822]">Дані агенції</h3>
+            <button id="register-btn" class="btn-solid btn-section">Зареєструвати агенцію</button>
+            <button id="edit-btn" class="btn-solid btn-section hidden">Редагувати профіль агенції</button>
+        </div>
+        <p id="agency-info" class="text-[#2D4952]">Агенція ще не зареєстрована.</p>
+    </div>
+
+    <!-- Ваші тури -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-[#2D4952]/20 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-[#281822]">Ваші тури</h3>
+            <button onclick="location.href='add_tour.html'" class="btn-solid btn-section"><i class="fas fa-plus mr-2"></i> Додати тур</button>
+        </div>
+        <div id="tours-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Тур-картки -->
+        </div>
+    </div>
+
+    <!-- Магніти -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-[#2D4952]/20 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-[#281822]">Магніти</h3>
+            <button id="add-magnet-btn" class="btn-solid btn-section"><i class="fas fa-plus mr-2"></i> Додати магніт</button>
+        </div>
+        <div id="magnets-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Магніт-картки -->
+        </div>
+    </div>
+
+    <!-- Публікації -->
+    <div class="bg-white rounded-xl p-6 shadow-sm border border-[#2D4952]/20 mb-6">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-xl font-bold text-[#281822]">Публікації</h3>
+            <button onclick="location.href='create_post.html'" class="btn-solid btn-section"><i class="fas fa-plus mr-2"></i> Створити публікацію</button>
+        </div>
+        <div id="posts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Публікації -->
+        </div>
+    </div>
+</main>
+
+<!-- МОДАЛКИ -->
+<div id="agency-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Реєстрація турагенції</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body flex flex-col gap-4">
+            <label>Лого агенції
+                <input type="file" id="agency-logo" accept="image/*">
+            </label>
+            <label>Назва агенції
+                <input type="text" id="agency-name" placeholder="Введіть назву">
+            </label>
+            <label>Код ЄДРПОУ / РНОКПП
+                <input type="text" id="agency-code" placeholder="Введіть код">
+            </label>
+            <button id="save-agency" class="btn-solid">Зберегти агенцію</button>
+        </div>
+    </div>
+</div>
+
+<div id="magnet-options-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Додати магніт</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body flex flex-col gap-4">
+            <button id="create-own-magnet" class="btn-solid">Створити власний</button>
+            <button id="order-design-magnet" class="btn-solid">Замовити дизайн</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+
+        // --- БУРГЕР ---
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.querySelector('.sidebar');
+        const sidebarOverlay = document.querySelector('.sidebar-overlay');
+        const sidebarCloseBtn = document.querySelector('.sidebar-close-btn');
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.add('is-open');
+            sidebarOverlay.classList.add('is-visible');
+        });
+        sidebarCloseBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        function closeSidebar() {
+            sidebar.classList.remove('is-open');
+            sidebarOverlay.classList.remove('is-visible');
+        }
+
+        // --- МОДАЛКА АГЕНЦІЇ ---
+        const registerBtn = document.getElementById('register-btn');
+        const editBtn = document.getElementById('edit-btn');
+        const agencyModal = document.getElementById('agency-modal');
+        const modalCloseBtn = agencyModal.querySelector('.modal-close-btn');
+        const saveAgencyBtn = document.getElementById('save-agency');
+        const agencyInfo = document.getElementById('agency-info');
+        let agencyRegistered = false;
+
+        registerBtn.addEventListener('click', () => {
+            agencyModal.classList.add('active');
+        });
+
+        modalCloseBtn.addEventListener('click', () => {
+            agencyModal.classList.remove('active');
+        });
+
+        saveAgencyBtn.addEventListener('click', () => {
+            const name = document.getElementById('agency-name').value.trim();
+            const code = document.getElementById('agency-code').value.trim();
+            const logo = document.getElementById('agency-logo').files[0];
+
+            if (!name || !code || !logo) {
+                alert('Будь ласка, заповніть всі поля.');
+                return;
+            }
+
+            agencyRegistered = true;
+            agencyModal.classList.remove('active');
+            updateAgencyButtons();
+        });
+
+        function updateAgencyButtons() {
+            if (agencyRegistered) {
+                registerBtn.classList.add('hidden');
+                editBtn.classList.remove('hidden');
+                agencyInfo.textContent = 'Агенція зареєстрована. Можна редагувати дані.';
+            } else {
+                registerBtn.classList.remove('hidden');
+                editBtn.classList.add('hidden');
+                agencyInfo.textContent = 'Агенція ще не зареєстрована.';
+            }
+        }
+
+        updateAgencyButtons();
+
+        // --- МОДАЛКА МАГНІТУ ---
+        const addMagnetBtn = document.getElementById('add-magnet-btn');
+        const magnetModal = document.getElementById('magnet-options-modal');
+        const magnetCloseBtn = magnetModal.querySelector('.modal-close-btn');
+
+        addMagnetBtn.addEventListener('click', () => {
+            magnetModal.classList.add('active');
+        });
+
+        magnetCloseBtn.addEventListener('click', () => {
+            magnetModal.classList.remove('active');
+        });
+
+        document.getElementById('create-own-magnet').addEventListener('click', () => {
+            window.location.href = 'create_magnet.html';
+        });
+        document.getElementById('order-design-magnet').addEventListener('click', () => {
+            window.location.href = 'order_magnet.html';
+        });
+
+    });
+</script>
+
+</body>
+</html>
