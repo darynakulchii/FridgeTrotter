@@ -11,7 +11,7 @@ router.get('/ads', async (req, res) => {
     const { search, type, sort } = req.query;
     let query = `
         SELECT
-            ca.ad_id, ca.destination_country, ca.start_date, ca.end_date, ca.min_group_size, ca.max_group_size, ca.description, ca.created_at,
+            ca.ad_id, ca.user_id, ca.destination_country, ca.start_date, ca.end_date, ca.min_group_size, ca.max_group_size, ca.description, ca.created_at,
             up.first_name, up.last_name, up.profile_image_url AS author_avatar,
             EXTRACT(YEAR FROM age(up.date_of_birth)) AS author_age,
             (SELECT array_agg(t.tag_name) FROM companion_ad_tags cat JOIN tags t ON cat.tag_id = t.tag_id WHERE cat.ad_id = ca.ad_id) AS tags

@@ -40,7 +40,7 @@ router.get('/posts', async (req, res) => {
     // Основний запит з агрегацією зображень
     let query = `
         SELECT
-            p.post_id, p.title, p.content, p.category, p.created_at, p.likes_count,
+            p.post_id, p.author_id, p.title, p.content, p.category, p.created_at, p.likes_count,
             up.first_name, up.last_name, up.profile_image_url AS author_avatar,
             (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count,
             COALESCE(

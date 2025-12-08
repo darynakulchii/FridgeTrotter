@@ -47,7 +47,6 @@ function setupSocketIO() {
         } else {
             // Якщо повідомлення в іншій розмові - оновлюємо список розмов
             loadConversations();
-            // Тут можна додати візуальне сповіщення (червону крапку)
         }
     });
 }
@@ -59,7 +58,6 @@ async function loadConversations() {
     const listContainer = document.getElementById('conversations-list');
 
     try {
-        // Використовуємо правильний шлях для FridgeTrotter API
         const response = await fetch(`${API_URL}/chat/conversations`, { headers: getHeaders() });
         const data = await response.json();
 
@@ -102,16 +100,15 @@ async function loadConversations() {
     }
 }
 
-// Відкриття конкретної розмови
+// Відкриття конкретної розмови (глобальна функція для onclick)
 window.openConversation = async (conversationId, partnerId, partnerName, partnerAvatar) => {
     currentConversationId = conversationId;
     currentReceiverId = partnerId;
 
     // Оновлення UI
     document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('active'));
-    // Знаходимо елемент, на який клікнули (приблизний пошук, бо onclick вішається на рядок)
-    // В ідеалі краще через dataset, але поки так:
-    loadConversations(); // Перезавантажимо, щоб оновити клас active коректно
+    // Перезавантажуємо список, щоб коректно підсвітити активний елемент
+    loadConversations();
 
     // Оновлення хедера чату
     const header = document.getElementById('chat-header');
@@ -209,16 +206,13 @@ function setupMessageForm() {
                 headers: getHeaders(),
                 body: JSON.stringify({
                     receiver_id: currentReceiverId,
-                    content: text // Зверніть увагу: бекенд FridgeTrotter очікує 'content', а не 'message_body' в create endpoint?
-                    // Перевірив ваш код бекенду: там `const { receiver_id, content } = req.body;`
-                    // Тому поле має називатись 'content'
+                    content: text
                 })
             });
 
             if (!response.ok) throw new Error('Failed to send');
 
             // Якщо це було перше повідомлення в новій розмові - оновити список
-            // (можна перевірити, чи є currentConversationId)
             loadConversations();
 
         } catch (error) {
@@ -239,42 +233,43 @@ async function checkUrlParams() {
     const userIdToChat = urlParams.get('user_id');
 
     if (userIdToChat && userIdToChat != currentUser.userId) {
-        // Спробуємо знайти існуючу розмову в списку (після його завантаження)
-        // Але оскільки loadConversations асинхронний, краще зробити прямий запит або імітацію
-
         console.log("Opening chat with user:", userIdToChat);
 
-        // Отримуємо інфо про юзера, щоб красиво відобразити хедер, навіть якщо розмови ще немає
         try {
-            const res = await fetch(`${API_URL}/user/${userIdToChat}/public-profile`); // Перевірте, чи є такий роут у вашому user.js (у StudentHousing він був)
-            // Якщо немає роуту user/:id, використайте public-profile логіку
-            // У вашому коді бекенду `user.js` є `/api/users/:id/public-profile`
+            // Отримуємо інфо про юзера, щоб красиво відобразити хедер, навіть якщо розмови ще немає
+            const response = await fetch(`${API_URL}/user/${userIdToChat}/public-profile`, { headers: getHeaders() });
 
-            // Виправлення URL
-            const publicProfileRes = await fetch(`${API_URL.replace('/api', '')}/api/users/${userIdToChat}/public-profile`);
-
-            if (publicProfileRes.ok) {
-                const user = await publicProfileRes.json();
+            if (response.ok) {
+                const user = await response.json();
                 const name = `${user.first_name} ${user.last_name}`;
 
                 // Встановлюємо ID отримувача
                 currentReceiverId = userIdToChat;
+                currentConversationId = null; // Поки що null, створиться при відправці повідомлення
 
-                // Оновлюємо хедер
+                // Оновлюємо Хедер чату
                 const header = document.getElementById('chat-header');
+                let avatarHtml = user.profile_image_url
+                    ? `<img src="${user.profile_image_url}" class="w-10 h-10 rounded-full object-cover">`
+                    : `<div class="w-10 h-10 rounded-full bg-[#2D4952] flex items-center justify-center text-white font-bold">${user.first_name[0]}</div>`;
+
                 header.innerHTML = `
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-[#2D4952] flex items-center justify-center text-white font-bold">${user.first_name[0]}</div>
+                        ${avatarHtml}
                         <h3 class="font-bold text-[#281822] text-lg">${name}</h3>
                     </div>
                 `;
 
+                // Показуємо форму і очищаємо зону повідомлень
                 document.getElementById('message-form').style.display = 'flex';
-                document.getElementById('messages-container').innerHTML = '<p class="text-center text-gray-400 mt-10">Це початок вашої історії повідомлень.</p>';
+                document.getElementById('messages-container').innerHTML =
+                    '<div class="h-full flex flex-col items-center justify-center text-gray-400"><i class="fas fa-paper-plane text-4xl mb-3"></i><p>Напишіть перше повідомлення!</p></div>';
 
-                // Важливо: currentConversationId тут може бути null, якщо розмови ще немає.
-                // Бекенд створить її при першому повідомленні.
+                // Знімаємо виділення з інших чатів у списку
+                document.querySelectorAll('.conversation-item').forEach(el => el.classList.remove('active'));
             }
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error('Error fetching user for chat:', e);
+        }
     }
 }

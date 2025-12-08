@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // === ЛОГІКА СТВОРЕННЯ ПОСТА ===
 function initCreatePostModal() {
-    const createBtn = document.getElementById('create-post-btn'); // Переконайтесь, що додали ID в HTML
+    const createBtn = document.getElementById('create-post-btn');
 
     if (createBtn) {
         createBtn.addEventListener('click', () => {
@@ -22,7 +22,7 @@ function initCreatePostModal() {
                 window.location.href = 'login.html';
                 return;
             }
-            // Перенаправлення на нову сторінку замість відкриття модалки
+            // Перенаправлення на сторінку створення
             window.location.href = 'create_post.html';
         });
     }
@@ -31,7 +31,7 @@ function initCreatePostModal() {
 // === ЗАВАНТАЖЕННЯ ПОСТІВ ===
 async function loadPosts() {
     const container = document.getElementById('forum-posts-container');
-    // ... (код отримання параметрів пошуку без змін) ...
+
     const search = document.getElementById('forum-search')?.value || '';
     const category = document.getElementById('forum-category')?.value || '';
     const sort = document.getElementById('forum-sort')?.value || '';
@@ -80,29 +80,39 @@ async function loadPosts() {
                 imagesHtml += `</div>`;
             }
 
+            // Основна HTML картка поста
             const html = `
                 <div class="forum-card flex flex-col h-full">
                     <div class="flex justify-between mb-3">
-                        <div class="flex items-center gap-3">
-                            <div class="avatar-circle bg-[#281822]">
-                                ${post.author_avatar ? `<img src="${post.author_avatar}" class="w-full h-full object-cover rounded-full">` : getInitials(post.first_name, post.last_name)}
+                        <a href="other_user_profile.html?user_id=${post.author_id}" class="flex items-center gap-3 group text-decoration-none">
+                            <div class="avatar-circle bg-[#281822] group-hover:opacity-80 transition">
+                                ${post.author_avatar
+                ? `<img src="${post.author_avatar}" class="w-full h-full object-cover rounded-full">`
+                : getInitials(post.first_name, post.last_name)}
                             </div>
                             <div class="flex flex-col">
-                                <span class="font-bold text-[#281822] text-sm">${post.first_name} ${post.last_name}</span>
+                                <span class="font-bold text-[#281822] text-sm group-hover:text-[#48192E] group-hover:underline transition">
+                                    ${post.first_name} ${post.last_name}
+                                </span>
                                 <span class="text-gray-400 text-xs">${new Date(post.created_at).toLocaleDateString()}</span>
                             </div>
-                        </div>
+                        </a>
                         <span class="tag-pill">${post.category || 'Загальна'}</span>
                     </div>
+                    
                     <div class="flex-grow">
                         <h3 class="font-bold text-lg mb-2 text-[#281822] hover:text-[#48192E] cursor-pointer transition">${post.title}</h3>
                         <p class="text-gray-600 text-sm mb-4 leading-relaxed line-clamp-3">${post.content}</p>
-                        <!-- Вставляємо блок із зображеннями -->
                         ${imagesHtml}
                     </div>
-                    <div class="flex gap-6 border-t border-gray-100 pt-3 mt-auto">
+                    
+                    <div class="flex gap-6 border-t border-gray-100 pt-3 mt-auto items-center">
                         <span class="action-icon cursor-pointer hover:text-[#48192E]" onclick="toggleLike(${post.post_id})"><i class="far fa-thumbs-up"></i> ${post.likes_count}</span>
                         <span class="action-icon"><i class="far fa-comment-alt"></i> ${post.comments_count || 0}</span>
+                        
+                        <button onclick="window.location.href='chat.html?user_id=${post.author_id}'" class="ml-auto text-xs text-[#2D4952] font-bold hover:underline flex items-center gap-1">
+                            <i class="far fa-envelope"></i> Написати
+                        </button>
                     </div>
                 </div>
             `;
@@ -111,16 +121,16 @@ async function loadPosts() {
 
     } catch (error) {
         console.error('Error loading posts:', error);
+        container.innerHTML = '<p class="text-red-500 col-span-2 text-center">Помилка завантаження даних.</p>';
     }
 }
 
-// ... (решта функцій getInitials, debounce, toggleLike без змін) ...
 // Допоміжна функція для ініціалів
 function getInitials(first, last) {
     return (first?.[0] || '') + (last?.[0] || '');
 }
 
-// Функція затримки пошуку
+// Функція затримки пошуку (debounce)
 function debounce(func, timeout = 300){
     let timer;
     return (...args) => {
@@ -129,7 +139,7 @@ function debounce(func, timeout = 300){
     };
 }
 
-// Функція лайку (проста реалізація)
+// Функція лайку
 window.toggleLike = async (postId) => {
     const token = localStorage.getItem('token');
     if(!token) return alert('Увійдіть, щоб ставити лайки');
@@ -139,13 +149,13 @@ window.toggleLike = async (postId) => {
             method: 'POST',
             headers: getHeaders()
         });
-        loadPosts(); // Оновлюємо лічильник
+        // Перезавантажуємо пости, щоб оновити лічильник
+        // (Для кращого UX можна оновлювати тільки лічильник у DOM, але loadPosts надійніше)
+        loadPosts();
     } catch(e) { console.error(e); }
 };
 
-// (Опціонально) Функція для відкриття зображення на весь екран
+// Функція для відкриття зображення (можна додати повноцінну модалку)
 window.openImageModal = (url) => {
-    // Можна реалізувати просту модалку для перегляду
-    console.log('Open image:', url);
-    // window.open(url, '_blank');
+    window.open(url, '_blank');
 };
