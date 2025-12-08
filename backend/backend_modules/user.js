@@ -313,4 +313,63 @@ router.delete('/follow/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// ==========================================
+// 5. ПУБЛІЧНИЙ ПРОФІЛЬ (ПЕРЕГЛЯД ІНШОГО КОРИСТУВАЧА)
+// ==========================================
+
+// GET /api/user/:id/public-profile
+router.get('/:id/public-profile', async (req, res) => {
+    const targetUserId = req.params.id;
+
+    // Спробуємо дізнатися ID поточного юзера, якщо він залогінений (через хедера),
+    // щоб перевірити статус підписки. Але це не блокує перегляд.
+    let currentUserId = null;
+    const authHeader = req.headers['authorization'];
+    if (authHeader) {
+        const token = authHeader.split(' ')[1];
+        try {
+            const jwt = require('jsonwebtoken'); // Переконайтесь, що jwt підключено вгорі файлу або тут
+            // Імпортуйте JWT_SECRET з auth_middleware або process.env
+            const { JWT_SECRET } = require('../auth_middleware');
+            const decoded = jwt.verify(token, JWT_SECRET);
+            currentUserId = decoded.userId;
+        } catch (e) { /* ігноруємо помилку токена для публічного перегляду */ }
+    }
+
+    const query = `
+        SELECT 
+            u.user_id, u.registration_date,
+            up.first_name, up.last_name, up.location, up.bio, up.travel_interests, up.profile_image_url,
+            us.countries_visited, us.cities_visited, us.followers_count,
+            fs.fridge_color, fs.is_public AS fridge_is_public,
+            (SELECT COUNT(*) FROM user_followers WHERE follower_id = $2 AND following_id = $1) AS is_following
+        FROM users u
+        LEFT JOIN user_profiles up ON u.user_id = up.user_id
+        LEFT JOIN user_stats us ON u.user_id = us.user_id
+        LEFT JOIN fridge_settings fs ON u.user_id = fs.user_id
+        WHERE u.user_id = $1;
+    `;
+
+    try {
+        const result = await pool.query(query, [targetUserId, currentUserId || -1]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Користувача не знайдено.' });
+        }
+
+        const user = result.rows[0];
+
+        // Приховуємо локацію, якщо юзер це налаштував (можна додати перевірку is_location_public)
+        // Для спрощення повертаємо як є.
+
+        res.json({
+            ...user,
+            is_following: parseInt(user.is_following) > 0
+        });
+    } catch (error) {
+        console.error('Помилка отримання публічного профілю:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
 module.exports = { router };
