@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Знайти компанію - FridgeTrotter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/main_page.css">
+</head>
+<body class="bg-[#F3F4F6]">
+
+<div class="container-wide py-8">
+    <button onclick="history.back()" class="flex items-center gap-2 text-[#48192E] font-bold mb-6 hover:underline">
+        <i class="fas fa-arrow-left"></i> Назад
+    </button>
+
+    <div class="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-md">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="bg-[#2D4952] text-white p-3 rounded-full">
+                <i class="fas fa-user-friends text-xl"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-[#281822]">Створити оголошення</h1>
+        </div>
+
+        <p class="text-gray-500 mb-8">Заповніть форму, щоб знайти ідеальну компанію для вашої наступної подорожі.</p>
+
+        <form id="create-ad-form" class="space-y-6">
+            <!-- Країна -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Куди плануєте?</label>
+                <div class="relative">
+                    <i class="fas fa-map-marker-alt absolute left-3 top-3.5 text-gray-400"></i>
+                    <input type="text" id="ad-country" class="w-full border p-3 pl-10 rounded-lg focus:border-[#48192E] outline-none" required placeholder="Країна або місто (напр. Італія, Рим)">
+                </div>
+            </div>
+
+            <!-- Дати -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-[#281822]">Дата початку</label>
+                    <input type="date" id="ad-start-date" class="w-full border p-3 rounded-lg focus:border-[#48192E] outline-none" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-[#281822]">Дата завершення</label>
+                    <input type="date" id="ad-end-date" class="w-full border p-3 rounded-lg focus:border-[#48192E] outline-none" required>
+                </div>
+            </div>
+
+            <!-- Розмір групи -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Бажаний розмір групи (осіб)</label>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="relative">
+                        <span class="absolute left-3 top-3.5 text-gray-400 text-sm">Від</span>
+                        <input type="number" id="ad-min-size" min="1" value="1" class="w-full border p-3 pl-10 rounded-lg focus:border-[#48192E] outline-none">
+                    </div>
+                    <div class="relative">
+                        <span class="absolute left-3 top-3.5 text-gray-400 text-sm">До</span>
+                        <input type="number" id="ad-max-size" min="1" value="4" class="w-full border p-3 pl-10 rounded-lg focus:border-[#48192E] outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Теги -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Теги (через кому)</label>
+                <input type="text" id="ad-tags" class="w-full border p-3 rounded-lg focus:border-[#48192E] outline-none" placeholder="Пляж, Гори, Бюджетно, Гастротур">
+                <p class="text-xs text-gray-500 mt-1">Це допоможе іншим знайти ваше оголошення за інтересами.</p>
+            </div>
+
+            <!-- Опис -->
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Деталі подорожі</label>
+                <textarea id="ad-description" rows="5" class="w-full border p-3 rounded-lg focus:border-[#48192E] outline-none" required placeholder="Розкажіть про свої плани, бюджет та кого ви шукаєте..."></textarea>
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 flex justify-end gap-4">
+                <button type="button" onclick="history.back()" class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-700">Скасувати</button>
+                <button type="submit" class="btn-solid px-8 bg-[#2D4952] hover:bg-[#1a2e33]">Створити оголошення</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script type="module" src="../js/modules/create_ad.js"></script>
+</body>
+</html>

@@ -3,12 +3,13 @@ import { API_URL, getHeaders } from '../api-config.js';
 /**
  * profile.js
  * Повна реалізація логіки профілю з інтеграцією бекенду.
+ * Виправлено: Створення поста перенаправляє на окрему сторінку.
  */
 
 // Отримуємо поточного користувача з LocalStorage
 const currentUser = JSON.parse(localStorage.getItem('user'));
 
-// Змінна для збереження стану модалки поста
+// Змінна для збереження стану модалки (використовується лише для РЕДАГУВАННЯ)
 let editingPostId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    // Інжектуємо HTML для модалки створення/редагування поста
+    // Інжектуємо HTML для модалки (залишаємо для редагування постів)
     injectPostModal();
 
     initTabs();
@@ -28,14 +29,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* =========================================
-   0. HELPER: Модалка для постів
+   0. HELPER: Модалка для постів (Тільки редагування)
    ========================================= */
 function injectPostModal() {
     const modalHTML = `
         <div id="post-modal" class="modal-backdrop">
             <div class="modal-content max-w-lg">
                 <div class="modal-header">
-                    <h3 class="text-xl font-bold text-[#281822]" id="post-modal-title">Створити пост</h3>
+                    <h3 class="text-xl font-bold text-[#281822]" id="post-modal-title">Редагувати пост</h3>
                     <button class="modal-close-btn" onclick="closePostModal()">&times;</button>
                 </div>
                 <div class="modal-body space-y-4">
@@ -56,7 +57,7 @@ function injectPostModal() {
                         <label class="block text-sm font-medium mb-1 text-[#281822]">Текст</label>
                         <textarea id="post-content" rows="5" class="w-full border p-2 rounded-md focus:border-[#48192E] outline-none"></textarea>
                     </div>
-                    <button id="save-post-btn" class="btn-burgundy-solid w-full">Зберегти</button>
+                    <button id="save-post-btn" class="btn-burgundy-solid w-full">Зберегти зміни</button>
                 </div>
             </div>
         </div>
@@ -64,18 +65,25 @@ function injectPostModal() {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
     // Прив'язка події
-    document.getElementById('save-post-btn').addEventListener('click', savePost);
+    const saveBtn = document.getElementById('save-post-btn');
+    if (saveBtn) saveBtn.addEventListener('click', savePost);
 }
 
+// === ЗМІНЕНО: Відкриття сторінки створення поста ===
 window.openCreatePostModal = () => {
-    editingPostId = null;
-    document.getElementById('post-modal-title').innerText = 'Створити пост';
-    document.getElementById('post-title').value = '';
-    document.getElementById('post-content').value = '';
-    document.getElementById('post-category').value = 'Поради';
-    document.getElementById('post-modal').classList.add('active');
+    const token = localStorage.getItem('token');
+
+    // Перевірка авторизації
+    if (!token) {
+        window.location.href = 'login.html';
+        return;
+    }
+
+    // Перенаправлення на нову сторінку
+    window.location.href = 'create_post.html';
 };
 
+// Редагування залишаємо в модальному вікні
 window.openEditPostModal = (id, title, content, category) => {
     editingPostId = id;
     document.getElementById('post-modal-title').innerText = 'Редагувати пост';
@@ -127,7 +135,7 @@ async function loadUserProfile() {
 
         const data = await response.json();
         fillProfileData(data);
-        fillSettingsData(data); // Заповнюємо також вкладку налаштувань
+        fillSettingsData(data);
     } catch (error) {
         console.error(error);
     }
@@ -144,7 +152,7 @@ function fillProfileData(data) {
         if (inputs[1]) inputs[1].value = data.email || '';
         if (inputs[2]) inputs[2].value = data.location || '';
         if (inputs[3]) inputs[3].value = data.date_of_birth ? data.date_of_birth.split('T')[0] : '';
-        // inputs[4] - сайт, пропускаємо
+        // inputs[4] - сайт
         if (textarea) textarea.value = data.bio || '';
         if (inputs[5]) inputs[5].value = data.travel_interests || '';
 
@@ -174,7 +182,6 @@ function fillProfileData(data) {
         colorOptions.forEach(opt => {
             const preview = opt.querySelector('.color-preview');
             opt.classList.remove('selected');
-            // Грубе порівняння кольорів, оскільки браузер конвертує в RGB
             if (preview.style.backgroundColor && data.fridge_color && preview.style.backgroundColor.includes(hexToRgb(data.fridge_color))) {
                 opt.classList.add('selected');
             } else if (data.fridge_color === '#f3f4f6' && !preview.style.backgroundColor) {
@@ -182,7 +189,6 @@ function fillProfileData(data) {
             }
         });
 
-        // Встановлюємо активний клас якщо збігається hex (для точності) або просто перший
         if(!settingsTab.querySelector('.color-option.selected')) {
             colorOptions[0].classList.add('selected');
         }
@@ -198,29 +204,22 @@ function fillProfileData(data) {
     }
 }
 
-// Додаткова функція для вкладки "Налаштування" (Конфіденційність)
 function fillSettingsData(data) {
     const mainSettingsTab = document.getElementById('tab-settings');
     if (!mainSettingsTab) return;
 
-    // Шукаємо блок "Конфіденційність" (третій settings-card)
     const cards = mainSettingsTab.querySelectorAll('.settings-card');
     if(cards.length >= 3) {
         const privacyCard = cards[2];
         const switches = privacyCard.querySelectorAll('.toggle-switch');
 
-        // 1. Публічний профіль (у нас немає поля в БД, емулюємо через location)
-        // 2. Email (is_email_public)
         if(switches[1]) toggleSwitch(switches[1], data.is_email_public);
-        // 3. Місцезнаходження (is_location_public)
         if(switches[2]) toggleSwitch(switches[2], data.is_location_public);
     }
 }
 
-// Helper hex to rgb simpler
 function hexToRgb(hex) {
-    // simple check to avoid complex logic, not strict
-    return hex.replace('#', ''); // dummy
+    return hex.replace('#', '');
 }
 
 function toggleSwitch(element, isActive) {
@@ -235,7 +234,6 @@ async function initFridge() {
     const fridgeDoor = document.getElementById('fridge-door');
     const panel = document.querySelector('.magnet-panel-card');
 
-    // Завантаження доступних
     try {
         const response = await fetch(`${API_URL}/fridge/magnets/available`, { headers: getHeaders() });
         const data = await response.json();
@@ -256,7 +254,6 @@ async function initFridge() {
 
     loadUserFridgeLayout();
 
-    // Колір пікер
     const colorOptions = document.querySelectorAll('.color-option');
     colorOptions.forEach(opt => {
         opt.addEventListener('click', () => {
@@ -267,7 +264,6 @@ async function initFridge() {
         });
     });
 
-    // Тумблери UI
     document.querySelectorAll('.toggle-switch').forEach(sw => {
         sw.addEventListener('click', () => {
             sw.classList.toggle('active');
@@ -474,7 +470,8 @@ async function loadMyPosts() {
     // Прив'язка кнопки "Створити новий пост"
     const createBtn = header.querySelector('button');
     if(createBtn) {
-        createBtn.onclick = () => window.openCreateCreatePostModal ? window.openCreatePostModal() : null;
+        // === ВИПРАВЛЕНО: Правильний виклик функції перенаправлення ===
+        createBtn.onclick = () => window.openCreatePostModal();
     }
 
     try {
@@ -507,9 +504,12 @@ async function savePost() {
         let url = `${API_URL}/forum/posts`;
         let method = 'POST';
 
+        // Тут логіка тільки для редагування, бо створення тепер на окремій сторінці
         if (editingPostId) {
             url = `${API_URL}/forum/posts/${editingPostId}`;
             method = 'PUT';
+        } else {
+            // Теоретично цей блок тепер не має викликатись з модалки, але про всяк випадок
         }
 
         const res = await fetch(url, {
@@ -535,10 +535,9 @@ window.deletePost = async (id) => {
     } catch(e) { console.error(e); }
 };
 
-// Завантаження збережених турів
 async function loadSavedTours() {
     const container = document.querySelector('#tab-saved-tours .grid');
-    const clearBtn = document.querySelector('#tab-saved-tours button'); // "Очистити всі"
+    const clearBtn = document.querySelector('#tab-saved-tours button');
 
     if(clearBtn) {
         clearBtn.onclick = async () => {
@@ -585,7 +584,7 @@ async function loadSavedTours() {
 async function loadSavedPosts() {
     const container = document.querySelector('#tab-saved-posts');
     const header = container.querySelector('.flex.justify-between');
-    const clearBtn = header.querySelector('button'); // Очистити всі
+    const clearBtn = header.querySelector('button');
 
     if(clearBtn) {
         clearBtn.onclick = async () => {
@@ -635,7 +634,6 @@ function initContentTabs() {
 }
 
 function createPostCardHTML(post, isMyPost) {
-    // Екранування для передачі в функцію onclick
     const safeTitle = post.title.replace(/"/g, '&quot;');
     const safeContent = post.content.replace(/"/g, '&quot;');
 
@@ -689,7 +687,6 @@ function initSettingsForms() {
         if (saveBtn) {
             saveBtn.addEventListener('click', async () => {
                 const data = getProfileFormData();
-                // Збираємо також дані з холодильника та загальних налаштувань, щоб не затерти
                 const settingsTab = document.getElementById('tab-fridge-settings');
                 const selectedColorEl = settingsTab?.querySelector('.color-option.selected .color-preview');
                 const switches = settingsTab?.querySelectorAll('.toggle-switch');
@@ -701,7 +698,6 @@ function initSettingsForms() {
                     fridgeColor: selectedColorEl?.style.backgroundColor || '#f3f4f6',
                     fridgeIsPublic: switches?.[0]?.classList.contains('active') ?? true,
                     fridgeAllowComments: switches?.[1]?.classList.contains('active') ?? true,
-                    // Додаткові налаштування з таба Settings
                     isEmailPublic: privacySwitches?.[1]?.classList.contains('active') ?? false,
                     isLocationPublic: privacySwitches?.[2]?.classList.contains('active') ?? true
                 };
@@ -739,13 +735,11 @@ function initSettingsForms() {
         }
     }
 
-    // 2. Вкладка "Налаштування" (Пароль, Видалення, Приватність)
+    // 2. Вкладка "Налаштування"
     const settingsTab = document.getElementById('tab-settings');
     if (settingsTab) {
-        // Кнопка збереження внизу "Налаштувань" (там де приватість)
         const saveBtns = settingsTab.querySelectorAll('.btn-burgundy-solid');
 
-        // Перша кнопка - зміна пароля
         if (saveBtns[0]) {
             saveBtns[0].addEventListener('click', async () => {
                 const inputs = settingsTab.querySelectorAll('input[type="password"]');
@@ -772,12 +766,8 @@ function initSettingsForms() {
             });
         }
 
-        // Друга кнопка - збереження налаштувань (внизу)
         if (saveBtns[1]) {
             saveBtns[1].addEventListener('click', async () => {
-                // Викликаємо ту саму логіку, що і в InfoTab, але ініціюємо звідси
-                // Для спрощення, просто емулюємо клік на кнопці в InfoTab, якщо дані там актуальні,
-                // або дублюємо логіку збору даних. Краще продублювати виклик PUT.
                 const infoTabSaveBtn = document.querySelector('#tab-info .btn-burgundy-solid');
                 if(infoTabSaveBtn) infoTabSaveBtn.click();
             });

@@ -10,137 +10,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('forum-sort')?.addEventListener('change', loadPosts);
 });
 
-// Зберігатимемо вибрані файли тут, щоб мати можливість їх видаляти перед відправкою
-let selectedFiles = [];
-
 // === ЛОГІКА СТВОРЕННЯ ПОСТА ===
 function initCreatePostModal() {
-    const createBtn = document.getElementById('create-post-btn');
-    const modal = document.getElementById('create-post-modal');
-    const closeBtn = document.getElementById('close-post-modal');
-    const cancelBtn = document.getElementById('cancel-post-btn');
-    const form = document.getElementById('create-post-form');
-    const imageInput = document.getElementById('new-post-images');
-    const previewContainer = document.getElementById('image-preview-container');
+    const createBtn = document.getElementById('create-post-btn'); // Переконайтесь, що додали ID в HTML
 
-    if (!createBtn || !modal) return;
-
-    // Відкриття
-    createBtn.addEventListener('click', () => {
-        const token = localStorage.getItem('token');
-        if (!token) {
-            alert('Будь ласка, увійдіть у свій акаунт, щоб створити пост.');
-            window.location.href = 'login.html';
-            return;
-        }
-        modal.classList.add('active');
-    });
-
-    // Закриття та очищення форми
-    const closeModalFunc = () => {
-        modal.classList.remove('active');
-        form.reset();
-        selectedFiles = [];
-        previewContainer.innerHTML = ''; // Очистити прев'ю
-    };
-
-    if(closeBtn) closeBtn.addEventListener('click', closeModalFunc);
-    if(cancelBtn) cancelBtn.addEventListener('click', closeModalFunc);
-    window.addEventListener('click', (e) => { if (e.target === modal) closeModalFunc(); });
-
-    // Обробка вибору файлів (Прев'ю)
-    if (imageInput) {
-        imageInput.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-
-            // Перевірка на кількість
-            if (selectedFiles.length + files.length > 5) {
-                alert('Максимальна кількість фото: 5');
+    if (createBtn) {
+        createBtn.addEventListener('click', () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Будь ласка, увійдіть у свій акаунт, щоб створити пост.');
+                window.location.href = 'login.html';
                 return;
             }
-
-            files.forEach(file => {
-                // Перевірка типу (хоча accept в HTML теж є)
-                if (!file.type.startsWith('image/')) return;
-
-                selectedFiles.push(file);
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const preview = document.createElement('div');
-                    preview.className = 'relative w-full h-20 rounded-md overflow-hidden group border border-gray-200';
-                    preview.innerHTML = `
-                        <img src="${e.target.result}" class="w-full h-full object-cover">
-                        <button type="button" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-xs" data-name="${file.name}">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    `;
-
-                    // Кнопка видалення прев'ю
-                    preview.querySelector('button').addEventListener('click', function() {
-                        const fileName = this.getAttribute('data-name');
-                        selectedFiles = selectedFiles.filter(f => f.name !== fileName);
-                        preview.remove();
-                    });
-
-                    previewContainer.appendChild(preview);
-                };
-                reader.readAsDataURL(file);
-            });
-            // Скидаємо значення інпуту, щоб можна було вибрати той самий файл повторно, якщо його видалили
-            imageInput.value = '';
-        });
-    }
-
-
-    // Відправка форми (FormData)
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerText;
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Завантаження...';
-
-            // Використовуємо FormData для multipart/form-data
-            const formData = new FormData();
-            formData.append('title', document.getElementById('new-post-title').value);
-            formData.append('category', document.getElementById('new-post-category').value);
-            formData.append('content', document.getElementById('new-post-content').value);
-
-            // Додаємо всі вибрані файли
-            selectedFiles.forEach(file => {
-                formData.append('images', file); // Ключ 'images' має співпадати з multer на бекенді
-            });
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/forum/posts`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                        // Content-Type не вказуємо, браузер сам встановить multipart/form-data з boundary
-                    },
-                    body: formData
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    alert('Пост успішно створено!');
-                    closeModalFunc();
-                    loadPosts();
-                } else {
-                    alert(data.error || 'Помилка створення поста');
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Помилка з\'єднання');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = originalText;
-            }
+            // Перенаправлення на нову сторінку замість відкриття модалки
+            window.location.href = 'create_post.html';
         });
     }
 }
