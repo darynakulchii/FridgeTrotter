@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Основні стилі -->
     <link rel="stylesheet" href="../css/main_page.css">
     <link rel="stylesheet" href="../css/agent.css">
 </head>
@@ -19,7 +18,6 @@
 <header class="main-header">
     <div class="header-top">
         <div class="header-left-group">
-            <!-- Глобальний бургер -->
             <button id="menu-toggle-btn" class="header-btn"><i class="fas fa-bars"></i></button>
             <a href="main_page_tours.html" class="header-title">FridgeTrotter</a>
         </div>
@@ -31,14 +29,14 @@
     </div>
     <div class="header-nav-row">
         <div class="nav-container">
-            <a href="../tours.html" class="nav-tab">Тури</a>
-            <a href="../forum.html" class="nav-tab">Форум</a>
-            <a href="../search_company.html" class="nav-tab">Пошук компанії</a>
+            <a href="#" id="nav-tours" class="nav-tab">Тури</a>
+            <a href="#" id="nav-forum" class="nav-tab">Форум</a>
+            <a href="#" id="nav-companies" class="nav-tab">Пошук компанії</a>
         </div>
     </div>
 </header>
 
-<!-- === САЙДБАР (для мобільного меню) === -->
+<!-- === САЙДБАР === -->
 <div id="sidebar-overlay" class="sidebar-overlay"></div>
 <div id="sidebar" class="sidebar">
     <div class="sidebar-header">
@@ -47,9 +45,9 @@
     </div>
     <nav class="sidebar-nav">
         <ul class="sidebar-menu-group">
-            <li><a href="../tours.html" class="sidebar-link"><i class="fas fa-plane"></i> Тури</a></li>
-            <li><a href="../forum.html" class="sidebar-link"><i class="fas fa-comments"></i> Форум</a></li>
-            <li><a href="../search_company.html" class="sidebar-link"><i class="fas fa-search"></i> Пошук компанії</a></li>
+            <li><a href="main_page_tours.html" class="sidebar-link"><i class="fas fa-plane"></i> Тури</a></li>
+            <li><a href="forum.html" class="sidebar-link"><i class="fas fa-comments"></i> Форум</a></li>
+            <li><a href="companions.html" class="sidebar-link"><i class="fas fa-search"></i> Пошук компанії</a></li>
         </ul>
     </nav>
 </div>
@@ -71,7 +69,7 @@
     <div class="bg-white rounded-xl p-6 shadow-sm border border-[#2D4952]/20 mb-6">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold text-[#281822]">Ваші тури</h3>
-            <button onclick="location.href='add_tour.html'" class="btn-solid btn-section"><i class="fas fa-plus mr-2"></i> Додати тур</button>
+            <button id="add-tour-btn" class="btn-solid btn-section"><i class="fas fa-plus mr-2"></i> Додати тур</button>
         </div>
         <div id="tours-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </div>
@@ -89,7 +87,7 @@
     <div class="bg-white rounded-xl p-6 shadow-sm border border-[#2D4952]/20 mb-6">
         <div class="flex justify-between items-center mb-4">
             <h3 class="text-xl font-bold text-[#281822]">Публікації</h3>
-            <button onclick="location.href='create_post.html'" class="btn-solid btn-section"><i class="fas fa-plus mr-2"></i> Створити публікацію</button>
+            <button id="add-post-btn" class="btn-solid btn-section"><i class="fas fa-plus mr-2"></i> Створити публікацію</button>
         </div>
         <div id="posts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </div>
@@ -130,12 +128,55 @@
     </div>
 </div>
 
-<!-- Підключаємо глобальний JS для бургер-меню -->
+<div id="post-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Створити публікацію</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body flex flex-col gap-4">
+            <label>Текст публікації
+                <textarea id="post-text" placeholder="Введіть текст..." class="border p-2 rounded"></textarea>
+            </label>
+            <label>Зображення
+                <input type="file" id="post-image" accept="image/*">
+            </label>
+            <button id="save-post" class="btn-solid">Додати публікацію</button>
+        </div>
+    </div>
+</div>
+
+<div id="tour-modal" class="modal-backdrop">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Додати тур</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <div class="modal-body flex flex-col gap-4">
+            <label>Назва туру
+                <input type="text" id="tour-name" placeholder="Введіть назву туру">
+            </label>
+            <label>Опис
+                <textarea id="tour-description" placeholder="Введіть опис..." class="border p-2 rounded"></textarea>
+            </label>
+            <label>Зображення
+                <input type="file" id="tour-image" accept="image/*">
+            </label>
+            <button id="save-tour" class="btn-solid">Додати тур</button>
+        </div>
+    </div>
+</div>
+
 <script src="../js/header.js"></script>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // --- МОДАЛКА АГЕНЦІЇ ---
+        // --- Header nav переходи ---
+        document.getElementById('nav-tours').addEventListener('click', () => location.href='main_page_tours.html');
+        document.getElementById('nav-forum').addEventListener('click', () => location.href='forum.html');
+        document.getElementById('nav-companies').addEventListener('click', () => location.href='companions.html');
+
+        // --- Агенція ---
         const registerBtn = document.getElementById('register-btn');
         const editBtn = document.getElementById('edit-btn');
         const agencyModal = document.getElementById('agency-modal');
@@ -146,20 +187,15 @@
 
         registerBtn.addEventListener('click', () => agencyModal.classList.add('active'));
         modalCloseBtn.addEventListener('click', () => agencyModal.classList.remove('active'));
-
         saveAgencyBtn.addEventListener('click', () => {
             const name = document.getElementById('agency-name').value.trim();
             const code = document.getElementById('agency-code').value.trim();
             const logo = document.getElementById('agency-logo').files[0];
-            if (!name || !code || !logo) {
-                alert('Будь ласка, заповніть всі поля.');
-                return;
-            }
+            if (!name || !code || !logo) { alert('Будь ласка, заповніть всі поля.'); return; }
             agencyRegistered = true;
             agencyModal.classList.remove('active');
             updateAgencyButtons();
         });
-
         function updateAgencyButtons() {
             if (agencyRegistered) {
                 registerBtn.classList.add('hidden');
@@ -173,19 +209,73 @@
         }
         updateAgencyButtons();
 
-        // --- МОДАЛКА МАГНІТУ ---
+        // --- Магніт ---
         const addMagnetBtn = document.getElementById('add-magnet-btn');
         const magnetModal = document.getElementById('magnet-options-modal');
         const magnetCloseBtn = magnetModal.querySelector('.modal-close-btn');
-
         addMagnetBtn.addEventListener('click', () => magnetModal.classList.add('active'));
         magnetCloseBtn.addEventListener('click', () => magnetModal.classList.remove('active'));
 
         document.getElementById('create-own-magnet').addEventListener('click', () => {
-            window.location.href = 'create_magnet.html';
+            alert('Відкриваємо форму для створення власного магніту.');
+            magnetModal.classList.remove('active');
         });
         document.getElementById('order-design-magnet').addEventListener('click', () => {
-            window.location.href = 'order_magnet.html';
+            alert('Відкриваємо форму для замовлення дизайну магніту.');
+            magnetModal.classList.remove('active');
+        });
+
+        // --- Публікація ---
+        const addPostBtn = document.getElementById('add-post-btn');
+        const postModal = document.getElementById('post-modal');
+        const postCloseBtn = postModal.querySelector('.modal-close-btn');
+        const savePostBtn = document.getElementById('save-post');
+
+        addPostBtn.addEventListener('click', () => postModal.classList.add('active'));
+        postCloseBtn.addEventListener('click', () => postModal.classList.remove('active'));
+        savePostBtn.addEventListener('click', () => {
+            const text = document.getElementById('post-text').value.trim();
+            const image = document.getElementById('post-image').files[0];
+            if (!text || !image) { alert('Будь ласка, заповніть усі поля.'); return; }
+
+            const postsList = document.getElementById('posts-list');
+            const postCard = document.createElement('div');
+            postCard.classList.add('bg-gray-50', 'p-4', 'rounded-lg', 'shadow');
+            postCard.innerHTML = `<p class="mb-2">${text}</p>
+            <img src="${URL.createObjectURL(image)}" alt="Публікація" class="w-full h-32 object-cover rounded">`;
+            postsList.appendChild(postCard);
+
+            postModal.classList.remove('active');
+            document.getElementById('post-text').value = '';
+            document.getElementById('post-image').value = '';
+        });
+
+        // --- Тур ---
+        const addTourBtn = document.getElementById('add-tour-btn');
+        const tourModal = document.getElementById('tour-modal');
+        const tourCloseBtn = tourModal.querySelector('.modal-close-btn');
+        const saveTourBtn = document.getElementById('save-tour');
+
+        addTourBtn.addEventListener('click', () => tourModal.classList.add('active'));
+        tourCloseBtn.addEventListener('click', () => tourModal.classList.remove('active'));
+        saveTourBtn.addEventListener('click', () => {
+            const name = document.getElementById('tour-name').value.trim();
+            const desc = document.getElementById('tour-description').value.trim();
+            const image = document.getElementById('tour-image').files[0];
+            if (!name || !desc || !image) { alert('Будь ласка, заповніть усі поля.'); return; }
+
+            const tourList = document.getElementById('tours-list');
+            const tourCard = document.createElement('div');
+            tourCard.classList.add('bg-gray-50', 'p-4', 'rounded-lg', 'shadow');
+            tourCard.innerHTML = `<h4 class="font-bold text-lg mb-2">${name}</h4>
+            <p class="text-sm mb-2">${desc}</p>
+            <img src="${URL.createObjectURL(image)}" alt="${name}" class="w-full h-32 object-cover rounded">`;
+            tourList.appendChild(tourCard);
+
+            tourModal.classList.remove('active');
+            document.getElementById('tour-name').value = '';
+            document.getElementById('tour-description').value = '';
+            document.getElementById('tour-image').value = '';
         });
     });
 </script>
