@@ -19,8 +19,9 @@
 <header class="main-header">
     <div class="header-top">
         <div class="header-left-group">
-            <button id="menu-toggle" class="header-btn"><i class="fas fa-bars"></i></button>
-            <a href="../index.html" class="header-title">FridgeTrotter</a>
+            <!-- Глобальний бургер -->
+            <button id="menu-toggle-btn" class="header-btn"><i class="fas fa-bars"></i></button>
+            <a href="main_page_tours.html" class="header-title">FridgeTrotter</a>
         </div>
         <div class="header-right-group">
             <button class="header-btn"><i class="fas fa-bell"></i><span class="badge-dot"></span></button>
@@ -38,11 +39,11 @@
 </header>
 
 <!-- === САЙДБАР (для мобільного меню) === -->
-<div class="sidebar-overlay"></div>
-<div class="sidebar">
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<div id="sidebar" class="sidebar">
     <div class="sidebar-header">
+        <button id="sidebar-close-btn" class="sidebar-close-btn">&times;</button>
         <h2>Меню</h2>
-        <button class="sidebar-close-btn">&times;</button>
     </div>
     <nav class="sidebar-nav">
         <ul class="sidebar-menu-group">
@@ -72,9 +73,7 @@
             <h3 class="text-xl font-bold text-[#281822]">Ваші тури</h3>
             <button onclick="location.href='add_tour.html'" class="btn-solid btn-section"><i class="fas fa-plus mr-2"></i> Додати тур</button>
         </div>
-        <div id="tours-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Тур-картки -->
-        </div>
+        <div id="tours-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </div>
 
     <!-- Магніти -->
@@ -83,9 +82,7 @@
             <h3 class="text-xl font-bold text-[#281822]">Магніти</h3>
             <button id="add-magnet-btn" class="btn-solid btn-section"><i class="fas fa-plus mr-2"></i> Додати магніт</button>
         </div>
-        <div id="magnets-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Магніт-картки -->
-        </div>
+        <div id="magnets-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </div>
 
     <!-- Публікації -->
@@ -94,9 +91,7 @@
             <h3 class="text-xl font-bold text-[#281822]">Публікації</h3>
             <button onclick="location.href='create_post.html'" class="btn-solid btn-section"><i class="fas fa-plus mr-2"></i> Створити публікацію</button>
         </div>
-        <div id="posts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- Публікації -->
-        </div>
+        <div id="posts-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
     </div>
 </main>
 
@@ -135,27 +130,11 @@
     </div>
 </div>
 
+<!-- Підключаємо глобальний JS для бургер-меню -->
+<script src="../js/header.js"></script>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-
-        // --- БУРГЕР ---
-        const menuToggle = document.getElementById('menu-toggle');
-        const sidebar = document.querySelector('.sidebar');
-        const sidebarOverlay = document.querySelector('.sidebar-overlay');
-        const sidebarCloseBtn = document.querySelector('.sidebar-close-btn');
-
-        menuToggle.addEventListener('click', () => {
-            sidebar.classList.add('is-open');
-            sidebarOverlay.classList.add('is-visible');
-        });
-        sidebarCloseBtn.addEventListener('click', closeSidebar);
-        sidebarOverlay.addEventListener('click', closeSidebar);
-
-        function closeSidebar() {
-            sidebar.classList.remove('is-open');
-            sidebarOverlay.classList.remove('is-visible');
-        }
-
         // --- МОДАЛКА АГЕНЦІЇ ---
         const registerBtn = document.getElementById('register-btn');
         const editBtn = document.getElementById('edit-btn');
@@ -165,24 +144,17 @@
         const agencyInfo = document.getElementById('agency-info');
         let agencyRegistered = false;
 
-        registerBtn.addEventListener('click', () => {
-            agencyModal.classList.add('active');
-        });
-
-        modalCloseBtn.addEventListener('click', () => {
-            agencyModal.classList.remove('active');
-        });
+        registerBtn.addEventListener('click', () => agencyModal.classList.add('active'));
+        modalCloseBtn.addEventListener('click', () => agencyModal.classList.remove('active'));
 
         saveAgencyBtn.addEventListener('click', () => {
             const name = document.getElementById('agency-name').value.trim();
             const code = document.getElementById('agency-code').value.trim();
             const logo = document.getElementById('agency-logo').files[0];
-
             if (!name || !code || !logo) {
                 alert('Будь ласка, заповніть всі поля.');
                 return;
             }
-
             agencyRegistered = true;
             agencyModal.classList.remove('active');
             updateAgencyButtons();
@@ -199,7 +171,6 @@
                 agencyInfo.textContent = 'Агенція ще не зареєстрована.';
             }
         }
-
         updateAgencyButtons();
 
         // --- МОДАЛКА МАГНІТУ ---
@@ -207,13 +178,8 @@
         const magnetModal = document.getElementById('magnet-options-modal');
         const magnetCloseBtn = magnetModal.querySelector('.modal-close-btn');
 
-        addMagnetBtn.addEventListener('click', () => {
-            magnetModal.classList.add('active');
-        });
-
-        magnetCloseBtn.addEventListener('click', () => {
-            magnetModal.classList.remove('active');
-        });
+        addMagnetBtn.addEventListener('click', () => magnetModal.classList.add('active'));
+        magnetCloseBtn.addEventListener('click', () => magnetModal.classList.remove('active'));
 
         document.getElementById('create-own-magnet').addEventListener('click', () => {
             window.location.href = 'create_magnet.html';
@@ -221,9 +187,7 @@
         document.getElementById('order-design-magnet').addEventListener('click', () => {
             window.location.href = 'order_magnet.html';
         });
-
     });
 </script>
-
 </body>
 </html>
