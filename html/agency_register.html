@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Реєстрація агенції</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/main_page.css">
+</head>
+<body class="bg-[#D3CBC4] min-h-screen flex items-center justify-center py-10">
+
+<div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md relative">
+    <button onclick="history.back()" class="absolute top-4 right-4 text-gray-400 hover:text-[#281822]">
+        <i class="fas fa-times text-xl"></i>
+    </button>
+
+    <div class="text-center mb-6">
+        <h2 class="text-2xl font-bold text-[#281822]">Реєстрація агенції</h2>
+        <p class="text-sm text-gray-500">Заповніть дані вашої туристичної компанії</p>
+    </div>
+
+    <form id="agency-register-form" class="space-y-4">
+
+        <div>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Назва агенції</label>
+            <input type="text" name="name" required placeholder="Travel Company LLC"
+                   class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Номер ліцензії</label>
+            <input type="text" name="license" required placeholder="№ 12345678"
+                   class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]">
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Електронна пошта</label>
+            <div class="relative">
+                <i class="far fa-envelope absolute left-3 top-3 text-gray-400"></i>
+                <input type="email" name="email" required placeholder="agency@example.com"
+                       class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Контактний телефон</label>
+            <div class="relative">
+                <i class="fas fa-phone absolute left-3 top-3 text-gray-400"></i>
+                <input type="tel" name="phone" required placeholder="+380..."
+                       class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]">
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Веб-сайт (опціонально)</label>
+            <div class="relative">
+                <i class="fas fa-globe absolute left-3 top-3 text-gray-400"></i>
+                <input type="url" name="website" placeholder="https://"
+                       class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]">
+            </div>
+        </div>
+
+        <div class="flex items-start gap-2 pt-2">
+            <input type="checkbox" id="agreement" name="agreement" required class="mt-1 accent-[#48192E] w-4 h-4 cursor-pointer">
+            <label for="agreement" class="text-xs text-gray-600 cursor-pointer select-none">
+                Я підтверджую достовірність даних та даю згоду на обробку персональних даних.
+            </label>
+        </div>
+
+        <button type="submit" class="btn-solid w-full bg-[#281822] text-white py-2 rounded-md font-bold hover:bg-[#48192E] transition">
+            Зареєструвати
+        </button>
+
+        <div class="mt-4 text-center text-sm">
+            <span class="text-gray-600">Вже є акаунт?</span>
+            <a href="login.html" class="text-[#48192E] font-bold hover:underline">Увійти</a>
+        </div>
+
+        <div class="mt-2 text-center text-sm">
+            <a href="main_page_tours.html" class="text-gray-500 hover:text-[#281822]">← На головну</a>
+        </div>
+    </form>
+</div>
+
+<script type="module" src="../js/index.js"></script>
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+
+<script type="module">
+    import { API_URL, getHeaders } from '../js/api-config.js';
+
+    const form = document.getElementById('agency-register-form');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Обробка...';
+
+        // Збір даних з форми
+        const formData = new FormData(form);
+        const data = Object.fromEntries(formData.entries());
+        data.agreement = document.getElementById('agreement').checked;
+
+        try {
+            const response = await fetch(`${API_URL}/agencies/register`, {
+                method: 'POST',
+                headers: getHeaders(), // Додає токен авторизації
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert('Вітаємо! Агенцію успішно зареєстровано.');
+                // Оновлюємо дані користувача в localStorage, щоб відобразити статус агента
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (user) {
+                    user.isAgent = true;
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+                window.location.href = 'my_profile.html'; // Повернення в профіль
+            } else {
+                alert(result.error || 'Помилка реєстрації');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Помилка з\'єднання з сервером');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Зареєструвати';
+        }
+    });
+</script>
+
+</body>
+</html>
