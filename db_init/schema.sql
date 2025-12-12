@@ -247,18 +247,21 @@ CREATE INDEX idx_notifications_user_id ON notifications (user_id);
 
 DROP TABLE IF EXISTS agencies CASCADE;
 
-CREATE TABLE agencies (
-                          agency_id SERIAL PRIMARY KEY,
-                          owner_id INT UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-                          name VARCHAR(255) UNIQUE NOT NULL,
-                          license_number VARCHAR(100) UNIQUE NOT NULL,
-                          phone VARCHAR(50) NOT NULL,
-                          email VARCHAR(255) NOT NULL,
-                          website VARCHAR(255),
-                          is_agreed_data_processing BOOLEAN NOT NULL DEFAULT FALSE,
-                          description TEXT,
-                          avg_rating NUMERIC(2, 1) DEFAULT 0.0,
-                          review_count INT DEFAULT 0,
-                          total_tours_count INT DEFAULT 0,
-                          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+-- Таблиця агенцій (зв'язана з користувачем-власником)
+CREATE TABLE IF NOT EXISTS agencies (
+                                        agency_id SERIAL PRIMARY KEY,
+                                        owner_id INT UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                                        name VARCHAR(255) UNIQUE NOT NULL,
+                                        license_number VARCHAR(100) UNIQUE NOT NULL,
+                                        phone VARCHAR(50) NOT NULL,
+                                        email VARCHAR(255) NOT NULL,
+                                        website VARCHAR(255),
+                                        is_agreed_data_processing BOOLEAN NOT NULL DEFAULT FALSE,
+                                        description TEXT,
+                                        avg_rating NUMERIC(2, 1) DEFAULT 0.0,
+                                        review_count INT DEFAULT 0,
+                                        total_tours_count INT DEFAULT 0,
+                                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE INDEX IF NOT EXISTS idx_agencies_owner_id ON agencies(owner_id);
