@@ -480,7 +480,7 @@ function collectAllProfileData() {
 
     // Fridge Settings
     const fSettingsTab = document.getElementById('tab-fridge-settings');
-    const selectedColorEl = fSettingsTab?.querySelector('.color-option.selected .color-preview');
+    const selectedOption = fSettingsTab?.querySelector('.color-option.selected');
     const fSwitches = fSettingsTab?.querySelectorAll('.toggle-switch');
 
     // General Settings (Notifications & Privacy)
@@ -489,7 +489,7 @@ function collectAllProfileData() {
 
     return {
         ...basicInfo,
-        fridgeColor: selectedColorEl?.style.backgroundColor || '#f3f4f6',
+        fridgeColor: selectedOption?.dataset.color || '#f3f4f6',
         fridgeIsPublic: fSwitches?.[0]?.classList.contains('active') ?? true,
         fridgeAllowComments: fSwitches?.[1]?.classList.contains('active') ?? true,
 
