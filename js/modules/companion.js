@@ -9,6 +9,17 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('companion-type')?.addEventListener('change', loadCompanions);
 });
 
+window.contactUser = (userId) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        if(confirm('Щоб написати повідомлення, потрібно увійти. Перейти на сторінку входу?')) {
+            window.location.href = 'login.html';
+        }
+        return;
+    }
+    window.location.href = `chat.html?user_id=${userId}`;
+};
+
 // === Обробка кліку на кнопку "Створити оголошення" ===
 function initCreateAdButton() {
     const createBtn = document.getElementById('create-ad-btn');
@@ -60,7 +71,7 @@ async function loadCompanions() {
             const html = `
                 <div class="companion-card">
                     <div class="flex items-start gap-4 mb-4">
-                        <a href="other_user_profile.html?user_id=${ad.user_id}" class="w-12 h-12 rounded-full bg-[#48192E] text-[#D3CBC4] flex items-center justify-center font-bold text-lg shrink-0 overflow-hidden hover:opacity-80 transition cursor-pointer">
+                         <a href="other_user_profile.html?user_id=${ad.user_id}" class="w-12 h-12 rounded-full bg-[#48192E] text-[#D3CBC4] flex items-center justify-center font-bold text-lg shrink-0 overflow-hidden hover:opacity-80 transition cursor-pointer">
                             ${ad.author_avatar
                 ? `<img src="${ad.author_avatar}" class="w-full h-full object-cover">`
                 : (ad.first_name[0] + ad.last_name[0]).toUpperCase()}
@@ -93,7 +104,7 @@ async function loadCompanions() {
                     </div>
                     
                     <div class="flex gap-3 mt-auto">
-                        <button onclick="window.location.href='chat.html?user_id=${ad.user_id}'" class="flex-1 btn-solid py-2.5 text-center transition hover:opacity-90">
+                        <button onclick="contactUser(${ad.user_id})" class="flex-1 btn-solid py-2.5 text-center transition hover:opacity-90">
                             <i class="far fa-comment-dots mr-2"></i> Написати
                         </button>
                     </div>

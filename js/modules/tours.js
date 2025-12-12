@@ -75,8 +75,40 @@ function createTourCard(tour) {
     `;
 }
 
-// Функція для відкриття модалки (можна додати в глобальну область видимості або обробити через event delegation)
-window.openTourDetails = (id) => {
-    console.log("Open details for tour:", id);
-    // Тут логіка fetch детального туру: fetch(`${API_URL}/tours/${id}`) ...
+window.openTourDetails = async (id) => {
+    try {
+        const response = await fetch(`${API_URL}/tours/${id}`);
+        const data = await response.json();
+
+        if (data.tour) {
+            const t = data.tour;
+            document.getElementById('modal-tour-title').innerText = t.title;
+            document.getElementById('modal-tour-image').src = t.image_url || 'https://via.placeholder.com/600x400';
+            document.getElementById('modal-tour-desc').innerText = t.description;
+            document.getElementById('modal-tour-loc').innerText = t.location;
+            document.getElementById('modal-tour-price').innerText = `${t.price_uah} ₴`;
+            document.getElementById('modal-tour-duration').innerText = `${t.duration_days} днів`;
+
+            // === ЗАХИСТ КНОПКИ БРОНЮВАННЯ ===
+            const bookBtn = document.querySelector('#tour-details-modal .btn-solid');
+            // Клонуємо кнопку, щоб очистити старі обробники подій
+            const newBookBtn = bookBtn.cloneNode(true);
+            bookBtn.parentNode.replaceChild(newBookBtn, bookBtn);
+
+            newBookBtn.onclick = () => {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    if(confirm('Для бронювання туру необхідно увійти в акаунт.')) {
+                        window.location.href = 'login.html';
+                    }
+                    return;
+                }
+                alert('Функціонал бронювання в розробці. Зв\'яжіться з агенцією!');
+            };
+
+            // Відкриваємо модалку (функція з index.js або global)
+            const modal = document.getElementById('tour-details-modal');
+            if (modal) modal.classList.add('active');
+        }
+    } catch (e) { console.error(e); }
 };

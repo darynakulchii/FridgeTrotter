@@ -10,6 +10,16 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('forum-sort')?.addEventListener('change', loadPosts);
 });
 
+// Глобальна функція для написання (якщо не додали її в index.js, можна продублювати або використати спільний модуль)
+window.contactAuthor = (userId) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        if(confirm('Увійдіть, щоб написати автору.')) window.location.href = 'login.html';
+        return;
+    }
+    window.location.href = `chat.html?user_id=${userId}`;
+};
+
 // === ЛОГІКА СТВОРЕННЯ ПОСТА ===
 function initCreatePostModal() {
     const createBtn = document.getElementById('create-post-btn');
@@ -110,7 +120,7 @@ async function loadPosts() {
                         <span class="action-icon cursor-pointer hover:text-[#48192E]" onclick="toggleLike(${post.post_id})"><i class="far fa-thumbs-up"></i> ${post.likes_count}</span>
                         <span class="action-icon"><i class="far fa-comment-alt"></i> ${post.comments_count || 0}</span>
                         
-                        <button onclick="window.location.href='chat.html?user_id=${post.author_id}'" class="ml-auto text-xs text-[#2D4952] font-bold hover:underline flex items-center gap-1">
+                        <button onclick="contactAuthor(${post.author_id})" class="ml-auto text-xs text-[#2D4952] font-bold hover:underline flex items-center gap-1">
                             <i class="far fa-envelope"></i> Написати
                         </button>
                     </div>
@@ -118,7 +128,6 @@ async function loadPosts() {
             `;
             container.insertAdjacentHTML('beforeend', html);
         });
-
     } catch (error) {
         console.error('Error loading posts:', error);
         container.innerHTML = '<p class="text-red-500 col-span-2 text-center">Помилка завантаження даних.</p>';
