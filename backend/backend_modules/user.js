@@ -79,14 +79,20 @@ router.put('/profile', authenticateToken, async (req, res) => {
     try {
         await client.query('BEGIN');
 
-        // 1. Оновлення user_profiles (додано website)
+        // === ВИПРАВЛЕННЯ ТУТ ===
+        // Якщо dateOfBirth це порожній рядок, замінюємо його на NULL
+        const safeDateOfBirth = (dateOfBirth === '' || dateOfBirth === undefined) ? null : dateOfBirth;
+
+        // 1. Оновлення user_profiles
         const profileUpdateQuery = `
             UPDATE user_profiles
             SET first_name = $1, last_name = $2, location = $3, date_of_birth = $4, bio = $5, travel_interests = $6, website = $7
             WHERE user_id = $8;
         `;
+
+        // Використовуємо safeDateOfBirth замість dateOfBirth у масиві параметрів
         await client.query(profileUpdateQuery, [
-            firstName, lastName, location, dateOfBirth, bio, travelInterests, website, userId
+            firstName, lastName, location, safeDateOfBirth, bio, travelInterests, website, userId
         ]);
 
         // 2. Оновлення users (додано налаштування сповіщень)
