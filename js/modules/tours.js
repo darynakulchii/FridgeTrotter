@@ -1,4 +1,4 @@
-import { API_URL } from '../api-config.js';
+import { API_URL, getHeaders } from '../api-config.js';
 
 document.addEventListener("DOMContentLoaded", function() {
     loadTours();
@@ -14,13 +14,13 @@ async function loadTours() {
         if (!response.ok) throw new Error('Failed to fetch tours');
 
         const data = await response.json();
-        const tours = data.tours; // Ваш API повертає об'єкт { tours: [...] }
+        const tours = data.tours;
 
         // Очищаємо контейнер
         toursContainer.innerHTML = '';
 
-        if (tours.length === 0) {
-            toursContainer.innerHTML = '<p class="text-center text-gray-500 w-full">Турів поки немає.</p>';
+        if (!tours || tours.length === 0) {
+            toursContainer.innerHTML = '<p class="text-center text-gray-500 w-full col-span-2">Турів поки немає.</p>';
             return;
         }
 
@@ -32,7 +32,7 @@ async function loadTours() {
 
     } catch (error) {
         console.error('Error loading tours:', error);
-        toursContainer.innerHTML = '<p class="text-red-500">Не вдалося завантажити тури.</p>';
+        toursContainer.innerHTML = '<p class="text-red-500 col-span-2 text-center">Не вдалося завантажити тури.</p>';
     }
 }
 
@@ -68,15 +68,60 @@ function createTourCard(tour) {
 
                 <div class="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
                     <span class="text-2xl font-bold text-[#48192E]">${tour.price_uah} ₴</span>
-                    <button class="btn-solid" onclick="openTourDetails(${tour.tour_id})">Детальніше</button>
+                    <button class="btn-solid" onclick="event.stopPropagation(); openTourDetails(${tour.tour_id})">Детальніше</button>
                 </div>
             </div>
         </div>
     `;
 }
 
-// Функція для відкриття модалки (можна додати в глобальну область видимості або обробити через event delegation)
-window.openTourDetails = (id) => {
-    console.log("Open details for tour:", id);
-    // Тут логіка fetch детального туру: fetch(`${API_URL}/tours/${id}`) ...
+// === РЕАЛІЗОВАНА ЛОГІКА ВІДКРИТТЯ ДЕТАЛЕЙ ТУРУ ===
+window.openTourDetails = async (id) => {
+    const modal = document.getElementById('tour-details-modal');
+    if (!modal) return;
+
+    // Показуємо модалку зі станом завантаження
+    modal.classList.add('active');
+
+    // Елементи модалки
+    const titleEl = document.getElementById('modal-tour-title');
+    const descEl = document.getElementById('modal-tour-desc');
+    const imgEl = document.getElementById('modal-tour-image');
+    const locEl = document.getElementById('modal-tour-loc');
+    const durEl = document.getElementById('modal-tour-duration');
+    const priceEl = document.getElementById('modal-tour-price');
+
+    // Очищення/Placeholder
+    titleEl.innerText = 'Завантаження...';
+    descEl.innerText = '';
+
+    try {
+        const response = await fetch(`${API_URL}/tours/${id}`);
+        if (!response.ok) throw new Error('Not found');
+
+        const data = await response.json();
+        const tour = data.tour;
+
+        // Заповнення даними
+        titleEl.innerText = tour.title;
+        descEl.innerText = tour.description;
+        imgEl.src = tour.image_url || 'https://via.placeholder.com/600x400';
+        locEl.innerText = tour.location;
+        durEl.innerText = `${tour.duration_days} днів`;
+        priceEl.innerText = `${tour.price_uah} ₴`;
+
+        // Кнопка "Забронювати" (можна додати логіку)
+        const bookBtn = modal.querySelector('.btn-solid');
+        bookBtn.onclick = () => {
+            alert(`Бронювання туру "${tour.title}" поки що недоступне.`);
+        };
+
+        // Кнопка "Зберегти" (якщо залогінений)
+        // Тут можна динамічно додати кнопку "В обране", якщо потрібно
+
+    } catch (error) {
+        console.error(error);
+        titleEl.innerText = 'Помилка';
+        descEl.innerText = 'Не вдалося завантажити інформацію про тур.';
+    }
 };

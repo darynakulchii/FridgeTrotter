@@ -33,9 +33,10 @@ const uploadToCloudinary = (fileBuffer) => {
 /**
  * GET /api/forum/posts
  * Отримання списку постів з зображеннями.
+ * Додано підтримку author_id
  */
 router.get('/posts', async (req, res) => {
-    const { search, category, sort } = req.query;
+    const { search, category, sort, author_id } = req.query;
 
     // Основний запит з агрегацією зображень
     let query = `
@@ -44,8 +45,8 @@ router.get('/posts', async (req, res) => {
             up.first_name, up.last_name, up.profile_image_url AS author_avatar,
             (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count,
             COALESCE(
-                ARRAY_AGG(pi.image_url) FILTER (WHERE pi.image_url IS NOT NULL), 
-                '{}'
+                            ARRAY_AGG(pi.image_url) FILTER (WHERE pi.image_url IS NOT NULL),
+                            '{}'
             ) AS images
         FROM posts p
                  JOIN user_profiles up ON p.author_id = up.user_id
@@ -68,6 +69,13 @@ router.get('/posts', async (req, res) => {
         paramIndex++;
     }
 
+    // === НОВЕ: Фільтр по автору ===
+    if (author_id) {
+        query += ` AND p.author_id = $${paramIndex}`;
+        queryParams.push(author_id);
+        paramIndex++;
+    }
+
     // Групування обов'язкове при використанні агрегатних функцій (ARRAY_AGG)
     query += ` GROUP BY p.post_id, up.user_id`;
 
@@ -75,9 +83,6 @@ router.get('/posts', async (req, res) => {
     if (sort === 'popular') {
         query += ` ORDER BY p.likes_count DESC, p.created_at DESC`;
     } else if (sort === 'unanswered') {
-        // Тут складніше сортувати через підзапит в SELECT, тому краще дублювати логіку COUNT або використати CTE
-        // Для спрощення сортуємо по created_at, якщо sort специфічний, або можна додати comments_count в GROUP BY
-        // Але найпростіше для "unanswered" - це сортування в JS або спрощений SQL:
         query += ` ORDER BY comments_count ASC, p.created_at DESC`;
     } else {
         query += ` ORDER BY p.created_at DESC`; // Default: Newest first
@@ -257,7 +262,6 @@ router.post('/posts', authenticateToken, upload.array('images', 5), async (req, 
 /**
  * PUT /api/forum/posts/:id
  * Редагування поста (Тільки текст).
- * Для редагування фото потрібен окремий складніший логічний блок (видалення старих/додавання нових).
  */
 router.put('/posts/:id', authenticateToken, async (req, res) => {
     const postId = req.params.id;
@@ -298,9 +302,6 @@ router.delete('/posts/:id', authenticateToken, async (req, res) => {
 
         if (checkResult.rows.length === 0) return res.status(404).json({ error: 'Пост не знайдено' });
         if (checkResult.rows[0].author_id !== userId) return res.status(403).json({ error: 'Немає прав' });
-
-        // ON DELETE CASCADE в схемі БД видалить також записи з post_images, comments, likes тощо.
-        // Зображення на Cloudinary залишаться (для їх видалення потрібен окремий виклик cloudinary API).
 
         await pool.query('DELETE FROM posts WHERE post_id = $1', [postId]);
         res.json({ message: 'Пост видалено' });
