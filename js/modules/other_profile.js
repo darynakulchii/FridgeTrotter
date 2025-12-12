@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTabs();
     loadProfileData();
     loadFridge();
-    loadUserPosts();
+    loadUserPosts(); // Тепер ця функція працює!
 });
 
 // 1. ТАБИ
@@ -117,10 +117,6 @@ async function loadFridge() {
 
         const data = await response.json();
 
-        // Встановлюємо колір, якщо він є в профілі (ми його фетчили окремо, або треба додати логіку тут)
-        // Для спрощення можна зробити окремий запит або брати з loadProfileData (потрібно зробити глобальну змінну user)
-        // Поки залишимо дефолтний, або візьмемо з профілю, якщо змінити порядок викликів.
-
         if (data.magnets && data.magnets.length > 0) {
             placeholder.classList.add('hidden');
             data.magnets.forEach(m => {
@@ -144,21 +140,65 @@ function createMagnetElement(magnetData) {
     return div;
 }
 
-// 4. ПОСТИ
+// 4. ПОСТИ (РЕАЛІЗОВАНО)
 async function loadUserPosts() {
     const container = document.getElementById('posts-container');
-    // Потрібен бекенд роут для постів конкретного юзера (публічний)
-    // Зараз API має /forum/posts?search=...
-    // Можна додати фільтр по author_id або зробити новий endpoint
-    // Для швидкості використаємо існуючий фільтр на фронті (не ідеально) або новий endpoint.
-    // Оскільки ми вже робили endpoint /forum/posts/my, давайте зробимо аналог.
 
-    // *Припустимо, що backend підтримує ?author_id=XYZ в /forum/posts
-    // Якщо ні, це треба додати в backend/backend_modules/forum.js.
-    // Давайте спробуємо використати існуючий загальний пошук, якщо там є автор, або додамо логіку в JS.
+    // Встановлюємо стан завантаження
+    container.innerHTML = '<p class="text-center text-gray-500 py-8"><i class="fas fa-spinner fa-spin"></i> Завантаження постів...</p>';
 
-    // Щоб не міняти бекенд зараз, просто напишемо повідомлення, якщо роута нема
-    container.innerHTML = '<p class="text-center text-gray-500 py-8">Публікації користувача будуть доступні незабаром.</p>';
+    try {
+        // Використовуємо новий параметр author_id
+        const response = await fetch(`${API_URL}/forum/posts?author_id=${targetUserId}`, { headers: getHeaders() });
+        const data = await response.json();
+
+        container.innerHTML = '';
+
+        if (!data.posts || data.posts.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-8">Користувач ще не створив жодного поста.</p>';
+            return;
+        }
+
+        data.posts.forEach(post => {
+            // HTML код картки поста (дублюється з forum.js, можна винести в util, але тут спрощено)
+            let imagesHtml = '';
+            if (post.images && post.images.length > 0) {
+                const imgUrl = post.images[0]; // Показуємо тільки перше фото для компактності
+                imagesHtml = `
+                    <div class="h-48 mb-4 rounded-lg overflow-hidden relative">
+                        <img src="${imgUrl}" class="w-full h-full object-cover">
+                        ${post.images.length > 1 ? `<span class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">+${post.images.length-1}</span>` : ''}
+                    </div>
+                `;
+            }
+
+            const html = `
+                <div class="post-card mb-6">
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-lg text-[#281822]">${post.title}</h3>
+                            <span class="text-xs text-gray-400">${new Date(post.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">${post.category}</span>
+                    </div>
+                    
+                    ${imagesHtml}
+                    
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-3">${post.content}</p>
+                    
+                    <div class="flex items-center gap-4 text-gray-500 text-sm border-t border-gray-100 pt-3">
+                        <span><i class="far fa-thumbs-up"></i> ${post.likes_count}</span>
+                        <span><i class="far fa-comment-alt"></i> ${post.comments_count}</span>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+
+    } catch (e) {
+        console.error('Error loading posts:', e);
+        container.innerHTML = '<p class="text-center text-red-500 py-8">Не вдалося завантажити пости.</p>';
+    }
 }
 
 // 5. ДІЇ (Follow)
