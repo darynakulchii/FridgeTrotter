@@ -38,8 +38,12 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Вкладка: Холодильник - Сітка */
-        .fridge-container { display: grid; grid-template-columns: 300px 1fr; gap: 2rem; align-items: start; }
-        @media(max-width: 1024px) { .fridge-container { grid-template-columns: 1fr; } }
+        .fridge-container {
+            display: grid;
+            grid-template-columns: 300px 1fr; /* ліва панель 300px, права займає решту */
+            gap: 2rem; /* відстань між колонками */
+            align-items: start;
+        }
 
         /* Рамки (Картки) для блоків холодильника */
         .magnet-panel-card {
@@ -48,6 +52,7 @@
             border-radius: 16px;
             height: fit-content;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
         }
 
         .fridge-wrapper-card {
@@ -59,20 +64,55 @@
 
         /* Кнопки магнітів у панелі */
         .magnet-btn {
-            display: flex; align-items: center; gap: 1rem;
-            padding: 1rem; margin-bottom: 0.75rem;
-            border-radius: 8px; color: #D3CBC4;
-            cursor: grab; transition: transform 0.2s;
-            user-select: none; /* Заборона виділення тексту */
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            /*max-width: 80%;*/
+            /*box-sizing: border-box;*/
+            padding: 0.8rem;
+            margin-bottom: 0.75rem;
+
+            min-width: 0;
+            border-radius: 8px;
+            color: #D3CBC4;
+            cursor: grab;
+            transition: transform 0.2s;
+            user-select: none;            /* Заборона виділення */
+            /*overflow: hidden;             !* щоб текст не вилазив *!*/
         }
-        .magnet-btn:hover { transform: translateX(2px); }
-        .magnet-btn:active { cursor: grabbing; }
 
-        .magnet-btn.burgundy { background-color: #48192E; }
-        .magnet-btn.teal { background-color: #2D4952; }
+        .magnet-btn:hover {
+            transform: translateX(2px);
+        }
 
-        /* ВАЖЛИВО: Відключаємо події миші для дітей магніту, щоб drag працював коректно */
-        .magnet-btn * { pointer-events: none; }
+        .magnet-btn:active {
+            cursor: grabbing;
+        }
+
+        .magnet-btn.burgundy {
+            background-color: #48192E;
+        }
+
+        .magnet-btn.teal {
+            background-color: #2D4952;
+        }
+
+        /* Дітям дозволяємо працювати тільки як декор, drag не ламається */
+        .magnet-btn * {
+            pointer-events: none;
+        }
+
+        /* Текст всередині не виходить з рамки */
+        .magnet-btn div {
+            min-width: 0;
+        }
+
+        .magnet-btn .font-bold,
+        .magnet-btn .text-xs {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
         /* Сам холодильник */
         .fridge-view {
@@ -89,6 +129,11 @@
             width: 8px; height: 120px; background-color: #281822; border-radius: 10px; opacity: 0.8;
             pointer-events: none;
         }
+        /* === ДОДАЄМО ЦЕ ПРАВИЛО === */
+        .magnet-fixed-width {
+            width: 115px !important;
+        }
+        /* ========================== */
 
         /* Плейсхолдер текст */
         .fridge-placeholder {
@@ -210,54 +255,71 @@
 
     <div id="tab-fridge" class="tab-content active">
         <div class="fridge-container">
+
             <div class="magnet-panel-card">
                 <h3 class="text-lg font-normal mb-6 text-[#281822]">Доступні магніти</h3>
 
-                <!-- Видалено onclick та ondragstart, додано draggable="true" для роботи JS -->
-                <div class="magnet-btn burgundy" draggable="true" id="mag-fr" data-icon="plane" data-country="Франція" data-city="Париж"> <i class="fas fa-plane text-xl"></i> <div> <div class="font-bold text-sm">Франція</div> <div class="text-xs opacity-80">Париж</div> </div> </div>
-                <div class="magnet-btn burgundy" draggable="true" id="mag-jp" data-icon="camera" data-country="Японія" data-city="Токіо">
-                    <i class="fas fa-camera text-xl"></i>
-                    <div>
-                        <div class="font-bold text-sm">Японія</div>
-                        <div class="text-xs opacity-80">Токіо</div>
-                    </div>
-                </div>
-                <div class="magnet-btn burgundy" draggable="true" id="mag-ch" data-icon="mountain" data-country="Швейцарія" data-city="Цюріх">
-                    <i class="fas fa-mountain text-xl"></i>
-                    <div>
-                        <div class="font-bold text-sm">Швейцарія</div>
-                        <div class="text-xs opacity-80">Цюріх</div>
-                    </div>
-                </div>
+                <div id="magnet-grid" style="
+                    display: grid !important;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 1rem;
+                    width: 100%;
+                ">
 
-                <div class="magnet-btn teal" draggable="true" id="mag-it" data-icon="coffee" data-country="Італія" data-city="Рим">
-                    <i class="fas fa-coffee text-xl"></i>
-                    <div>
-                        <div class="font-bold text-sm">Італія</div>
-                        <div class="text-xs opacity-80">Рим</div>
-                    </div>
-                </div>
-                <div class="magnet-btn teal" draggable="true" id="mag-gr" data-icon="umbrella-beach" data-country="Греція" data-city="Афіни">
-                    <i class="fas fa-umbrella-beach text-xl"></i>
-                    <div>
-                        <div class="font-bold text-sm">Греція</div>
-                        <div class="text-xs opacity-80">Афіни</div>
-                    </div>
-                </div>
-                <div class="magnet-btn teal" draggable="true" id="mag-es" data-icon="map-marker-alt" data-country="Іспанія" data-city="Барселона">
-                    <i class="fas fa-map-marker-alt text-xl"></i>
-                    <div>
-                        <div class="font-bold text-sm">Іспанія</div>
-                        <div class="text-xs opacity-80">Барселона</div>
-                    </div>
-                </div>
 
+                    <div class="magnet-btn burgundy magnet-fixed-width" draggable="true" id="mag-fr" data-icon="plane" data-country="Франція" data-city="Париж">
+                        <i class="fas fa-plane text-xl"></i>
+                        <div>
+                            <div class="font-bold text-sm">Франція</div>
+                            <div class="text-xs opacity-80">Париж</div>
+                        </div>
+                    </div>
+
+                    <div class="magnet-btn burgundy magnet-fixed-width" draggable="true" id="mag-it" data-icon="coffee" data-country="Італія" data-city="Рим">
+                        <i class="fas fa-coffee text-xl"></i>
+                        <div>
+                            <div class="font-bold text-sm">Італія</div>
+                            <div class="text-xs opacity-80">Рим</div>
+                        </div>
+                    </div>
+
+                    <div class="magnet-btn burgundy magnet-fixed-width" draggable="true" id="mag-jp" data-icon="camera" data-country="Японія" data-city="Токіо">
+                        <i class="fas fa-camera text-xl"></i>
+                        <div>
+                            <div class="font-bold text-sm">Японія</div>
+                            <div class="text-xs opacity-80">Токіо</div>
+                        </div>
+                    </div>
+
+                    <div class="magnet-btn burgundy magnet-fixed-width" draggable="true" id="mag-gr" data-icon="umbrella-beach" data-country="Греція" data-city="Афіни">
+                        <i class="fas fa-umbrella-beach text-xl"></i>
+                        <div>
+                            <div class="font-bold text-sm">Греція</div>
+                            <div class="text-xs opacity-80">Афіни</div>
+                        </div>
+                    </div>
+
+                    <div class="magnet-btn burgundy magnet-fixed-width" draggable="true" id="mag-ch" data-icon="mountain" data-country="Швейцарія" data-city="Цюріх">
+                        <i class="fas fa-mountain text-xl"></i>
+                        <div>
+                            <div class="font-bold text-sm">Швейцарія</div>
+                            <div class="text-xs opacity-80">Цюріх</div>
+                        </div>
+                    </div>
+
+                    <div class="magnet-btn burgundy magnet-fixed-width" draggable="true" id="mag-es" data-icon="map-marker-alt" data-country="Іспанія" data-city="Барселона">
+                        <i class="fas fa-map-marker-alt text-xl"></i>
+                        <div>
+                            <div class="font-bold text-sm">Іспанія</div>
+                            <div class="text-xs opacity-80">Барселона</div>
+                        </div>
+                    </div>
+
+                </div>
                 <p class="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-100">Перетягніть магніт на холодильник</p>
             </div>
-
             <div class="fridge-wrapper-card">
                 <h3 class="text-lg font-normal mb-6 text-[#281822]">Мій холодильник</h3>
-                <!-- Видалено inline події -->
                 <div class="fridge-view" id="fridge-door">
                     <div class="fridge-handle"></div>
                     <div id="fridge-placeholder" class="fridge-placeholder">
