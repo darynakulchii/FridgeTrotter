@@ -14,8 +14,8 @@ CREATE TABLE users (
                        password_hash VARCHAR(255) NOT NULL,
                        registration_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                        is_agent BOOLEAN DEFAULT FALSE,
-                       is_email_public BOOLEAN DEFAULT FALSE, -- З налаштувань профілю
-                       is_location_public BOOLEAN DEFAULT TRUE -- З налаштувань профілю
+                       is_email_public BOOLEAN DEFAULT FALSE,
+                       is_location_public BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE user_profiles (
@@ -245,21 +245,17 @@ CREATE TABLE notifications (
 
 CREATE INDEX idx_notifications_user_id ON notifications (user_id);
 
--- Спочатку видаляємо стару таблицю (УВАГА: це видалить існуючі дані агенцій!)
 DROP TABLE IF EXISTS agencies CASCADE;
 
--- Створюємо нову з потрібними полями
 CREATE TABLE agencies (
                           agency_id SERIAL PRIMARY KEY,
-                          owner_id INT UNIQUE REFERENCES users(user_id) ON DELETE CASCADE, -- Зв'язок з власником
+                          owner_id INT UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
                           name VARCHAR(255) UNIQUE NOT NULL,
                           license_number VARCHAR(100) UNIQUE NOT NULL,
                           phone VARCHAR(50) NOT NULL,
                           email VARCHAR(255) NOT NULL,
                           website VARCHAR(255),
                           is_agreed_data_processing BOOLEAN NOT NULL DEFAULT FALSE,
-
-    -- Поля, які були раніше для функціоналу турів
                           description TEXT,
                           avg_rating NUMERIC(2, 1) DEFAULT 0.0,
                           review_count INT DEFAULT 0,

@@ -17,7 +17,7 @@
 
     <div class="text-center mb-6">
         <h2 class="text-2xl font-bold text-[#281822]">Реєстрація агенції</h2>
-        <p class="text-sm text-gray-500">Заповніть дані вашої туристичної компанії</p>
+        <p class="text-sm text-gray-500">Створіть новий бізнес-акаунт</p>
     </div>
 
     <form id="agency-register-form" class="space-y-4">
@@ -35,12 +35,22 @@
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-[#281822] mb-1">Електронна пошта</label>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Електронна пошта (Логін)</label>
             <div class="relative">
                 <i class="far fa-envelope absolute left-3 top-3 text-gray-400"></i>
                 <input type="email" name="email" required placeholder="agency@example.com"
                        class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]">
             </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Пароль</label>
+            <div class="relative">
+                <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
+                <input type="password" name="password" required placeholder="••••••••"
+                       class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]">
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Використовуватиметься для входу в кабінет агента</p>
         </div>
 
         <div>
@@ -64,17 +74,18 @@
         <div class="flex items-start gap-2 pt-2">
             <input type="checkbox" id="agreement" name="agreement" required class="mt-1 accent-[#48192E] w-4 h-4 cursor-pointer">
             <label for="agreement" class="text-xs text-gray-600 cursor-pointer select-none">
-                Я підтверджую достовірність даних та даю згоду на обробку персональних даних.
+                Я даю згоду на обробку персональних даних та погоджуюсь з
+                <a href="#" id="open-privacy-modal-link" class="text-[#48192E] font-bold underline hover:text-[#281822]">Політикою конфіденційності</a>.
             </label>
         </div>
 
         <button type="submit" class="btn-solid w-full bg-[#281822] text-white py-2 rounded-md font-bold hover:bg-[#48192E] transition">
-            Зареєструвати
+            Зареєструвати агенцію
         </button>
 
         <div class="mt-4 text-center text-sm">
             <span class="text-gray-600">Вже є акаунт?</span>
-            <a href="login.html" class="text-[#48192E] font-bold hover:underline">Увійти</a>
+            <a href="agency_login.html" class="text-[#48192E] font-bold hover:underline">Увійти</a>
         </div>
 
         <div class="mt-2 text-center text-sm">
@@ -83,11 +94,10 @@
     </form>
 </div>
 
-<script type="module" src="../js/index.js"></script>
 <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 
 <script type="module">
-    import { API_URL, getHeaders } from '../js/api-config.js';
+    import { API_URL } from '../js/api-config.js';
 
     const form = document.getElementById('agency-register-form');
 
@@ -104,23 +114,33 @@
         data.agreement = document.getElementById('agreement').checked;
 
         try {
+            // Запит без заголовка Authorization
             const response = await fetch(`${API_URL}/agencies/register`, {
                 method: 'POST',
-                headers: getHeaders(), // Додає токен авторизації
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(data)
             });
 
             const result = await response.json();
 
             if (response.ok) {
-                alert('Вітаємо! Агенцію успішно зареєстровано.');
-                // Оновлюємо дані користувача в localStorage, щоб відобразити статус агента
-                const user = JSON.parse(localStorage.getItem('user'));
-                if (user) {
-                    user.isAgent = true;
-                    localStorage.setItem('user', JSON.stringify(user));
+                // ЛОГІКА ПЕРЕМИКАННЯ АКАУНТІВ
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+
+                // 2. Зберігаємо дані НОВОГО користувача (агента)
+                if (result.token && result.user) {
+                    localStorage.setItem('token', result.token);
+                    localStorage.setItem('user', JSON.stringify(result.user));
+
+                    alert('Вітаємо! Агенцію успішно зареєстровано. Ви увійшли як турагент.');
+                    window.location.href = 'my_profile.html';
+                } else {
+                    alert('Агенцію зареєстровано. Будь ласка, увійдіть з новим паролем.');
+                    window.location.href = 'login.html';
                 }
-                window.location.href = 'my_profile.html'; // Повернення в профіль
             } else {
                 alert(result.error || 'Помилка реєстрації');
             }
@@ -129,7 +149,7 @@
             alert('Помилка з\'єднання з сервером');
         } finally {
             submitBtn.disabled = false;
-            submitBtn.innerText = 'Зареєструвати';
+            submitBtn.innerText = 'Зареєструвати агенцію';
         }
     });
 </script>
