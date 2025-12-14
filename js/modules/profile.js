@@ -200,10 +200,10 @@ async function initFridge() {
     const saveBtn = document.getElementById('save-fridge-btn');
     if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
-            // 1. Просто зберігаємо (функція вже має логіку відправки на сервер)
+            // Блокуємо кнопку на час збереження
+            const originalText = saveBtn.innerHTML;
+            saveBtn.disabled = true;
             await saveFridgeOnlyLayout();
-
-            // 2. Показуємо звичайне повідомлення, як на інших вкладках
             alert('Зміни успішно збережено!');
         });
     }
