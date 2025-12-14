@@ -286,7 +286,6 @@ function initDragAndDrop(fridgeDoor) {
         }
     });
 
-    // Подія для існуючих магнітів на холодильнику
     fridgeDoor.addEventListener('dragstart', (e) => {
         const target = e.target.closest('.magnet-on-fridge');
         if (target) {
@@ -319,7 +318,9 @@ function initDragAndDrop(fridgeDoor) {
                 country: draggedItem.getAttribute('data-country'),
                 city: draggedItem.getAttribute('data-city'),
                 icon_class: draggedItem.getAttribute('data-icon'),
-                color_group: draggedItem.getAttribute('data-color')
+                color_group: draggedItem.getAttribute('data-color'),
+                image_url: draggedItem.getAttribute('data-image'),
+                shape: draggedItem.getAttribute('data-shape')
             };
             const newEl = createMagnetOnFridgeElement(data);
             newEl.style.left = `${x - 35}px`;

@@ -45,12 +45,12 @@ router.get('/:userId/layout', async (req, res) => {
     const query = `
         SELECT
             ufm.user_fridge_magnet_id, ufm.x_position, ufm.y_position, ufm.magnet_id,
-            m.country, m.city, m.icon_class, m.color_group
+            m.country, m.city, m.icon_class, m.color_group,
+            m.image_url, m.shape  -- <-- ДОДАНО ЦІ ДВА ПОЛЯ
         FROM user_fridge_magnets ufm
                  JOIN magnets m ON ufm.magnet_id = m.magnet_id
         WHERE ufm.user_id = $1;
     `;
-
     try {
         const result = await pool.query(query, [targetUserId]);
         res.json({ magnets: result.rows });
