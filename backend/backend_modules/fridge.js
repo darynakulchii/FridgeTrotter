@@ -24,39 +24,51 @@ router.get('/:userId/layout', async (req, res) => {
     const targetUserId = req.params.userId;
     const currentUserId = req.user ? req.user.userId : null;
 
-    // Перевірка налаштувань (публічність)
-    const settingsQuery = `
-        SELECT is_public FROM fridge_settings WHERE user_id = $1;
-    `;
-    const settingsResult = await pool.query(settingsQuery, [targetUserId]);
-
-    if (settingsResult.rows.length === 0) {
-        // Якщо налаштувань немає, вважаємо приватним за замовчуванням
-        if (targetUserId.toString() !== (currentUserId || '').toString()) {
-            return res.status(404).json({ error: 'Налаштування не знайдено.' });
-        }
-    } else {
-        const { is_public } = settingsResult.rows[0];
-        if (!is_public && targetUserId.toString() !== (currentUserId || '').toString()) {
-            return res.status(403).json({ error: 'Холодильник є приватним.' });
-        }
-    }
-
-    const query = `
-        SELECT
-            ufm.user_fridge_magnet_id, ufm.x_position, ufm.y_position, ufm.magnet_id,
-            m.country, m.city, m.icon_class, m.color_group,
-            m.image_url, m.shape  -- <-- ДОДАНО ЦІ ДВА ПОЛЯ
-        FROM user_fridge_magnets ufm
-                 JOIN magnets m ON ufm.magnet_id = m.magnet_id
-        WHERE ufm.user_id = $1;
-    `;
     try {
-        const result = await pool.query(query, [targetUserId]);
-        res.json({ magnets: result.rows });
+        // 1. Перевірка налаштувань (публічність та розмір)
+        const settingsQuery = `
+            SELECT is_public, magnet_size FROM fridge_settings WHERE user_id = $1;
+        `;
+        const settingsResult = await pool.query(settingsQuery, [targetUserId]);
+
+        if (settingsResult.rows.length === 0) {
+            // Якщо налаштувань немає і це чужий профіль — 404
+            if (targetUserId.toString() !== (currentUserId || '').toString()) {
+                return res.status(404).json({ error: 'Налаштування не знайдено.' });
+            }
+        } else {
+            const { is_public } = settingsResult.rows[0];
+            // Якщо профіль не публічний і це не власник — 403
+            if (!is_public && targetUserId.toString() !== (currentUserId || '').toString()) {
+                return res.status(403).json({ error: 'Холодильник є приватним.' });
+            }
+        }
+
+        const magnetsQuery = `
+            SELECT
+                ufm.user_fridge_magnet_id, ufm.x_position, ufm.y_position, ufm.magnet_id,
+                m.country, m.city, m.icon_class, m.color_group,
+                m.image_url, m.shape
+            FROM user_fridge_magnets ufm
+            JOIN magnets m ON ufm.magnet_id = m.magnet_id
+            WHERE ufm.user_id = $1;
+        `;
+
+        const magnetsResult = await pool.query(magnetsQuery, [targetUserId]);
+        const settings = settingsResult.rows[0] || { is_public: true, magnet_size: 'medium' };
+
+        res.json({
+            magnets: magnetsResult.rows,
+            settings: {
+                magnet_size: settings.magnet_size
+            }
+        });
+
     } catch (error) {
-        console.error('Помилка отримання магнітів:', error);
-        res.status(500).json({ error: 'Помилка сервера.' });
+        console.error('Помилка отримання даних холодильника:', error);
+        if (!res.headersSent) {
+            res.status(500).json({ error: 'Помилка сервера.' });
+        }
     }
 });
 
@@ -77,9 +89,6 @@ router.post('/save', authenticateToken, async (req, res) => {
 
         // 2. Вставити нові записи
         if (magnetsData && magnetsData.length > 0) {
-            // === ВИПРАВЛЕННЯ ПОМИЛКИ ===
-            // Фільтруємо дублікати магнітів. Якщо користувач (або баг на фронті) додав
-            // один і той самий магніт двічі, залишаємо лише першу його позицію.
             const uniqueMagnets = [];
             const seenIds = new Set();
 

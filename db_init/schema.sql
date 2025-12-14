@@ -289,3 +289,5 @@ CREATE TABLE agency_magnet_orders (
                                       status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
                                       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE fridge_settings ADD COLUMN magnet_size VARCHAR(20) DEFAULT 'medium';

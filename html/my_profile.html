@@ -353,10 +353,10 @@
             <p class="settings-desc">Додаткові налаштування вигляду</p>
 
             <label class="font-bold text-[#281822] text-sm block mb-2">Розмір магнітів</label>
-            <div class="flex gap-2 mb-6">
-                <button class="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">Маленькі</button>
-                <button class="px-4 py-2 bg-[#281822] text-white rounded-md text-sm">Середні</button>
-                <button class="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">Великі</button>
+            <div class="flex gap-2 mb-6" id="magnet-size-control">
+                <button type="button" class="magnet-size-btn px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition-colors" data-size="small">Маленькі</button>
+                <button type="button" class="magnet-size-btn px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition-colors" data-size="medium">Середні</button>
+                <button type="button" class="magnet-size-btn px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50 transition-colors" data-size="large">Великі</button>
             </div>
 
             <button class="btn-burgundy-solid">Зберегти налаштування</button>

@@ -172,6 +172,21 @@ function fillProfileData(data) {
             toggleSwitch(allSwitches[7], data.is_location_public);
         }
     }
+    // --- 4. Розмір магнітів ---
+    if (data.magnet_size) {
+        const sizeBtns = document.querySelectorAll('.magnet-size-btn');
+        sizeBtns.forEach(btn => {
+            // Скидаємо стилі
+            btn.classList.remove('bg-[#281822]', 'text-white', 'border-transparent');
+            btn.classList.add('border-gray-300', 'text-gray-700');
+
+            // Активуємо потрібну
+            if (btn.getAttribute('data-size') === data.magnet_size) {
+                btn.classList.remove('border-gray-300', 'text-gray-700');
+                btn.classList.add('bg-[#281822]', 'text-white', 'border-transparent');
+            }
+        });
+    }
 }
 
 // Допоміжна функція для перемикання класу active
@@ -354,16 +369,19 @@ function initDragAndDrop(fridgeDoor) {
 async function loadUserFridgeLayout() {
     const fridgeDoor = document.getElementById('fridge-door');
     try {
+        // Отримуємо і магніти, і налаштування
         const response = await fetch(`${API_URL}/fridge/${currentUser.userId}/layout`, { headers: getHeaders() });
         const data = await response.json();
 
-        // Видаляємо старі магніти перед рендерингом
+        // Очищення
         const oldMagnets = fridgeDoor.querySelectorAll('.magnet-on-fridge');
         oldMagnets.forEach(m => m.remove());
 
+        const size = data.settings?.magnet_size || 'medium';
+
         if(data.magnets) {
             data.magnets.forEach(m => {
-                const el = createMagnetOnFridgeElement(m);
+                const el = createMagnetOnFridgeElement(m, size);
                 el.style.left = `${m.x_position}px`;
                 el.style.top = `${m.y_position}px`;
                 fridgeDoor.appendChild(el);
@@ -373,14 +391,15 @@ async function loadUserFridgeLayout() {
     } catch (e) { console.error(e); }
 }
 
-function createMagnetElement(magnetData, isOnFridge) {
+function createMagnetElement(magnetData, isOnFridge, size = 'medium') {
     const div = document.createElement('div');
     div.setAttribute('draggable', 'true')
     const baseClass = isOnFridge ? 'magnet-on-fridge' : 'magnet-btn';
     const shapeClass = magnetData.shape ? `magnet-shape-${magnetData.shape}` : '';
     const extraClasses = magnetData.image_url ? 'relative overflow-hidden' : '';
+    const sizeClass = isOnFridge ? `size-${size}` : '';
 
-    div.className = `${baseClass} ${magnetData.color_group || 'burgundy'} ${shapeClass} ${extraClasses}`;
+    div.className = `${baseClass} ${magnetData.color_group || 'burgundy'} ${shapeClass} ${extraClasses} ${sizeClass}`;
 
     div.setAttribute('data-id', magnetData.magnet_id);
     div.setAttribute('data-country', magnetData.country);
@@ -416,8 +435,8 @@ function createMagnetElement(magnetData, isOnFridge) {
     return div;
 }
 
-function createMagnetOnFridgeElement(magnetData) {
-    return createMagnetElement(magnetData, true);
+function createMagnetOnFridgeElement(magnetData, size = 'medium') {
+    return createMagnetElement(magnetData, true, size);
 }
 
 
@@ -464,6 +483,8 @@ function collectAllProfileData() {
     const inputs = infoTab.querySelectorAll('input.form-input');
     const textarea = infoTab.querySelector('textarea.form-input');
     const fullName = inputs[0].value.split(' ');
+    const activeSizeBtn = document.querySelector('.magnet-size-btn.bg-\\[\\#281822\\]');
+    const magnetSize = activeSizeBtn ? activeSizeBtn.getAttribute('data-size') : 'medium';
 
     // Fridge Settings Data
     const fSettingsTab = document.getElementById('tab-fridge-settings');
@@ -487,6 +508,7 @@ function collectAllProfileData() {
 
         // Холодильник (колір беремо з атрибуту data-color)
         fridgeColor: selectedOption?.getAttribute('data-color') || '#f3f4f6',
+        magnetSize: magnetSize,
 
         fridgeIsPublic: fSwitches?.[0]?.classList.contains('active') ?? true,
         fridgeAllowComments: fSwitches?.[1]?.classList.contains('active') ?? true,
@@ -613,6 +635,24 @@ function initSettingsForms() {
             });
         }
     }
+
+    // 5. Логіка вибору розміру магнітів
+    const sizeBtns = document.querySelectorAll('.magnet-size-btn');
+    sizeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Прибираємо активний клас з усіх
+            sizeBtns.forEach(b => {
+                b.classList.remove('bg-[#281822]', 'text-white', 'border-transparent');
+                b.classList.add('border-gray-300', 'text-gray-700');
+            });
+            // Додаємо активний клас натиснутій
+            btn.classList.remove('border-gray-300', 'text-gray-700');
+            btn.classList.add('bg-[#281822]', 'text-white', 'border-transparent');
+
+            // Опціонально: можна одразу оновити вигляд на холодильнику (live preview)
+            // updateFridgeMagnetsSize(btn.getAttribute('data-size'));
+        });
+    });
 }
 
 /* =========================================

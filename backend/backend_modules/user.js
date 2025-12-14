@@ -39,11 +39,12 @@ router.get('/profile', authenticateToken, async (req, res) => {
         SELECT
             u.user_id, u.email, u.registration_date, u.is_agent,
             u.is_email_public, u.is_location_public,
-            u.notify_email, u.notify_push, u.notify_new_followers, u.notify_comments, u.notify_messages, -- НОВІ ПОЛЯ
+            u.notify_email, u.notify_push, u.notify_new_followers, u.notify_comments, u.notify_messages,
             up.first_name, up.last_name, up.location, up.date_of_birth, up.bio, up.travel_interests, up.profile_image_url,
-            up.website, -- НОВЕ ПОЛЕ
+            up.website,
             us.countries_visited, us.cities_visited, us.followers_count,
-            fs.fridge_color, fs.is_public AS fridge_is_public, fs.allow_comments AS fridge_allow_comments
+            fs.fridge_color, fs.is_public AS fridge_is_public, fs.allow_comments AS fridge_allow_comments,
+            fs.magnet_size
         FROM users u
                  LEFT JOIN user_profiles up ON u.user_id = up.user_id
                  LEFT JOIN user_stats us ON u.user_id = us.user_id
@@ -69,10 +70,10 @@ router.get('/profile', authenticateToken, async (req, res) => {
 router.put('/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const {
-        firstName, lastName, location, dateOfBirth, bio, travelInterests, website, // Додано website
+        firstName, lastName, location, dateOfBirth, bio, travelInterests, website,
         isEmailPublic, isLocationPublic,
         notifyEmail, notifyPush, notifyFollowers, notifyComments, notifyMessages,
-        fridgeColor, fridgeIsPublic, fridgeAllowComments
+        fridgeColor, fridgeIsPublic, fridgeAllowComments, magnetSize
     } = req.body;
 
     const client = await pool.connect();
@@ -117,12 +118,18 @@ router.put('/profile', authenticateToken, async (req, res) => {
 
         // 3. Оновлення fridge_settings (без змін)
         const fridgeUpdateQuery = `
-            INSERT INTO fridge_settings (user_id, fridge_color, is_public, allow_comments)
-            VALUES ($4, $1, $2, $3)
+            INSERT INTO fridge_settings (user_id, fridge_color, is_public, allow_comments, magnet_size)
+            VALUES ($4, $1, $2, $3, $5)
             ON CONFLICT (user_id) DO UPDATE
-                SET fridge_color = $1, is_public = $2, allow_comments = $3;
+                SET fridge_color = $1, is_public = $2, allow_comments = $3, magnet_size = $5;
         `;
-        await client.query(fridgeUpdateQuery, [fridgeColor, fridgeIsPublic, fridgeAllowComments, userId]);
+        await client.query(fridgeUpdateQuery, [
+            fridgeColor,
+            fridgeIsPublic,
+            fridgeAllowComments,
+            userId,
+            magnetSize || 'medium'
+        ]);
 
         await client.query('COMMIT');
         res.json({ message: 'Профіль оновлено.' });

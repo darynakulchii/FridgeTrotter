@@ -509,3 +509,21 @@ body {
     height: auto;
     min-height: 60px;
 }
+
+
+/* Розміри магнітів */
+.magnet-on-fridge {
+    transition: transform 0.2s, width 0.2s, height 0.2s;
+}
+
+.magnet-on-fridge.size-small {
+    transform: scale(0.8);
+}
+
+.magnet-on-fridge.size-medium {
+    transform: scale(1);
+}
+
+.magnet-on-fridge.size-large {
+    transform: scale(1.2);
+}
