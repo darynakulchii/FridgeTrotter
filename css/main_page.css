@@ -484,3 +484,29 @@ body {
     font-weight: bold;
     border: 2px solid #281822; /* Колір хедера для обводки */
 }
+
+/* Форми магнітів */
+.magnet-shape-square {
+    border-radius: 8px; /* Стандартне заокруглення */
+    width: 70px;
+    height: 70px;
+}
+
+.magnet-shape-circle {
+    border-radius: 50% !important; /* Робимо круглим */
+    width: 70px;
+    height: 70px;
+}
+
+.magnet-shape-rectangle {
+    border-radius: 6px;
+    width: 90px !important; /* Ширший */
+    height: 60px !important; /* Нижчий */
+}
+
+/* Корекція для панелі вибору (щоб не ламалось в гріді) */
+.magnet-panel-card .magnet-btn.magnet-shape-rectangle {
+    width: 100%;
+    height: auto;
+    min-height: 60px;
+}

@@ -51,8 +51,10 @@ CREATE TABLE magnets (
                          magnet_id SERIAL PRIMARY KEY,
                          country VARCHAR(100) NOT NULL,
                          city VARCHAR(100),
-                         icon_class VARCHAR(50) NOT NULL, -- Наприклад, 'plane', 'camera'
-                         color_group VARCHAR(50) -- Наприклад, 'burgundy', 'teal'
+                         icon_class VARCHAR(50) NOT NULL,
+                         color_group VARCHAR(50),
+                         image_url VARCHAR(500),
+                         shape VARCHAR(50)
 );
 
 CREATE UNIQUE INDEX idx_unique_magnet ON magnets (country, city);

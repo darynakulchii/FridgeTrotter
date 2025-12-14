@@ -219,7 +219,7 @@ router.get('/me/tours', authenticateToken, async (req, res) => {
  */
 router.post('/magnets', authenticateToken, upload.single('image'), async (req, res) => {
     const userId = req.user.userId;
-    const { type, shape, comment } = req.body; // type: 'upload' | 'request'
+    const { type, shape, comment, country, city } = req.body;
 
     const client = await pool.connect();
     try {
@@ -242,24 +242,26 @@ router.post('/magnets', authenticateToken, upload.single('image'), async (req, r
 
         // 3. Зберігаємо замовлення
         const insertQuery = `
-            INSERT INTO agency_magnet_orders (agency_id, type, image_url, shape, comment)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING order_id;
+            INSERT INTO magnets (country, city, icon_class, color_group, image_url, shape)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING magnet_id;
         `;
-        await client.query(insertQuery, [agencyId, type, imageUrl, shape, comment]);
+        await client.query(insertQuery, [
+            country,
+            city,
+            'star', // icon_class (заглушка)
+            'teal', // color_group (заглушка)
+            imageUrl,
+            shape || 'square'
+        ]);
 
         await client.query('COMMIT');
-
-        const message = type === 'upload'
-            ? 'Ваш магніт відправлено на модерацію.'
-            : 'Запит відправлено менеджеру. Ми зв\'яжемося з вами.';
-
-        res.status(201).json({ message });
+        res.status(201).json({ message: 'Магніт успішно додано до каталогу!' });
 
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Magnet Order Error:', error);
-        res.status(500).json({ error: 'Помилка створення замовлення.' });
+        res.status(500).json({ error: 'Помилка додавання магніту.' });
     } finally {
         client.release();
     }

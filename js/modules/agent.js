@@ -1,118 +1,160 @@
 import { API_URL, getHeaders } from '../api-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    initMagnetModal();
-
-    // === ДОДАНО: Обробка відкриття модалки через делегування ===
+    // Слухач подій для всього документа (делегування)
     document.addEventListener('click', (e) => {
-        // Шукаємо кнопку (враховуючи, що клік може бути по іконці всередині кнопки)
-        const btn = e.target.closest('#agent-btn-add-magnet');
+        handleGlobalClicks(e);
+    });
 
-        if (btn) {
-            // Закриваємо попереднє меню агента
-            const agentMenu = document.getElementById('agent-mode-modal');
-            if (agentMenu) agentMenu.classList.remove('active');
-
-            // Відкриваємо модалку додавання магніту
-            const magnetModal = document.getElementById('modal-agent-add-magnet');
-            if (magnetModal) magnetModal.classList.add('active');
+    // Ініціалізація логіки завантаження файлів (вона потребує прив'язки до input, коли він з'явиться)
+    // Оскільки input теж динамічний, краще також використати делегування для 'change'
+    document.addEventListener('change', (e) => {
+        if (e.target && e.target.id === 'magnet-file-input') {
+            handleFileSelect(e.target);
         }
     });
 });
 
-function initMagnetModal() {
-    const modal = document.getElementById('modal-agent-add-magnet');
-    if (!modal) return;
+function handleGlobalClicks(e) {
+    // 1. Відкриття модального вікна "Додати магніт"
+    const openBtn = e.target.closest('#agent-btn-add-magnet');
+    if (openBtn) {
+        // Закриваємо меню агента
+        document.getElementById('agent-mode-modal')?.classList.remove('active');
+        // Відкриваємо модалку магніту
+        const modal = document.getElementById('modal-agent-add-magnet');
+        if (modal) {
+            modal.classList.add('active');
+            resetForms(); // Скидаємо форми при відкритті
+        }
+        return;
+    }
 
-    const stepSelect = document.getElementById('magnet-step-select');
-    const formUpload = document.getElementById('form-magnet-upload');
-    const formRequest = document.getElementById('form-magnet-request');
+    // 2. Кнопка "Завантажити свій дизайн"
+    const btnUpload = e.target.closest('#btn-choice-upload');
+    if (btnUpload) {
+        document.getElementById('magnet-step-select').classList.add('hidden');
+        document.getElementById('form-magnet-upload').classList.remove('hidden');
+        return;
+    }
 
-    // Кнопки вибору режиму
-    document.getElementById('btn-choice-upload').addEventListener('click', () => {
-        stepSelect.classList.add('hidden');
-        formUpload.classList.remove('hidden');
-    });
+    // 3. Кнопка "Замовити дизайн"
+    const btnRequest = e.target.closest('#btn-choice-request');
+    if (btnRequest) {
+        document.getElementById('magnet-step-select').classList.add('hidden');
+        document.getElementById('form-magnet-request').classList.remove('hidden');
+        return;
+    }
 
-    document.getElementById('btn-choice-request').addEventListener('click', () => {
-        stepSelect.classList.add('hidden');
-        formRequest.classList.remove('hidden');
-    });
+    // 4. Кнопки "Назад"
+    const btnBack = e.target.closest('.btn-back-step');
+    if (btnBack) {
+        document.getElementById('form-magnet-upload').classList.add('hidden');
+        document.getElementById('form-magnet-request').classList.add('hidden');
+        document.getElementById('magnet-step-select').classList.remove('hidden');
+        resetForms();
+        return;
+    }
 
-    // Кнопки "Назад"
-    document.querySelectorAll('.btn-back-step').forEach(btn => {
-        btn.addEventListener('click', () => {
-            formUpload.classList.add('hidden');
-            formRequest.classList.add('hidden');
-            stepSelect.classList.remove('hidden');
-            resetForms();
-        });
-    });
+    // 5. Сабміт форм (кнопки всередині форм)
+    // Оскільки button type="submit", краще слухати подію 'submit' на документі, див. нижче
+}
 
-    // --- Логіка завантаження файлу (Preview) ---
-    const fileInput = document.getElementById('magnet-file-input');
-    const previewImg = document.getElementById('magnet-preview-img');
-    const previewArea = document.getElementById('magnet-preview-area');
+// Обробка відправки форм через делегування 'submit'
+document.addEventListener('submit', async (e) => {
+    if (e.target.id === 'form-magnet-upload') {
+        e.preventDefault();
+        await handleUploadSubmit(e.target);
+    } else if (e.target.id === 'form-magnet-request') {
+        e.preventDefault();
+        await handleRequestSubmit(e.target);
+    }
+});
 
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
+// Логіка прев'ю файлу
+function handleFileSelect(input) {
+    const file = input.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const previewImg = document.getElementById('magnet-preview-img');
+            const previewArea = document.getElementById('magnet-preview-area');
+            if (previewImg && previewArea) {
                 previewImg.src = e.target.result;
                 previewImg.classList.remove('hidden');
                 previewArea.classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    // --- Обробка форми Upload ---
-    formUpload.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const file = fileInput.files[0];
-        // Отримуємо вибрану радіокнопку
-        const shape = document.querySelector('input[name="magnet_shape"]:checked').value;
-
-        if (!file) {
-            alert('Будь ласка, оберіть зображення.');
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('type', 'upload');
-        formData.append('image', file);
-        formData.append('shape', shape);
-
-        await sendMagnetRequest(formData, modal);
-    });
-
-    // --- Обробка форми Request ---
-    formRequest.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const comment = document.getElementById('magnet-request-text').value;
-
-        if (!comment.trim()) {
-            alert('Будь ласка, напишіть ваші побажання.');
-            return;
-        }
-
-        const formData = new FormData(); // Використовуємо FormData для уніфікації
-        formData.append('type', 'request');
-        formData.append('comment', comment);
-
-        await sendMagnetRequest(formData, modal);
-    });
+            }
+        };
+        reader.readAsDataURL(file);
+    }
 }
 
 function resetForms() {
-    document.getElementById('magnet-file-input').value = '';
-    document.getElementById('magnet-preview-img').classList.add('hidden');
-    document.getElementById('magnet-preview-area').classList.remove('hidden');
-    document.getElementById('magnet-request-text').value = '';
+    const fileInput = document.getElementById('magnet-file-input');
+    const previewImg = document.getElementById('magnet-preview-img');
+    const previewArea = document.getElementById('magnet-preview-area');
+    const requestText = document.getElementById('magnet-request-text');
+    const countryInput = document.getElementById('magnet-country');
+    const cityInput = document.getElementById('magnet-city');
+
+    if (fileInput) fileInput.value = '';
+    if (previewImg) previewImg.classList.add('hidden');
+    if (previewArea) previewArea.classList.remove('hidden');
+    if (requestText) requestText.value = '';
+    if (countryInput) countryInput.value = '';
+    if (cityInput) cityInput.value = '';
 }
 
-async function sendMagnetRequest(formData, modal) {
+// Обробка відправки форми Upload
+async function handleUploadSubmit(form) {
+    const fileInput = document.getElementById('magnet-file-input');
+    const file = fileInput.files[0];
+    const shapeInput = form.querySelector('input[name="magnet_shape"]:checked');
+    const shape = shapeInput ? shapeInput.value : 'square';
+    const country = document.getElementById('magnet-country').value;
+    const city = document.getElementById('magnet-city').value;
+
+    if (!file) {
+        alert('Будь ласка, оберіть зображення.');
+        return;
+    }
+
+    if (!country || !city) {
+        alert('Будь ласка, вкажіть країну та місто.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('type', 'upload');
+    formData.append('image', file);
+    formData.append('shape', shape);
+    formData.append('country', country);
+    formData.append('city', city);
+
+    await sendMagnetRequest(formData);
+}
+
+// Обробка відправки форми Request
+async function handleRequestSubmit(form) {
+    const comment = document.getElementById('magnet-request-text').value;
+
+    if (!comment.trim()) {
+        alert('Будь ласка, напишіть ваші побажання.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('type', 'request');
+    formData.append('comment', comment);
+
+    await sendMagnetRequest(formData);
+}
+
+// Спільна функція відправки на сервер
+async function sendMagnetRequest(formData) {
+    const modal = document.getElementById('modal-agent-add-magnet');
+
+    // Блокуємо кнопки
     const submitBtns = modal.querySelectorAll('button[type="submit"]');
     submitBtns.forEach(b => { b.disabled = true; b.innerText = 'Відправка...'; });
 
@@ -121,7 +163,6 @@ async function sendMagnetRequest(formData, modal) {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
-                // Content-Type не встановлюємо вручну при FormData, браузер сам поставить multipart/form-data
             },
             body: formData
         });
@@ -131,7 +172,7 @@ async function sendMagnetRequest(formData, modal) {
         if (response.ok) {
             alert(data.message);
             modal.classList.remove('active');
-            // Скидання стану модалки до початкового
+            // Скидання стану
             document.getElementById('form-magnet-upload').classList.add('hidden');
             document.getElementById('form-magnet-request').classList.add('hidden');
             document.getElementById('magnet-step-select').classList.remove('hidden');
@@ -145,8 +186,8 @@ async function sendMagnetRequest(formData, modal) {
     } finally {
         submitBtns.forEach(b => {
             b.disabled = false;
-            // Повертаємо текст кнопки (спрощено)
-            if(b.closest('#form-magnet-upload')) b.innerText = 'Створити магніт';
+            // Відновлюємо текст кнопки
+            if (b.closest('#form-magnet-upload')) b.innerText = 'Створити магніт';
             else b.innerText = 'Надіслати запит';
         });
     }

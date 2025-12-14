@@ -373,32 +373,44 @@ async function loadUserFridgeLayout() {
 
 function createMagnetElement(magnetData, isOnFridge) {
     const div = document.createElement('div');
-    // Додаємо атрибут draggable
-    div.setAttribute('draggable', 'true');
+    div.setAttribute('draggable', 'true')
+    const baseClass = isOnFridge ? 'magnet-on-fridge' : 'magnet-btn';
+    const shapeClass = magnetData.shape ? `magnet-shape-${magnetData.shape}` : '';
+    const extraClasses = magnetData.image_url ? 'relative overflow-hidden' : '';
 
-    if (!isOnFridge) {
-        div.className = `magnet-btn ${magnetData.color_group || 'burgundy'}`;
-    } else {
-        div.className = `magnet-on-fridge ${magnetData.color_group || 'burgundy'}`;
-    }
+    div.className = `${baseClass} ${magnetData.color_group || 'burgundy'} ${shapeClass} ${extraClasses}`;
 
-    // ВАЖЛИВО: Зберігаємо ID та інші метадані. Без цього база не прийме магніт.
     div.setAttribute('data-id', magnetData.magnet_id);
     div.setAttribute('data-country', magnetData.country);
     div.setAttribute('data-city', magnetData.city || '');
-    div.setAttribute('data-icon', magnetData.icon_class);
+    div.setAttribute('data-icon', magnetData.icon_class || 'star');
     div.setAttribute('data-color', magnetData.color_group || 'burgundy');
 
-    const countryText = magnetData.country;
-    const cityText = magnetData.city || magnetData.country;
+    if (magnetData.image_url) div.setAttribute('data-image', magnetData.image_url);
+    if (magnetData.shape) div.setAttribute('data-shape', magnetData.shape);
 
-    div.innerHTML = `
-        <i class="fas fa-${magnetData.icon_class} ${isOnFridge ? '' : 'text-xl'}"></i>
-        <div>
-            <div class="${isOnFridge ? 'text-[10px] font-bold mt-1 leading-tight' : 'font-bold text-sm'} pointer-events-none">${cityText}</div>
-            ${!isOnFridge ? `<div class="text-xs opacity-80 pointer-events-none">${countryText}</div>` : `<div class="text-[8px] opacity-90 pointer-events-none">${countryText}</div>`}
-        </div>
-    `;
+    if (magnetData.image_url) {
+        div.innerHTML = `
+            <img src="${magnetData.image_url}" class="absolute inset-0 w-full h-full object-cover pointer-events-none z-0">
+            <div class="absolute inset-0 bg-black/30 z-10 flex items-center justify-center p-1">
+                <span class="text-white font-bold text-center leading-tight ${isOnFridge ? 'text-[10px]' : 'text-xs'} drop-shadow-md pointer-events-none">
+                    ${magnetData.city || magnetData.country}
+                </span>
+            </div>
+        `;
+    } else {
+        const countryText = magnetData.country;
+        const cityText = magnetData.city || magnetData.country;
+
+        div.innerHTML = `
+            <i class="fas fa-${magnetData.icon_class} ${isOnFridge ? '' : 'text-xl'} z-10 relative"></i>
+            <div class="z-10 relative">
+                <div class="${isOnFridge ? 'text-[10px] font-bold mt-1 leading-tight' : 'font-bold text-sm'} pointer-events-none">${cityText}</div>
+                ${!isOnFridge ? `<div class="text-xs opacity-80 pointer-events-none">${countryText}</div>` : `<div class="text-[8px] opacity-90 pointer-events-none">${countryText}</div>`}
+            </div>
+        `;
+    }
+
     return div;
 }
 
