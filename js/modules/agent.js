@@ -2,6 +2,22 @@ import { API_URL, getHeaders } from '../api-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     initMagnetModal();
+
+    // === ДОДАНО: Обробка відкриття модалки через делегування ===
+    document.addEventListener('click', (e) => {
+        // Шукаємо кнопку (враховуючи, що клік може бути по іконці всередині кнопки)
+        const btn = e.target.closest('#agent-btn-add-magnet');
+
+        if (btn) {
+            // Закриваємо попереднє меню агента
+            const agentMenu = document.getElementById('agent-mode-modal');
+            if (agentMenu) agentMenu.classList.remove('active');
+
+            // Відкриваємо модалку додавання магніту
+            const magnetModal = document.getElementById('modal-agent-add-magnet');
+            if (magnetModal) magnetModal.classList.add('active');
+        }
+    });
 });
 
 function initMagnetModal() {
