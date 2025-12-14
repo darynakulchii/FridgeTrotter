@@ -2,6 +2,24 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { authenticateToken } = require('../auth_middleware');
+const multer = require('multer');
+const streamifier = require('streamifier');
+const cloudinary = require('cloudinary').v2;
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Допоміжна функція завантаження фото
+const uploadToCloudinary = (fileBuffer) => {
+    return new Promise((resolve, reject) => {
+        let stream = cloudinary.uploader.upload_stream(
+            { folder: 'fridgetrotter/tours', resource_type: 'image' },
+            (error, result) => {
+                if (result) resolve(result);
+                else reject(error);
+            }
+        );
+        streamifier.createReadStream(fileBuffer).pipe(stream);
+    });
+};
 
 /**
  * GET /api/tours/agencies
@@ -160,6 +178,71 @@ router.get('/saved', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Помилка отримання збережених турів:', error);
         res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+router.post('/', authenticateToken, upload.single('image'), async (req, res) => {
+    const userId = req.user.userId;
+    const { title, price, duration, location, description, category_id } = req.body;
+
+    if (!title || !price || !duration || !location) {
+        return res.status(400).json({ error: 'Заповніть всі обов\'язкові поля.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Знаходимо ID агенції, що належить користувачу
+        const agencyRes = await client.query('SELECT agency_id FROM agencies WHERE owner_id = $1', [userId]);
+
+        if (agencyRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Ви не зареєстровані як агенція.' });
+        }
+        const agencyId = agencyRes.rows[0].agency_id;
+
+        // 2. Завантажуємо фото (якщо є)
+        let imageUrl = null;
+        if (req.file) {
+            const uploadResult = await uploadToCloudinary(req.file.buffer);
+            imageUrl = uploadResult.secure_url;
+        }
+
+        // 3. Створюємо тур
+        const insertQuery = `
+            INSERT INTO tours (agency_id, title, description, location, duration_days, price_uah, image_url, category_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING tour_id;
+        `;
+
+        const tourRes = await client.query(insertQuery, [
+            agencyId,
+            title,
+            description,
+            location,
+            parseInt(duration),
+            parseFloat(price),
+            imageUrl,
+            category_id ? parseInt(category_id) : null
+        ]);
+
+        // Оновлюємо лічильник турів в агенції
+        await client.query('UPDATE agencies SET total_tours_count = total_tours_count + 1 WHERE agency_id = $1', [agencyId]);
+
+        await client.query('COMMIT');
+
+        res.status(201).json({
+            message: 'Тур успішно створено!',
+            tourId: tourRes.rows[0].tour_id
+        });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Create Tour Error:', error);
+        res.status(500).json({ error: 'Помилка сервера при створенні туру.' });
+    } finally {
+        client.release();
     }
 });
 

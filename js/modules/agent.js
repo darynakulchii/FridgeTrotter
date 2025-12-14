@@ -6,13 +6,28 @@ document.addEventListener('DOMContentLoaded', () => {
         handleGlobalClicks(e);
     });
 
-    // Ініціалізація логіки завантаження файлів (вона потребує прив'язки до input, коли він з'явиться)
-    // Оскільки input теж динамічний, краще також використати делегування для 'change'
     document.addEventListener('change', (e) => {
         if (e.target && e.target.id === 'magnet-file-input') {
             handleFileSelect(e.target);
         }
     });
+
+    const btnAddTour = document.getElementById('agent-btn-add-tour');
+    if (btnAddTour) {
+        btnAddTour.addEventListener('click', () => {
+            // Закриваємо меню агента
+            document.getElementById('agent-mode-modal')?.classList.remove('active');
+            // Відкриваємо модалку туру
+            const modal = document.getElementById('modal-agent-add-tour');
+            if (modal) modal.classList.add('active');
+        });
+    }
+
+    // Слухач сабміту форми створення туру
+    const formTour = document.getElementById('form-add-tour');
+    if (formTour) {
+        formTour.addEventListener('submit', handleTourSubmit);
+    }
 });
 
 function handleGlobalClicks(e) {
@@ -148,6 +163,52 @@ async function handleRequestSubmit(form) {
     formData.append('comment', comment);
 
     await sendMagnetRequest(formData);
+}
+
+// Функція обробки створення туру
+async function handleTourSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    // Блокуємо кнопку
+    const originalText = submitBtn.innerText;
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Публікація...';
+
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch(`${API_URL}/tours`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: formData // FormData автоматично ставить правильний Content-Type
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('Тур успішно створено!');
+            form.reset();
+            document.getElementById('tour-file-name').innerText = 'Натисніть щоб завантажити фото';
+            document.getElementById('modal-agent-add-tour').classList.remove('active');
+
+            // Якщо ми на сторінці турів або профілю, можна перезавантажити сторінку
+            if (window.location.pathname.includes('main_page_tours') || window.location.pathname.includes('my_profile')) {
+                window.location.reload();
+            }
+        } else {
+            alert(data.error || 'Помилка при створенні туру');
+        }
+    } catch (error) {
+        console.error('Error creating tour:', error);
+        alert('Помилка з\'єднання з сервером');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalText;
+    }
 }
 
 // Спільна функція відправки на сервер
