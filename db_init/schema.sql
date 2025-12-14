@@ -291,3 +291,12 @@ CREATE TABLE agency_magnet_orders (
 );
 
 ALTER TABLE fridge_settings ADD COLUMN magnet_size VARCHAR(20) DEFAULT 'medium';
+
+
+INSERT INTO tour_categories (category_id, name_ukr) VALUES
+                                                        (1, 'Пляжний відпочинок'),
+                                                        (2, 'Гірський туризм'),
+                                                        (3, 'Міський туризм'),
+                                                        (4, 'Екскурсійні тури'),
+                                                        (5, 'Активний відпочинок')
+ON CONFLICT (category_id) DO NOTHING;
