@@ -1,96 +1,148 @@
-// js/modules/create_post.js
 import { API_URL } from '../api-config.js';
 
-let selectedFiles = [];
+let selectedFiles = []; // Масив для зберігання файлів
+const MAX_PHOTOS = 8;   // Ліміт для постів
 
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. ПЕРЕВІРКА АВТОРИЗАЦІЇ
-    const token = localStorage.getItem('token');
-    if (!token) {
-        alert('Для створення посту необхідно увійти в акаунт.');
-        window.location.href = 'login.html';
-        return;
-    }
-
-    initFormLogic();
-});
-
-function initFormLogic() {
+export function initPostForm(onSuccessCallback) {
     const form = document.getElementById('create-post-form');
     const imageInput = document.getElementById('new-post-images');
     const previewContainer = document.getElementById('image-preview-container');
 
-    // Логіка вибору файлів (ідентична до тієї, що була в модалці)
-    if (imageInput) {
-        imageInput.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            if (selectedFiles.length + files.length > 5) {
-                alert('Максимальна кількість фото: 5');
-                return;
-            }
-            files.forEach(file => {
-                if (!file.type.startsWith('image/')) return;
-                selectedFiles.push(file);
+    if (!form || !imageInput || !previewContainer) return;
 
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const preview = document.createElement('div');
-                    preview.className = 'relative w-full h-20 rounded-md overflow-hidden group border border-gray-200';
-                    preview.innerHTML = `
-                        <img src="${ev.target.result}" class="w-full h-full object-cover">
-                        <button type="button" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-xs">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    `;
-                    preview.querySelector('button').addEventListener('click', () => {
-                        selectedFiles = selectedFiles.filter(f => f !== file);
-                        preview.remove();
-                    });
-                    previewContainer.appendChild(preview);
-                };
-                reader.readAsDataURL(file);
+    // --- Функція оновлення сітки (відображення) ---
+    const updatePhotoDisplay = () => {
+        previewContainer.innerHTML = ''; // Очищаємо контейнер
+
+        // 1. Рендеримо вибрані фото
+        selectedFiles.forEach((file, index) => {
+            const div = document.createElement('div');
+            div.className = 'photo-upload-placeholder preview';
+
+            // Кнопка видалення (хрестик)
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'photo-delete-btn';
+            deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+            deleteBtn.type = 'button';
+            deleteBtn.onclick = (e) => {
+                e.stopPropagation();
+                removeFile(index);
+            };
+            div.appendChild(deleteBtn);
+
+            // Читаємо файл і ставимо як фон
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                div.style.backgroundImage = `url('${e.target.result}')`;
+            };
+            reader.readAsDataURL(file);
+
+            previewContainer.appendChild(div);
+        });
+
+        // 2. Кнопка "+ Додати" (якщо ліміт не досягнуто)
+        if (selectedFiles.length < MAX_PHOTOS) {
+            const addBtn = document.createElement('div');
+            addBtn.className = 'photo-upload-placeholder add-photo-btn';
+            addBtn.innerHTML = '<i class="fas fa-plus"></i> Додати';
+            addBtn.onclick = () => imageInput.click();
+            previewContainer.appendChild(addBtn);
+        }
+
+        // 3. Заповнюємо решту місць пустими квадратами
+        // Рахуємо скільки слотів зайнято (фото + кнопка додавання)
+        const filledSlots = selectedFiles.length + (selectedFiles.length < MAX_PHOTOS ? 1 : 0);
+        for (let i = filledSlots; i < MAX_PHOTOS; i++) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'photo-upload-placeholder';
+            previewContainer.appendChild(emptyDiv);
+        }
+    };
+
+    // Видалення файлу з масиву
+    const removeFile = (index) => {
+        selectedFiles.splice(index, 1);
+        imageInput.value = ''; // Скидаємо інпут
+        updatePhotoDisplay();
+    };
+
+    // --- Слухач вибору файлів ---
+    // Клонуємо інпут, щоб очистити старі слухачі (важливо для модалок)
+    const newInput = imageInput.cloneNode(true);
+    imageInput.parentNode.replaceChild(newInput, imageInput);
+
+    // Отримуємо посилання на новий інпут
+    const currentInput = document.getElementById('new-post-images');
+
+    currentInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        if (!files.length) return;
+
+        const availableSlots = MAX_PHOTOS - selectedFiles.length;
+        if (files.length > availableSlots) {
+            alert(`Можна додати ще максимум ${availableSlots} фото.`);
+        }
+
+        // Додаємо тільки ті, що влазять у ліміт
+        const filesToAdd = files.slice(0, availableSlots);
+        selectedFiles = [...selectedFiles, ...filesToAdd];
+
+        currentInput.value = ''; // Очищаємо value, щоб можна було додати ті ж файли знову
+        updatePhotoDisplay();
+    });
+
+    // --- Відправка форми ---
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+
+    newForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = newForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerText;
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Публікація...';
+
+        const formData = new FormData();
+        formData.append('title', document.getElementById('new-post-title').value);
+        formData.append('category', document.getElementById('new-post-category').value);
+        formData.append('content', document.getElementById('new-post-content').value);
+
+        // Додаємо файли з нашого масиву у FormData
+        selectedFiles.forEach(file => {
+            formData.append('images', file);
+        });
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/forum/posts`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
             });
-            imageInput.value = '';
-        });
-    }
 
-    // Відправка форми
-    if (form) {
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerText;
-            submitBtn.disabled = true;
-            submitBtn.innerText = 'Публікація...';
+            if (response.ok) {
+                newForm.reset();
+                selectedFiles = []; // Очищаємо масив
+                updatePhotoDisplay(); // Скидаємо вигляд сітки
 
-            const formData = new FormData();
-            formData.append('title', document.getElementById('new-post-title').value);
-            formData.append('category', document.getElementById('new-post-category').value);
-            formData.append('content', document.getElementById('new-post-content').value);
-            selectedFiles.forEach(file => formData.append('images', file));
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/forum/posts`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-
-                if (response.ok) {
-                    // Успіх - перекидаємо на форум або в профіль
-                    window.location.href = 'forum.html';
-                } else {
-                    const data = await response.json();
-                    alert(data.error || 'Помилка створення поста');
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Помилка з\'єднання');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerText = originalText;
+                if (onSuccessCallback) onSuccessCallback();
+                else window.location.href = 'forum.html';
+            } else {
+                const data = await response.json();
+                alert(data.error || 'Помилка створення поста');
             }
-        });
+        } catch (error) {
+            console.error(error);
+            alert('Помилка з\'єднання');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = originalText;
+        }
+    });
+
+    // Ініціалізація при відкритті (скидаємо стан, якщо це нове відкриття)
+    if (onSuccessCallback) {
+        selectedFiles = [];
     }
+    updatePhotoDisplay();
 }

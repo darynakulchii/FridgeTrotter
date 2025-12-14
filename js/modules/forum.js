@@ -1,4 +1,5 @@
 import { API_URL, getHeaders } from '../api-config.js';
+import { initPostForm } from './create_post.js'; // Імпортуємо логіку форми з фото
 
 document.addEventListener('DOMContentLoaded', () => {
     loadPosts();
@@ -20,11 +21,12 @@ window.contactAuthor = (userId) => {
     window.location.href = `chat.html?user_id=${userId}`;
 };
 
-// === ЛОГІКА СТВОРЕННЯ ПОСТА ===
+// === ЛОГІКА СТВОРЕННЯ ПОСТА (Оновлена для Модалки) ===
 function initCreatePostModal() {
     const createBtn = document.getElementById('create-post-btn');
+    const modal = document.getElementById('create-post-modal');
 
-    if (createBtn) {
+    if (createBtn && modal) {
         createBtn.addEventListener('click', () => {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -32,8 +34,33 @@ function initCreatePostModal() {
                 window.location.href = 'login.html';
                 return;
             }
-            // Перенаправлення на сторінку створення
-            window.location.href = 'create_post.html';
+
+            // 1. Відкриваємо модалку
+            modal.classList.add('active');
+
+            // 2. Ініціалізуємо логіку форми (з create_post.js)
+            // Передаємо функцію, що робити після успіху
+            initPostForm(() => {
+                alert('Пост успішно опубліковано!');
+                modal.classList.remove('active'); // Закриваємо модалку
+                loadPosts(); // Оновлюємо стрічку постів
+            });
+        });
+    }
+
+    // Логіка закриття модалки (хрестик)
+    const closeBtn = document.getElementById('close-post-modal');
+    if (closeBtn && modal) {
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+    }
+
+    // Логіка закриття модалки (кнопка Скасувати всередині форми)
+    const cancelBtn = document.getElementById('cancel-post-btn');
+    if (cancelBtn && modal) {
+        cancelBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
         });
     }
 }
@@ -59,7 +86,7 @@ async function loadPosts() {
 
         container.innerHTML = '';
 
-        if (posts.length === 0) {
+        if (!posts || posts.length === 0) {
             container.innerHTML = '<p class="text-gray-500 col-span-2 text-center py-8">Постів не знайдено.</p>';
             return;
         }
@@ -77,7 +104,7 @@ async function loadPosts() {
                     // Для останнього зображення, якщо їх більше, показуємо лічильник
                     if (index === displayCount - 1 && post.images.length > displayCount) {
                         imagesHtml += `
-                            <div class="relative h-full">
+                            <div class="relative h-full cursor-pointer" onclick="openImageModal('${imgUrl}')">
                                 <img src="${imgUrl}" class="w-full h-full object-cover opacity-50">
                                 <div class="absolute inset-0 flex items-center justify-center text-white font-bold text-xl">
                                     +${post.images.length - displayCount + 1}
@@ -95,9 +122,9 @@ async function loadPosts() {
                 <div class="forum-card flex flex-col h-full">
                     <div class="flex justify-between mb-3">
                         <a href="other_user_profile.html?user_id=${post.author_id}" class="flex items-center gap-3 group text-decoration-none">
-                            <div class="avatar-circle bg-[#281822] group-hover:opacity-80 transition">
+                            <div class="avatar-circle bg-[#281822] group-hover:opacity-80 transition flex-shrink-0 overflow-hidden">
                                 ${post.author_avatar
-                ? `<img src="${post.author_avatar}" class="w-full h-full object-cover rounded-full">`
+                ? `<img src="${post.author_avatar}" class="w-full h-full object-cover">`
                 : getInitials(post.first_name, post.last_name)}
                             </div>
                             <div class="flex flex-col">
@@ -107,7 +134,7 @@ async function loadPosts() {
                                 <span class="text-gray-400 text-xs">${new Date(post.created_at).toLocaleDateString()}</span>
                             </div>
                         </a>
-                        <span class="tag-pill">${post.category || 'Загальна'}</span>
+                        <span class="tag-pill h-fit whitespace-nowrap">${post.category || 'Загальна'}</span>
                     </div>
                     
                     <div class="flex-grow">
@@ -159,12 +186,11 @@ window.toggleLike = async (postId) => {
             headers: getHeaders()
         });
         // Перезавантажуємо пости, щоб оновити лічильник
-        // (Для кращого UX можна оновлювати тільки лічильник у DOM, але loadPosts надійніше)
         loadPosts();
     } catch(e) { console.error(e); }
 };
 
-// Функція для відкриття зображення (можна додати повноцінну модалку)
+// Функція для відкриття зображення
 window.openImageModal = (url) => {
     window.open(url, '_blank');
 };
