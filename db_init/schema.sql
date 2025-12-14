@@ -300,3 +300,10 @@ INSERT INTO tour_categories (category_id, name_ukr) VALUES
                                                         (4, 'Екскурсійні тури'),
                                                         (5, 'Активний відпочинок')
 ON CONFLICT (category_id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS tour_images (
+                                           image_id SERIAL PRIMARY KEY,
+                                           tour_id INT NOT NULL REFERENCES tours(tour_id) ON DELETE CASCADE,
+                                           image_url VARCHAR(500) NOT NULL,
+                                           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -93,12 +93,22 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
     const tourId = req.params.id;
+    // Оновлений запит: збираємо всі картинки в масив images
     const query = `
-        SELECT t.*, a.name AS agency_name, tc.name_ukr AS category_name
+        SELECT
+            t.*,
+            a.name AS agency_name,
+            tc.name_ukr AS category_name,
+            COALESCE(
+                            ARRAY_AGG(ti.image_url) FILTER (WHERE ti.image_url IS NOT NULL),
+                            '{}'
+            ) AS images
         FROM tours t
                  JOIN agencies a ON t.agency_id = a.agency_id
                  LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
-        WHERE t.tour_id = $1;
+                 LEFT JOIN tour_images ti ON t.tour_id = ti.tour_id
+        WHERE t.tour_id = $1
+        GROUP BY t.tour_id, a.name, tc.name_ukr;
     `;
     try {
         const result = await pool.query(query, [tourId]);
@@ -115,31 +125,82 @@ router.get('/:id', async (req, res) => {
 /**
  * POST /api/tours/save
  */
-router.post('/save', authenticateToken, async (req, res) => {
-    const { tourId } = req.body;
+router.post('/', authenticateToken, upload.array('images', 10), async (req, res) => {
     const userId = req.user.userId;
+    const { title, price, duration, location, description, category_id } = req.body;
+    const files = req.files; // Тут тепер масив файлів
 
-    if (!tourId) {
-        return res.status(400).json({ error: 'Необхідно вказати ID туру.' });
+    if (!title || !price || !duration || !location) {
+        return res.status(400).json({ error: 'Заповніть всі обов\'язкові поля.' });
     }
 
-    const queryCheck = `SELECT * FROM user_saved_tours WHERE user_id = $1 AND tour_id = $2;`;
-    const queryInsert = `INSERT INTO user_saved_tours (user_id, tour_id) VALUES ($1, $2);`;
-    const queryDelete = `DELETE FROM user_saved_tours WHERE user_id = $1 AND tour_id = $2;`;
-
+    const client = await pool.connect();
     try {
-        const checkResult = await pool.query(queryCheck, [userId, tourId]);
+        await client.query('BEGIN');
 
-        if (checkResult.rows.length > 0) {
-            await pool.query(queryDelete, [userId, tourId]);
-            res.json({ message: 'Тур видалено зі збережених.', saved: false });
-        } else {
-            await pool.query(queryInsert, [userId, tourId]);
-            res.json({ message: 'Тур збережено.', saved: true });
+        // 1. Перевірка агенції
+        const agencyRes = await client.query('SELECT agency_id FROM agencies WHERE owner_id = $1', [userId]);
+        if (agencyRes.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Ви не зареєстровані як агенція.' });
         }
+        const agencyId = agencyRes.rows[0].agency_id;
+
+        // 2. Завантаження фото в Cloudinary
+        const imageUrls = [];
+        if (files && files.length > 0) {
+            const uploadPromises = files.map(file => uploadToCloudinary(file.buffer));
+            const results = await Promise.all(uploadPromises);
+            results.forEach(res => imageUrls.push(res.secure_url));
+        }
+
+        // Головне фото - це перше фото зі списку (або null)
+        const mainImageUrl = imageUrls.length > 0 ? imageUrls[0] : null;
+
+        // 3. Створюємо тур (зберігаємо головне фото в image_url для сумісності з картками на головній)
+        const insertTourQuery = `
+            INSERT INTO tours (agency_id, title, description, location, duration_days, price_uah, image_url, category_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING tour_id;
+        `;
+
+        const tourRes = await client.query(insertTourQuery, [
+            agencyId,
+            title,
+            description,
+            location,
+            parseInt(duration),
+            parseFloat(price),
+            mainImageUrl,
+            category_id ? parseInt(category_id) : null
+        ]);
+
+        const newTourId = tourRes.rows[0].tour_id;
+
+        // 4. Зберігаємо всі фото в таблицю tour_images
+        if (imageUrls.length > 0) {
+            const imageInsertQuery = `INSERT INTO tour_images (tour_id, image_url) VALUES ($1, $2)`;
+            for (const url of imageUrls) {
+                await client.query(imageInsertQuery, [newTourId, url]);
+            }
+        }
+
+        // Оновлюємо лічильник
+        await client.query('UPDATE agencies SET total_tours_count = total_tours_count + 1 WHERE agency_id = $1', [agencyId]);
+
+        await client.query('COMMIT');
+
+        res.status(201).json({
+            message: 'Тур успішно створено!',
+            tourId: newTourId
+        });
+
     } catch (error) {
-        console.error('Помилка збереження туру:', error);
-        res.status(500).json({ error: 'Помилка сервера.' });
+        await client.query('ROLLBACK');
+        console.error('Create Tour Error:', error);
+        res.status(500).json({ error: 'Помилка сервера при створенні туру.' });
+    } finally {
+        client.release();
     }
 });
 

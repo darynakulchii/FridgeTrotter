@@ -80,20 +80,21 @@ window.openTourDetails = async (id) => {
     const modal = document.getElementById('tour-details-modal');
     if (!modal) return;
 
-    // Показуємо модалку зі станом завантаження
     modal.classList.add('active');
 
-    // Елементи модалки
+    // Елементи
     const titleEl = document.getElementById('modal-tour-title');
     const descEl = document.getElementById('modal-tour-desc');
     const imgEl = document.getElementById('modal-tour-image');
+    const galleryEl = document.getElementById('modal-tour-gallery'); // Новий елемент
     const locEl = document.getElementById('modal-tour-loc');
     const durEl = document.getElementById('modal-tour-duration');
     const priceEl = document.getElementById('modal-tour-price');
 
-    // Очищення/Placeholder
+    // Очищення
     titleEl.innerText = 'Завантаження...';
-    descEl.innerText = '';
+    galleryEl.innerHTML = ''; // Очищаємо галерею
+    imgEl.src = '';
 
     try {
         const response = await fetch(`${API_URL}/tours/${id}`);
@@ -102,22 +103,29 @@ window.openTourDetails = async (id) => {
         const data = await response.json();
         const tour = data.tour;
 
-        // Заповнення даними
+        // Заповнення текстом
         titleEl.innerText = tour.title;
         descEl.innerText = tour.description;
-        imgEl.src = tour.image_url || 'https://via.placeholder.com/600x400';
         locEl.innerText = tour.location;
         durEl.innerText = `${tour.duration_days} днів`;
         priceEl.innerText = `${tour.price_uah} ₴`;
 
-        // Кнопка "Забронювати" (можна додати логіку)
-        const bookBtn = modal.querySelector('.btn-solid');
-        bookBtn.onclick = () => {
-            alert(`Бронювання туру "${tour.title}" поки що недоступне.`);
-        };
+        // Логіка галереї
+        // Встановлюємо головне фото (або перше з масиву, або заглушку)
+        const mainImage = tour.image_url || (tour.images && tour.images[0]) || 'https://via.placeholder.com/600x400';
+        imgEl.src = mainImage;
 
-        // Кнопка "Зберегти" (якщо залогінений)
-        // Тут можна динамічно додати кнопку "В обране", якщо потрібно
+        // Якщо є більше фото, показуємо їх у галереї
+        if (tour.images && tour.images.length > 0) {
+            tour.images.forEach(imgUrl => {
+                const thumb = document.createElement('img');
+                thumb.src = imgUrl;
+                thumb.className = "w-full h-16 object-cover rounded cursor-pointer hover:opacity-80 transition border border-transparent hover:border-[#48192E]";
+                // При кліку міняємо головне фото
+                thumb.onclick = () => { imgEl.src = imgUrl; };
+                galleryEl.appendChild(thumb);
+            });
+        }
 
     } catch (error) {
         console.error(error);
