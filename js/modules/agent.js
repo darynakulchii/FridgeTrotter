@@ -1,4 +1,5 @@
 import { API_URL, getHeaders } from '../api-config.js';
+import { setupTourPhotoUpload, getTourPhotos } from './create_tour.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Глобальний слухач кліків (делегування)
@@ -30,15 +31,14 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function handleGlobalClicks(e) {
-    // --- ВІДКРИТТЯ МОДАЛКИ ДОДАВАННЯ ТУРУ ---
-    // Шукаємо кнопку через closest, бо клік може бути по іконці всередині кнопки
     const btnAddTour = e.target.closest('#agent-btn-add-tour');
     if (btnAddTour) {
-        // Закриваємо меню агента
         document.getElementById('agent-mode-modal')?.classList.remove('active');
-        // Відкриваємо модалку туру
         const modal = document.getElementById('modal-agent-add-tour');
-        if (modal) modal.classList.add('active');
+        if (modal) {
+            modal.classList.add('active');
+            setupTourPhotoUpload();
+        }
         return;
     }
 
@@ -87,43 +87,56 @@ function handleGlobalClicks(e) {
 
 // Функція обробки створення туру
 async function handleTourSubmit(e) {
-    e.preventDefault(); // Зупиняємо стандартну відправку форми
+    e.preventDefault();
     const form = e.target;
     const submitBtn = form.querySelector('button[type="submit"]');
 
-    // Блокуємо кнопку, щоб уникнути подвійних кліків
     const originalText = submitBtn.innerText;
     submitBtn.disabled = true;
     submitBtn.innerText = 'Публікація...';
 
+    // Створюємо FormData з текстових полів форми
     const formData = new FormData(form);
 
+    // 3. ВАЖЛИВО: Видаляємо дефолтне поле images/photos, яке взялося з input,
+    // оскільки воно може бути порожнім або не містити видалені користувачем файли з прев'ю.
+    formData.delete('images');
+    formData.delete('photos');
+
+    // 4. Отримуємо актуальний масив файлів з create_tour.js
+    const files = getTourPhotos();
+
+    // Додаємо кожен файл вручну під ключем 'images' (як очікує бекенд)
+    if (files.length > 0) {
+        files.forEach(file => {
+            formData.append('images', file);
+        });
+    } else {
+        // Якщо фото обов'язкові, можна зробити перевірку тут
+        // alert('Додайте хоча б одне фото');
+        // submitBtn.disabled = false; submitBtn.innerText = originalText; return;
+    }
+
     try {
-        const response = await fetch(`${API_URL}/tours`, {
+        const response = await fetch(`${API_URL}/tours`, { // Або /tours/save, перевірте роут
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${localStorage.getItem('token')}`
+                // Content-Type не вказуємо вручну при FormData!
             },
-            body: formData // FormData автоматично встановлює правильний Content-Type
+            body: formData
         });
 
         const data = await response.json();
 
         if (response.ok) {
             alert('Тур успішно створено!');
-            form.reset(); // Очищаємо форму
+            form.reset();
+            // Тут бажано також очистити масив selectedFiles у create_tour.js,
+            // але це потребує додавання функції clearPhotos() у той модуль.
 
-            // Скидаємо текст інпуту файлу
-            const fileNameLabel = document.getElementById('tour-file-name');
-            if(fileNameLabel) fileNameLabel.innerText = 'Натисніть щоб завантажити фото';
-
-            // Закриваємо модалку
             document.getElementById('modal-agent-add-tour').classList.remove('active');
-
-            // Якщо ми на сторінці турів або профілю, перезавантажуємо, щоб побачити зміни
-            if (window.location.pathname.includes('main_page_tours') || window.location.pathname.includes('my_profile')) {
-                window.location.reload();
-            }
+            window.location.reload();
         } else {
             alert(data.error || 'Помилка при створенні туру');
         }
