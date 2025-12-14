@@ -188,35 +188,102 @@
 </div>
 
 <div id="modal-agent-add-magnet" class="modal-backdrop">
-    <div class="modal-content max-w-md">
+    <div class="modal-content max-w-lg">
         <div class="modal-header">
             <h3 class="text-xl font-bold text-[#281822]">Додати магніт</h3>
             <button class="modal-close-btn">&times;</button>
         </div>
-        <div class="modal-body space-y-6">
-            <div class="text-center">
-                <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-[#48192E] text-2xl">
-                    <i class="fas fa-upload"></i>
+        <div class="modal-body">
+
+            <div id="magnet-step-select" class="space-y-6">
+                <div class="text-center">
+                    <button id="btn-choice-upload" class="w-full group">
+                        <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-[#48192E] text-2xl group-hover:bg-[#48192E] group-hover:text-white transition">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <h4 class="font-bold mb-1 text-[#281822]">Завантажити свій дизайн</h4>
+                        <p class="text-sm text-gray-500">Якщо у вас вже є готове зображення (PNG/JPG)</p>
+                    </button>
                 </div>
-                <h4 class="font-bold mb-1">Завантажити свій дизайн</h4>
-                <p class="text-sm text-gray-500 mb-3">Якщо у вас вже є готове зображення магніту</p>
-                <button class="btn-solid w-full">Завантажити файл</button>
+
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-gray-300"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">АБО</span>
+                    <div class="flex-grow border-t border-gray-300"></div>
+                </div>
+
+                <div class="text-center">
+                    <button id="btn-choice-request" class="w-full group">
+                        <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-[#2D4952] text-2xl group-hover:bg-[#2D4952] group-hover:text-white transition">
+                            <i class="fas fa-paint-brush"></i>
+                        </div>
+                        <h4 class="font-bold mb-1 text-[#281822]">Замовити дизайн</h4>
+                        <p class="text-sm text-gray-500">Наші дизайнери створять унікальний магніт для вас</p>
+                    </button>
+                </div>
             </div>
 
-            <div class="relative flex py-2 items-center">
-                <div class="flex-grow border-t border-gray-300"></div>
-                <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">АБО</span>
-                <div class="flex-grow border-t border-gray-300"></div>
-            </div>
+            <form id="form-magnet-upload" class="hidden space-y-4">
+                <button type="button" class="btn-back-step text-sm text-gray-500 hover:text-[#281822] mb-2"><i class="fas fa-arrow-left"></i> Назад</button>
 
-            <div class="text-center">
-                <div class="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 text-[#2D4952] text-2xl">
-                    <i class="fas fa-paint-brush"></i>
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-[#281822]">1. Завантажте зображення</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition cursor-pointer relative">
+                        <input type="file" id="magnet-file-input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                        <div id="magnet-preview-area">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                            <p class="text-sm text-gray-500">Натисніть або перетягніть файл сюди</p>
+                        </div>
+                        <img id="magnet-preview-img" class="hidden max-h-32 mx-auto rounded shadow-sm object-contain">
+                    </div>
                 </div>
-                <h4 class="font-bold mb-1">Замовити дизайн</h4>
-                <p class="text-sm text-gray-500 mb-3">Наші дизайнери створять унікальний магніт для вас (від 50 грн)</p>
-                <button class="border border-[#2D4952] text-[#2D4952] w-full py-2 rounded-lg font-bold hover:bg-gray-50">Оформити замовлення</button>
-            </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2 text-[#281822]">2. Оберіть форму магніту</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <label class="cursor-pointer">
+                            <input type="radio" name="magnet_shape" value="square" class="peer hidden" checked>
+                            <div class="border rounded-lg p-3 text-center peer-checked:border-[#48192E] peer-checked:bg-[#48192E]/5 hover:bg-gray-50">
+                                <div class="w-8 h-8 bg-gray-300 mx-auto mb-1 rounded-sm"></div>
+                                <span class="text-xs">Квадрат</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="magnet_shape" value="circle" class="peer hidden">
+                            <div class="border rounded-lg p-3 text-center peer-checked:border-[#48192E] peer-checked:bg-[#48192E]/5 hover:bg-gray-50">
+                                <div class="w-8 h-8 bg-gray-300 mx-auto mb-1 rounded-full"></div>
+                                <span class="text-xs">Коло</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer">
+                            <input type="radio" name="magnet_shape" value="rectangle" class="peer hidden">
+                            <div class="border rounded-lg p-3 text-center peer-checked:border-[#48192E] peer-checked:bg-[#48192E]/5 hover:bg-gray-50">
+                                <div class="w-10 h-6 bg-gray-300 mx-auto mb-2 mt-1 rounded-sm"></div>
+                                <span class="text-xs">Прямокутник</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-solid w-full">Створити магніт</button>
+            </form>
+
+            <form id="form-magnet-request" class="hidden space-y-4">
+                <button type="button" class="btn-back-step text-sm text-gray-500 hover:text-[#281822] mb-2"><i class="fas fa-arrow-left"></i> Назад</button>
+
+                <div class="bg-blue-50 p-4 rounded-lg flex gap-3 items-start">
+                    <i class="fas fa-info-circle text-[#2D4952] mt-1"></i>
+                    <p class="text-sm text-[#2D4952]">Опишіть ваше побажання, і наш дизайнер зв'яжеться з вами для уточнення деталей та вартості.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-[#281822]">Ваші побажання</label>
+                    <textarea id="magnet-request-text" rows="4" placeholder="Наприклад: Магніт з видом на Карпати, логотип агенції в кутку..." class="w-full border p-2 rounded-md outline-none focus:border-[#2D4952]"></textarea>
+                </div>
+
+                <button type="submit" class="w-full border border-[#2D4952] bg-[#2D4952] text-white py-2 rounded-lg font-bold hover:bg-[#1a2e33]">Надіслати запит</button>
+            </form>
+
         </div>
     </div>
 </div>

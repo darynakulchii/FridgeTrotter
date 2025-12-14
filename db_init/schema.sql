@@ -276,3 +276,14 @@ ALTER TABLE users
     ADD COLUMN IF NOT EXISTS notify_new_followers BOOLEAN DEFAULT TRUE,
     ADD COLUMN IF NOT EXISTS notify_comments BOOLEAN DEFAULT TRUE,
     ADD COLUMN IF NOT EXISTS notify_messages BOOLEAN DEFAULT TRUE;
+
+CREATE TABLE agency_magnet_orders (
+                                      order_id SERIAL PRIMARY KEY,
+                                      agency_id INT REFERENCES agencies(agency_id) ON DELETE CASCADE,
+                                      type VARCHAR(20) NOT NULL, -- 'upload' (свій дизайн) або 'request' (замовлення дизайну)
+                                      image_url TEXT, -- URL завантаженого зображення (для типу 'upload')
+                                      shape VARCHAR(50), -- 'square', 'circle', 'rectangle'
+                                      comment TEXT, -- Коментар для менеджера
+                                      status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
+                                      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

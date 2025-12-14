@@ -5,8 +5,26 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 // ІМПОРТУЄМО middleware для захисту маршрутів
 const { authenticateToken } = require('../auth_middleware');
+const multer = require('multer');
+const streamifier = require('streamifier');
+const cloudinary = require('cloudinary').v2;
 
 const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret_key_12345';
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Функція завантаження в Cloudinary
+const uploadToCloudinary = (fileBuffer) => {
+    return new Promise((resolve, reject) => {
+        let stream = cloudinary.uploader.upload_stream(
+            { folder: 'fridgetrotter/magnets', resource_type: 'image' },
+            (error, result) => {
+                if (result) resolve(result);
+                else reject(error);
+            }
+        );
+        streamifier.createReadStream(fileBuffer).pipe(stream);
+    });
+};
 
 // =================================================================
 // 1. РЕЄСТРАЦІЯ (ПУБЛІЧНИЙ МАРШРУТ)
@@ -192,6 +210,58 @@ router.get('/me/tours', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Get Agency Tours Error:', error);
         res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+/**
+ * POST /api/agencies/magnets
+ * Створення замовлення на магніт (або завантаження свого, або запит менеджеру)
+ */
+router.post('/magnets', authenticateToken, upload.single('image'), async (req, res) => {
+    const userId = req.user.userId;
+    const { type, shape, comment } = req.body; // type: 'upload' | 'request'
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Отримуємо ID агенції користувача
+        const agencyRes = await client.query('SELECT agency_id FROM agencies WHERE owner_id = $1', [userId]);
+        if (agencyRes.rows.length === 0) {
+            return res.status(403).json({ error: 'У вас немає зареєстрованої агенції.' });
+        }
+        const agencyId = agencyRes.rows[0].agency_id;
+
+        let imageUrl = null;
+
+        // 2. Якщо це завантаження свого дизайну - обробляємо файл
+        if (type === 'upload' && req.file) {
+            const uploadResult = await uploadToCloudinary(req.file.buffer);
+            imageUrl = uploadResult.secure_url;
+        }
+
+        // 3. Зберігаємо замовлення
+        const insertQuery = `
+            INSERT INTO agency_magnet_orders (agency_id, type, image_url, shape, comment)
+            VALUES ($1, $2, $3, $4, $5)
+            RETURNING order_id;
+        `;
+        await client.query(insertQuery, [agencyId, type, imageUrl, shape, comment]);
+
+        await client.query('COMMIT');
+
+        const message = type === 'upload'
+            ? 'Ваш магніт відправлено на модерацію.'
+            : 'Запит відправлено менеджеру. Ми зв\'яжемося з вами.';
+
+        res.status(201).json({ message });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Magnet Order Error:', error);
+        res.status(500).json({ error: 'Помилка створення замовлення.' });
+    } finally {
+        client.release();
     }
 });
 
