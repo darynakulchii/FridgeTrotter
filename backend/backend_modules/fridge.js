@@ -77,15 +77,33 @@ router.post('/save', authenticateToken, async (req, res) => {
 
         // 2. Вставити нові записи
         if (magnetsData && magnetsData.length > 0) {
-            const values = magnetsData.map(magnet =>
-                `(${userId}, ${magnet.magnet_id}, ${magnet.x_position}, ${magnet.y_position})`
-            ).join(',');
+            // === ВИПРАВЛЕННЯ ПОМИЛКИ ===
+            // Фільтруємо дублікати магнітів. Якщо користувач (або баг на фронті) додав
+            // один і той самий магніт двічі, залишаємо лише першу його позицію.
+            const uniqueMagnets = [];
+            const seenIds = new Set();
 
-            const insertQuery = `
-                INSERT INTO user_fridge_magnets (user_id, magnet_id, x_position, y_position)
-                VALUES ${values};
-            `;
-            await client.query(insertQuery);
+            magnetsData.forEach(magnet => {
+                // Переконуємось, що magnet_id це число
+                const mId = parseInt(magnet.magnet_id);
+                if (!seenIds.has(mId)) {
+                    seenIds.add(mId);
+                    uniqueMagnets.push(magnet);
+                }
+            });
+
+            // Якщо після фільтрації щось залишилось, зберігаємо
+            if (uniqueMagnets.length > 0) {
+                const values = uniqueMagnets.map(magnet =>
+                    `(${userId}, ${magnet.magnet_id}, ${magnet.x_position}, ${magnet.y_position})`
+                ).join(',');
+
+                const insertQuery = `
+                    INSERT INTO user_fridge_magnets (user_id, magnet_id, x_position, y_position)
+                    VALUES ${values};
+                `;
+                await client.query(insertQuery);
+            }
         }
 
         await client.query('COMMIT');
@@ -93,7 +111,8 @@ router.post('/save', authenticateToken, async (req, res) => {
     } catch (error) {
         await client.query('ROLLBACK');
         console.error('Помилка збереження магнітів:', error);
-        res.status(500).json({ error: 'Помилка сервера.' });
+        // Додаємо деталі помилки у відповідь, щоб легше було дебажити
+        res.status(500).json({ error: 'Помилка сервера.', details: error.message });
     } finally {
         client.release();
     }
