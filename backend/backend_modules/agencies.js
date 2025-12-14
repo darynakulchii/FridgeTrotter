@@ -1,54 +1,197 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../db');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+// ІМПОРТУЄМО middleware для захисту маршрутів
 const { authenticateToken } = require('../auth_middleware');
 
-// POST /api/agencies/register
-router.post('/register', authenticateToken, async (req, res) => {
-    const { name, license, phone, email, website, agreement } = req.body;
-    const userId = req.user.userId;
+const JWT_SECRET = process.env.JWT_SECRET || 'my_super_secret_key_12345';
 
-    // Валідація
-    if (!name || !license || !phone || !email || !agreement) {
-        return res.status(400).json({ error: 'Будь ласка, заповніть всі обов\'язкові поля та надайте згоду.' });
+// =================================================================
+// 1. РЕЄСТРАЦІЯ (ПУБЛІЧНИЙ МАРШРУТ)
+// =================================================================
+router.post('/register', async (req, res) => {
+    const { name, license, phone, email, website, agreement, password } = req.body;
+
+    if (!name || !license || !phone || !email || !agreement || !password) {
+        return res.status(400).json({ error: 'Будь ласка, заповніть всі обов\'язкові поля.' });
+    }
+
+    if (password.length < 6) {
+        return res.status(400).json({ error: 'Пароль має містити мінімум 6 символів.' });
     }
 
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
-        // 1. Створюємо агенцію
-        const agencyQuery = `
+        // Перевірка існування користувача
+        const userCheck = await client.query('SELECT 1 FROM users WHERE email = $1', [email]);
+        if (userCheck.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({ error: 'Користувач з таким email вже існує.' });
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Створення користувача
+        const userResult = await client.query(`
+            INSERT INTO users (email, password_hash, is_agent, is_email_public, is_location_public)
+            VALUES ($1, $2, TRUE, TRUE, TRUE)
+            RETURNING user_id;
+        `, [email, hashedPassword]);
+        const newUserId = userResult.rows[0].user_id;
+
+        // Створення профілю
+        await client.query(`
+            INSERT INTO user_profiles (user_id, first_name, last_name, location, bio)
+            VALUES ($1, $2, '(Агенція)', 'Україна', $3);
+        `, [newUserId, name, `Офіційна сторінка турагенції ${name}`]);
+
+        // Ініціалізація допоміжних таблиць
+        await client.query('INSERT INTO user_stats (user_id) VALUES ($1)', [newUserId]);
+        await client.query('INSERT INTO fridge_settings (user_id) VALUES ($1)', [newUserId]);
+
+        // Створення агенції
+        const agencyResult = await client.query(`
             INSERT INTO agencies (owner_id, name, license_number, phone, email, website, is_agreed_data_processing)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING agency_id;
-        `;
-        const values = [userId, name, license, phone, email, website || null, agreement];
-        const agencyResult = await client.query(agencyQuery, values);
-
-        // 2. Оновлюємо статус користувача (робимо його агентом)
-        await client.query('UPDATE users SET is_agent = TRUE WHERE user_id = $1', [userId]);
+        `, [newUserId, name, license, phone, email, website || null, agreement]);
 
         await client.query('COMMIT');
 
+        // Автоматичний вхід
+        const tokenPayload = { userId: newUserId, email: email, first_name: name, isAgent: true };
+        const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '24h' });
+
         res.status(201).json({
-            message: 'Агенцію успішно зареєстровано!',
-            agencyId: agencyResult.rows[0].agency_id
+            message: 'Агенцію зареєстровано!',
+            agencyId: agencyResult.rows[0].agency_id,
+            token: token,
+            user: tokenPayload
         });
 
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('Помилка реєстрації агенції:', err);
-
-        if (err.code === '23505') { // Помилка унікальності (вже існує така назва або ліцензія)
-            if (err.constraint.includes('license')) return res.status(409).json({ error: 'Агенція з таким номером ліцензії вже існує.' });
-            if (err.constraint.includes('name')) return res.status(409).json({ error: 'Агенція з такою назвою вже існує.' });
-            return res.status(409).json({ error: 'Ви вже зареєстрували агенцію.' });
+        console.error('Registration error:', err);
+        if (err.code === '23505') {
+            if (err.constraint && err.constraint.includes('name')) return res.status(409).json({ error: 'Агенція з такою назвою вже існує.' });
+            if (err.constraint && err.constraint.includes('license')) return res.status(409).json({ error: 'Ліцензія вже зареєстрована.' });
         }
-
         res.status(500).json({ error: 'Помилка сервера.' });
     } finally {
         client.release();
+    }
+});
+
+// =================================================================
+// 2. ОТРИМАННЯ ПРОФІЛЮ АГЕНЦІЇ (GET /me)
+// =================================================================
+router.get('/me', authenticateToken, async (req, res) => {
+    // Отримуємо ID користувача з токена
+    const userId = req.user.userId;
+
+    // Шукаємо агенцію, яка належить цьому користувачу
+    // Також підтягуємо логотип з таблиці user_profiles
+    const query = `
+        SELECT 
+            a.*,
+            up.profile_image_url AS logo_url
+        FROM agencies a
+        JOIN user_profiles up ON a.owner_id = up.user_id
+        WHERE a.owner_id = $1;
+    `;
+
+    try {
+        const result = await pool.query(query, [userId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Профіль агенції не знайдено.' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        console.error('Get Agency Profile Error:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+// =================================================================
+// 3. ОНОВЛЕННЯ ПРОФІЛЮ АГЕНЦІЇ (PUT /me)
+// =================================================================
+router.put('/me', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { description, phone, website, name } = req.body;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Оновлюємо таблицю agencies
+        // COALESCE дозволяє не оновлювати поле, якщо воно не передано (null)
+        const updateAgencyQuery = `
+            UPDATE agencies
+            SET 
+                description = COALESCE($1, description),
+                phone = COALESCE($2, phone),
+                website = COALESCE($3, website),
+                name = COALESCE($4, name)
+            WHERE owner_id = $5
+            RETURNING agency_id;
+        `;
+        const result = await client.query(updateAgencyQuery, [description, phone, website, name, userId]);
+
+        if (result.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Агенцію не знайдено.' });
+        }
+
+        // Якщо змінили назву агенції, варто оновити і user_profiles (first_name),
+        // бо ми використовуємо його як відображуване ім'я в чатах/постах
+        if (name) {
+            await client.query(`
+                UPDATE user_profiles SET first_name = $1 WHERE user_id = $2
+            `, [name, userId]);
+        }
+
+        await client.query('COMMIT');
+        res.json({ message: 'Профіль агенції оновлено успішно.' });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Update Agency Error:', error);
+        if (error.code === '23505') {
+            return res.status(409).json({ error: 'Агенція з такою назвою вже існує.' });
+        }
+        res.status(500).json({ error: 'Помилка сервера.' });
+    } finally {
+        client.release();
+    }
+});
+
+// =================================================================
+// 4. МОЇ ТУРИ (GET /me/tours)
+// =================================================================
+router.get('/me/tours', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+
+    const query = `
+        SELECT t.*, tc.name_ukr as category_name
+        FROM tours t
+        JOIN agencies a ON t.agency_id = a.agency_id
+        LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
+        WHERE a.owner_id = $1
+        ORDER BY t.tour_id DESC;
+    `;
+
+    try {
+        const result = await pool.query(query, [userId]);
+        res.json({ tours: result.rows });
+    } catch (error) {
+        console.error('Get Agency Tours Error:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
     }
 });
 

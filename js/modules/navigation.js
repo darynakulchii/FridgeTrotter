@@ -21,6 +21,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
             // 4. Оновити стан кнопки входу (якщо користувач вже залогінений)
             updateAuthButtonState();
+
+            protectNavigationLinks();
         })
         .catch(error => console.error('Error loading navigation:', error));
 });
@@ -137,4 +139,26 @@ function updateAuthButtonState() {
     if (authBtn && token && user) {
         authBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> Вийти (${user.first_name})`;
     }
+}
+
+function protectNavigationLinks() {
+    const restrictedPages = ['my_profile.html', 'chat.html', 'agency_register.html'];
+
+    const allLinks = document.querySelectorAll('a.nav-tab, a.sidebar-link, a.header-btn');
+
+    allLinks.forEach(link => {
+        const href = link.getAttribute('href');
+
+        if (href && restrictedPages.some(page => href.includes(page))) {
+            link.addEventListener('click', (e) => {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    e.preventDefault(); // Зупиняємо перехід
+                    if(confirm('Ця функція доступна лише авторизованим користувачам. Увійти?')) {
+                        window.location.href = 'login.html';
+                    }
+                }
+            });
+        }
+    });
 }

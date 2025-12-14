@@ -39,7 +39,9 @@ router.get('/profile', authenticateToken, async (req, res) => {
         SELECT
             u.user_id, u.email, u.registration_date, u.is_agent,
             u.is_email_public, u.is_location_public,
+            u.notify_email, u.notify_push, u.notify_new_followers, u.notify_comments, u.notify_messages, -- НОВІ ПОЛЯ
             up.first_name, up.last_name, up.location, up.date_of_birth, up.bio, up.travel_interests, up.profile_image_url,
+            up.website, -- НОВЕ ПОЛЕ
             us.countries_visited, us.cities_visited, us.followers_count,
             fs.fridge_color, fs.is_public AS fridge_is_public, fs.allow_comments AS fridge_allow_comments
         FROM users u
@@ -67,8 +69,9 @@ router.get('/profile', authenticateToken, async (req, res) => {
 router.put('/profile', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const {
-        firstName, lastName, location, dateOfBirth, bio, travelInterests,
+        firstName, lastName, location, dateOfBirth, bio, travelInterests, website, // Додано website
         isEmailPublic, isLocationPublic,
+        notifyEmail, notifyPush, notifyFollowers, notifyComments, notifyMessages,
         fridgeColor, fridgeIsPublic, fridgeAllowComments
     } = req.body;
 
@@ -76,48 +79,58 @@ router.put('/profile', authenticateToken, async (req, res) => {
     try {
         await client.query('BEGIN');
 
+        // === ВИПРАВЛЕННЯ ТУТ ===
+        // Якщо dateOfBirth це порожній рядок, замінюємо його на NULL
+        const safeDateOfBirth = (dateOfBirth === '' || dateOfBirth === undefined) ? null : dateOfBirth;
+
         // 1. Оновлення user_profiles
         const profileUpdateQuery = `
             UPDATE user_profiles
-            SET
-                first_name = $1,
-                last_name = $2,
-                location = $3,
-                date_of_birth = $4,
-                bio = $5,
-                travel_interests = $6
-            WHERE user_id = $7;
+            SET first_name = $1, last_name = $2, location = $3, date_of_birth = $4, bio = $5, travel_interests = $6, website = $7
+            WHERE user_id = $8;
         `;
+
+        // Використовуємо safeDateOfBirth замість dateOfBirth у масиві параметрів
         await client.query(profileUpdateQuery, [
-            firstName, lastName, location, dateOfBirth, bio, travelInterests, userId
+            firstName, lastName, location, safeDateOfBirth, bio, travelInterests, website, userId
         ]);
 
-        // 2. Оновлення users (налаштування приватності)
+        // 2. Оновлення users (додано налаштування сповіщень)
+        // Використовуємо COALESCE, щоб не затерти значення, якщо вони не передані
         const userUpdateQuery = `
             UPDATE users
             SET
-                is_email_public = $1,
-                is_location_public = $2
-            WHERE user_id = $3;
+                is_email_public = COALESCE($1, is_email_public),
+                is_location_public = COALESCE($2, is_location_public),
+                notify_email = COALESCE($3, notify_email),
+                notify_push = COALESCE($4, notify_push),
+                notify_new_followers = COALESCE($5, notify_new_followers),
+                notify_comments = COALESCE($6, notify_comments),
+                notify_messages = COALESCE($7, notify_messages)
+            WHERE user_id = $8;
         `;
-        await client.query(userUpdateQuery, [isEmailPublic, isLocationPublic, userId]);
+        await client.query(userUpdateQuery, [
+            isEmailPublic, isLocationPublic,
+            notifyEmail, notifyPush, notifyFollowers, notifyComments, notifyMessages,
+            userId
+        ]);
 
-        // 3. Оновлення fridge_settings
+        // 3. Оновлення fridge_settings (без змін)
         const fridgeUpdateQuery = `
             INSERT INTO fridge_settings (user_id, fridge_color, is_public, allow_comments)
             VALUES ($4, $1, $2, $3)
-            ON CONFLICT (user_id) DO UPDATE 
-            SET fridge_color = $1, is_public = $2, allow_comments = $3;
+            ON CONFLICT (user_id) DO UPDATE
+                SET fridge_color = $1, is_public = $2, allow_comments = $3;
         `;
         await client.query(fridgeUpdateQuery, [fridgeColor, fridgeIsPublic, fridgeAllowComments, userId]);
 
         await client.query('COMMIT');
-        res.json({ message: 'Дані профілю та налаштування холодильника успішно оновлено.' });
+        res.json({ message: 'Профіль оновлено.' });
 
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error('Помилка оновлення профілю:', error);
-        res.status(500).json({ error: 'Помилка сервера при оновленні профілю.' });
+        console.error('Update Profile Error:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
     } finally {
         client.release();
     }

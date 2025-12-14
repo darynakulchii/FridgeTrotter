@@ -337,28 +337,27 @@
             <p class="settings-desc">Виберіть колір дверцят вашого холодильника</p>
 
             <div class="color-grid mb-8">
-                <!-- Видалено onclick, JS використовує клас .color-option -->
-                <div class="color-option selected">
+                <div class="color-option selected" data-color="#f3f4f6">
                     <div class="color-preview" style="background: #f3f4f6;"></div>
                     <div class="text-center text-sm">Класичний білий</div>
                 </div>
-                <div class="color-option">
+                <div class="color-option" data-color="#98D8C8">
                     <div class="color-preview" style="background: #98D8C8;"></div>
                     <div class="text-center text-sm">Ретро м'ята</div>
                 </div>
-                <div class="color-option">
+                <div class="color-option" data-color="#E8DCC4">
                     <div class="color-preview" style="background: #E8DCC4;"></div>
                     <div class="text-center text-sm">Вінтаж бежевий</div>
                 </div>
-                <div class="color-option">
+                <div class="color-option" data-color="#B5D3E7">
                     <div class="color-preview" style="background: #B5D3E7;"></div>
                     <div class="text-center text-sm">Блакитна пастель</div>
                 </div>
-                <div class="color-option">
+                <div class="color-option" data-color="#F4C2C2">
                     <div class="color-preview" style="background: #F4C2C2;"></div>
                     <div class="text-center text-sm">Рожева мрія</div>
                 </div>
-                <div class="color-option">
+                <div class="color-option" data-color="#A8B5B2">
                     <div class="color-preview" style="background: #A8B5B2;"></div>
                     <div class="text-center text-sm">Сірий металік</div>
                 </div>
@@ -442,8 +441,7 @@
                 <div>
                     <label class="form-label"><i class="far fa-calendar mr-1"></i> Дата народження</label>
                     <div class="relative">
-                        <input type="text" class="form-input" value="15.05.1995">
-                        <i class="far fa-calendar absolute right-3 top-3 text-gray-400"></i>
+                        <input type="date" class="form-input">
                     </div>
                 </div>
                 <div class="md:col-span-2">
