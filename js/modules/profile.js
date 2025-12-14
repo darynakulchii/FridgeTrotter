@@ -199,6 +199,14 @@ async function initFridge() {
         const response = await fetch(`${API_URL}/fridge/magnets/available`, { headers: getHeaders() });
         const data = await response.json();
 
+        const grid = panel.querySelector('#magnet-grid');
+        if (!grid) return;
+        grid.innerHTML = '';
+
+        data.magnets.forEach(m => {
+            const el = createMagnetElement(m, false);
+            grid.appendChild(el);
+        });
         // Очищаємо панель від хардкод-HTML
         const title = panel.querySelector('h3');
         panel.innerHTML = '';
@@ -299,6 +307,18 @@ function createMagnetOnFridgeElement(magnetData) {
 }
 
 function initDragAndDrop(fridgeDoor) {
+    document.addEventListener('dragstart', (e) => {
+        const target = e.target.closest('.magnet-btn');
+        if (!target) return;
+
+        isNewItem = true;
+        draggedItem = target;
+
+        e.dataTransfer.setData('text/plain', target.getAttribute('data-id') || '');
+        e.dataTransfer.effectAllowed = 'copy';
+    });
+
+
     let draggedItem = null;
     let isNewItem = false;
     let offset = { x: 0, y: 0 };
