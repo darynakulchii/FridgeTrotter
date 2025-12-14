@@ -183,7 +183,7 @@ function toggleSwitch(element, isActive) {
 }
 
 /* =========================================
-   3. ЛОГІКА ХОЛОДИЛЬНИКА
+   3. ЛОГІКА ХОЛОДИЛЬНИКА (ОНОВЛЕНО ДЛЯ GRID)
    ========================================= */
 async function initFridge() {
     const fridgeDoor = document.getElementById('fridge-door');
@@ -193,34 +193,48 @@ async function initFridge() {
         initDragAndDrop(fridgeDoor);
     }
 
-    // 1. Завантажуємо доступні магніти (щоб у них були правильні ID з бази)
-    // Це критично для коректного збереження
+    // 1. Завантажуємо доступні магніти
     try {
         const response = await fetch(`${API_URL}/fridge/magnets/available`, { headers: getHeaders() });
         const data = await response.json();
 
-        const grid = panel.querySelector('#magnet-grid');
-        if (!grid) return;
-        grid.innerHTML = '';
+        // --- ВИПРАВЛЕННЯ: Створення Grid-сітки програмно ---
+        let grid = panel.querySelector('#magnet-grid');
 
-        data.magnets.forEach(m => {
-            const el = createMagnetElement(m, false);
-            grid.appendChild(el);
-        });
-        // Очищаємо панель від хардкод-HTML
-        const title = panel.querySelector('h3');
-        panel.innerHTML = '';
-        if (title) panel.appendChild(title);
+        // Якщо сітки немає в HTML, створюємо її динамічно
+        if (!grid) {
+            // Очищаємо панель від старого списку, але залишаємо заголовок
+            const title = panel.querySelector('h3');
+            panel.innerHTML = '';
+            if (title) panel.appendChild(title);
+
+            grid = document.createElement('div');
+            grid.id = 'magnet-grid';
+            // Застосовуємо стилі Grid
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+            grid.style.gap = '1rem';
+            grid.style.width = '100%';
+            panel.appendChild(grid);
+        } else {
+            grid.innerHTML = ''; // Очищаємо, якщо вже є
+        }
 
         if (data.magnets && data.magnets.length > 0) {
             data.magnets.forEach(m => {
                 const el = createMagnetElement(m, false);
-                panel.appendChild(el);
+                // Додаємо клас для фіксації ширини, щоб не розтягувались
+                el.style.width = '100%';
+                el.style.boxSizing = 'border-box';
+                grid.appendChild(el);
             });
         }
 
-        // Додаємо підказку назад
-        panel.insertAdjacentHTML('beforeend', '<p class="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-100">Перетягніть магніт на холодильник</p>');
+        // Додаємо підказку назад внизу панелі
+        const hintExists = panel.querySelector('.text-gray-500.border-t');
+        if (!hintExists) {
+            panel.insertAdjacentHTML('beforeend', '<p class="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-100">Перетягніть магніт на холодильник</p>');
+        }
 
     } catch (e) {
         console.error('Error loading available magnets:', e);
@@ -235,17 +249,96 @@ async function initFridge() {
         opt.addEventListener('click', () => {
             colorOptions.forEach(o => o.classList.remove('selected'));
             opt.classList.add('selected');
-            // Беремо колір з атрибуту data-color
-            const color = opt.getAttribute('data-color');
-            if(fridgeDoor) fridgeDoor.style.backgroundColor = color;
+            const color = opt.getAttribute('data-color') || opt.querySelector('.color-preview')?.style.backgroundColor;
+            if(fridgeDoor && color) fridgeDoor.style.backgroundColor = color;
         });
     });
 
-    // 4. Логіка кліку на тумблери (UI)
+    // 4. Логіка кліку на тумблери
     document.querySelectorAll('.toggle-switch').forEach(sw => {
         sw.addEventListener('click', () => {
             sw.classList.toggle('active');
         });
+    });
+}
+
+function initDragAndDrop(fridgeDoor) {
+    let draggedItem = null;
+    let isNewItem = false;
+    let offset = { x: 0, y: 0 };
+
+    // Подія для панелі (нові магніти)
+    document.addEventListener('dragstart', (e) => {
+        const target = e.target.closest('.magnet-btn');
+        if (target) {
+            isNewItem = true;
+            draggedItem = target;
+            // Безпечно отримуємо ID або пустий рядок
+            e.dataTransfer.setData('text/plain', target.getAttribute('data-id') || '');
+            e.dataTransfer.effectAllowed = 'copy';
+        }
+    });
+
+    // Подія для існуючих магнітів на холодильнику
+    fridgeDoor.addEventListener('dragstart', (e) => {
+        const target = e.target.closest('.magnet-on-fridge');
+        if (target) {
+            isNewItem = false;
+            draggedItem = target;
+            const rect = target.getBoundingClientRect();
+            offset.x = e.clientX - rect.left;
+            offset.y = e.clientY - rect.top;
+            e.dataTransfer.effectAllowed = 'move';
+            e.stopPropagation();
+        }
+    });
+
+    fridgeDoor.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = isNewItem ? 'copy' : 'move';
+    });
+
+    fridgeDoor.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (!draggedItem) return;
+
+        const rect = fridgeDoor.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (isNewItem) {
+            const data = {
+                magnet_id: draggedItem.getAttribute('data-id'),
+                country: draggedItem.getAttribute('data-country'),
+                city: draggedItem.getAttribute('data-city'),
+                icon_class: draggedItem.getAttribute('data-icon'),
+                color_group: draggedItem.getAttribute('data-color')
+            };
+            const newEl = createMagnetOnFridgeElement(data);
+            newEl.style.left = `${x - 35}px`;
+            newEl.style.top = `${y - 35}px`;
+            fridgeDoor.appendChild(newEl);
+        } else {
+            draggedItem.style.left = `${x - offset.x}px`;
+            draggedItem.style.top = `${y - offset.y}px`;
+        }
+
+        checkPlaceholder();
+        draggedItem = null;
+        isNewItem = false;
+        autoSaveFridge();
+    });
+
+    // Видалення
+    document.addEventListener('dragover', (e) => e.preventDefault());
+    document.addEventListener('drop', (e) => {
+        const isOverFridge = e.target.closest('#fridge-door');
+        if (!isOverFridge && !isNewItem && draggedItem && draggedItem.classList.contains('magnet-on-fridge')) {
+            draggedItem.remove();
+            checkPlaceholder();
+            draggedItem = null;
+            autoSaveFridge();
+        }
     });
 }
 
@@ -306,104 +399,6 @@ function createMagnetOnFridgeElement(magnetData) {
     return createMagnetElement(magnetData, true);
 }
 
-function initDragAndDrop(fridgeDoor) {
-    document.addEventListener('dragstart', (e) => {
-        const target = e.target.closest('.magnet-btn');
-        if (!target) return;
-
-        isNewItem = true;
-        draggedItem = target;
-
-        e.dataTransfer.setData('text/plain', target.getAttribute('data-id') || '');
-        e.dataTransfer.effectAllowed = 'copy';
-    });
-
-
-    let draggedItem = null;
-    let isNewItem = false;
-    let offset = { x: 0, y: 0 };
-
-    // Подія для панелі (нові магніти)
-    document.addEventListener('dragstart', (e) => {
-        const target = e.target.closest('.magnet-btn');
-        if (target) {
-            isNewItem = true;
-            draggedItem = target;
-            // Передаємо ID
-            e.dataTransfer.setData('text/plain', target.getAttribute('data-id'));
-            e.dataTransfer.effectAllowed = 'copy';
-        }
-    });
-
-    // Подія для існуючих магнітів на холодильнику
-    fridgeDoor.addEventListener('dragstart', (e) => {
-        const target = e.target.closest('.magnet-on-fridge');
-        if (target) {
-            isNewItem = false;
-            draggedItem = target;
-            const rect = target.getBoundingClientRect();
-            offset.x = e.clientX - rect.left;
-            offset.y = e.clientY - rect.top;
-            e.dataTransfer.effectAllowed = 'move';
-            e.stopPropagation();
-        }
-    });
-
-    fridgeDoor.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = isNewItem ? 'copy' : 'move';
-    });
-
-    fridgeDoor.addEventListener('drop', (e) => {
-        e.preventDefault();
-
-        // Перевірка чи є що кидати
-        if (!draggedItem) return;
-
-        const rect = fridgeDoor.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        if (isNewItem) {
-            // Створюємо новий елемент з даних draggedItem
-            const data = {
-                magnet_id: draggedItem.getAttribute('data-id'),
-                country: draggedItem.getAttribute('data-country'),
-                city: draggedItem.getAttribute('data-city'),
-                icon_class: draggedItem.getAttribute('data-icon'),
-                color_group: draggedItem.getAttribute('data-color')
-            };
-            const newEl = createMagnetOnFridgeElement(data);
-            newEl.style.left = `${x - 35}px`; // Центруємо відносно курсора
-            newEl.style.top = `${y - 35}px`;
-            fridgeDoor.appendChild(newEl);
-        } else {
-            // Рухаємо існуючий елемент
-            draggedItem.style.left = `${x - offset.x}px`;
-            draggedItem.style.top = `${y - offset.y}px`;
-        }
-
-        checkPlaceholder();
-        draggedItem = null;
-        isNewItem = false;
-
-        // Викликаємо автозбереження
-        autoSaveFridge();
-    });
-
-    // Видалення магніту (якщо винесли за межі холодильника)
-    document.addEventListener('dragover', (e) => e.preventDefault());
-    document.addEventListener('drop', (e) => {
-        // Якщо кинули НЕ на холодильник і це був старий магніт
-        const isOverFridge = e.target.closest('#fridge-door');
-        if (!isOverFridge && !isNewItem && draggedItem && draggedItem.classList.contains('magnet-on-fridge')) {
-            draggedItem.remove();
-            checkPlaceholder();
-            draggedItem = null;
-            autoSaveFridge(); // Зберігаємо видалення
-        }
-    });
-}
 
 function checkPlaceholder() {
     const fridgeDoor = document.getElementById('fridge-door');
