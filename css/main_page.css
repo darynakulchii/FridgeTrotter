@@ -506,7 +506,6 @@ body {
 
 /* Корекція для панелі вибору (щоб не ламалось в гріді) */
 .magnet-panel-card .magnet-btn.magnet-shape-rectangle {
-    width: 100%;
     height: auto;
     min-height: 60px;
 }

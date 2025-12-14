@@ -227,6 +227,7 @@ async function initFridge() {
             grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
             grid.style.gap = '1rem';
             grid.style.width = '100%';
+            grid.style.justifyItems = 'center';
             panel.appendChild(grid);
         } else {
             grid.innerHTML = '';
@@ -235,7 +236,7 @@ async function initFridge() {
         if (data.magnets && data.magnets.length > 0) {
             data.magnets.forEach(m => {
                 const el = createMagnetElement(m, false);
-                el.style.width = '100%';
+
                 el.style.boxSizing = 'border-box';
                 grid.appendChild(el);
             });
