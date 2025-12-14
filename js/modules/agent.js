@@ -1,42 +1,53 @@
 import { API_URL, getHeaders } from '../api-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Слухач подій для всього документа (делегування)
+    // 1. Глобальний слухач кліків (делегування)
+    // Дозволяє обробляти кліки по елементах, які з'являються динамічно (наприклад, з navigation.html)
     document.addEventListener('click', (e) => {
         handleGlobalClicks(e);
     });
 
+    // 2. Глобальний слухач сабміту форм
+    // Перехоплює відправку будь-якої форми на сторінці і перевіряє її ID
+    document.addEventListener('submit', async (e) => {
+        if (e.target.id === 'form-add-tour') {
+            await handleTourSubmit(e);
+        } else if (e.target.id === 'form-magnet-upload') {
+            e.preventDefault();
+            await handleUploadSubmit(e.target);
+        } else if (e.target.id === 'form-magnet-request') {
+            e.preventDefault();
+            await handleRequestSubmit(e.target);
+        }
+    });
+
+    // 3. Слухач зміни input type="file" для прев'ю
     document.addEventListener('change', (e) => {
         if (e.target && e.target.id === 'magnet-file-input') {
             handleFileSelect(e.target);
         }
     });
-
-    const btnAddTour = document.getElementById('agent-btn-add-tour');
-    if (btnAddTour) {
-        btnAddTour.addEventListener('click', () => {
-            // Закриваємо меню агента
-            document.getElementById('agent-mode-modal')?.classList.remove('active');
-            // Відкриваємо модалку туру
-            const modal = document.getElementById('modal-agent-add-tour');
-            if (modal) modal.classList.add('active');
-        });
-    }
-
-    // Слухач сабміту форми створення туру
-    const formTour = document.getElementById('form-add-tour');
-    if (formTour) {
-        formTour.addEventListener('submit', handleTourSubmit);
-    }
 });
 
 function handleGlobalClicks(e) {
-    // 1. Відкриття модального вікна "Додати магніт"
-    const openBtn = e.target.closest('#agent-btn-add-magnet');
-    if (openBtn) {
+    // --- ВІДКРИТТЯ МОДАЛКИ ДОДАВАННЯ ТУРУ ---
+    // Шукаємо кнопку через closest, бо клік може бути по іконці всередині кнопки
+    const btnAddTour = e.target.closest('#agent-btn-add-tour');
+    if (btnAddTour) {
         // Закриваємо меню агента
         document.getElementById('agent-mode-modal')?.classList.remove('active');
-        // Відкриваємо модалку магніту
+        // Відкриваємо модалку туру
+        const modal = document.getElementById('modal-agent-add-tour');
+        if (modal) modal.classList.add('active');
+        return;
+    }
+
+    // --- ЛОГІКА МАГНІТІВ ---
+
+    // 1. Відкриття модального вікна "Додати магніт"
+    const btnAddMagnet = e.target.closest('#agent-btn-add-magnet');
+    if (btnAddMagnet) {
+        document.getElementById('agent-mode-modal')?.classList.remove('active');
         const modal = document.getElementById('modal-agent-add-magnet');
         if (modal) {
             modal.classList.add('active');
@@ -45,7 +56,7 @@ function handleGlobalClicks(e) {
         return;
     }
 
-    // 2. Кнопка "Завантажити свій дизайн"
+    // 2. Кнопка "Завантажити свій дизайн" (всередині модалки магнітів)
     const btnUpload = e.target.closest('#btn-choice-upload');
     if (btnUpload) {
         document.getElementById('magnet-step-select').classList.add('hidden');
@@ -53,7 +64,7 @@ function handleGlobalClicks(e) {
         return;
     }
 
-    // 3. Кнопка "Замовити дизайн"
+    // 3. Кнопка "Замовити дизайн" (всередині модалки магнітів)
     const btnRequest = e.target.closest('#btn-choice-request');
     if (btnRequest) {
         document.getElementById('magnet-step-select').classList.add('hidden');
@@ -61,7 +72,7 @@ function handleGlobalClicks(e) {
         return;
     }
 
-    // 4. Кнопки "Назад"
+    // 4. Кнопки "Назад" у формах магнітів
     const btnBack = e.target.closest('.btn-back-step');
     if (btnBack) {
         document.getElementById('form-magnet-upload').classList.add('hidden');
@@ -70,23 +81,64 @@ function handleGlobalClicks(e) {
         resetForms();
         return;
     }
-
-    // 5. Сабміт форм (кнопки всередині форм)
-    // Оскільки button type="submit", краще слухати подію 'submit' на документі, див. нижче
 }
 
-// Обробка відправки форм через делегування 'submit'
-document.addEventListener('submit', async (e) => {
-    if (e.target.id === 'form-magnet-upload') {
-        e.preventDefault();
-        await handleUploadSubmit(e.target);
-    } else if (e.target.id === 'form-magnet-request') {
-        e.preventDefault();
-        await handleRequestSubmit(e.target);
-    }
-});
+// === ЛОГІКА ТУРІВ ===
 
-// Логіка прев'ю файлу
+// Функція обробки створення туру
+async function handleTourSubmit(e) {
+    e.preventDefault(); // Зупиняємо стандартну відправку форми
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+
+    // Блокуємо кнопку, щоб уникнути подвійних кліків
+    const originalText = submitBtn.innerText;
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Публікація...';
+
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch(`${API_URL}/tours`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
+            body: formData // FormData автоматично встановлює правильний Content-Type
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert('Тур успішно створено!');
+            form.reset(); // Очищаємо форму
+
+            // Скидаємо текст інпуту файлу
+            const fileNameLabel = document.getElementById('tour-file-name');
+            if(fileNameLabel) fileNameLabel.innerText = 'Натисніть щоб завантажити фото';
+
+            // Закриваємо модалку
+            document.getElementById('modal-agent-add-tour').classList.remove('active');
+
+            // Якщо ми на сторінці турів або профілю, перезавантажуємо, щоб побачити зміни
+            if (window.location.pathname.includes('main_page_tours') || window.location.pathname.includes('my_profile')) {
+                window.location.reload();
+            }
+        } else {
+            alert(data.error || 'Помилка при створенні туру');
+        }
+    } catch (error) {
+        console.error('Error creating tour:', error);
+        alert('Помилка з\'єднання з сервером');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalText;
+    }
+}
+
+// === ЛОГІКА МАГНІТІВ ===
+
+// Логіка прев'ю файлу для магнітів
 function handleFileSelect(input) {
     const file = input.files[0];
     if (file) {
@@ -120,7 +172,7 @@ function resetForms() {
     if (cityInput) cityInput.value = '';
 }
 
-// Обробка відправки форми Upload
+// Обробка відправки форми Upload Magnet
 async function handleUploadSubmit(form) {
     const fileInput = document.getElementById('magnet-file-input');
     const file = fileInput.files[0];
@@ -149,7 +201,7 @@ async function handleUploadSubmit(form) {
     await sendMagnetRequest(formData);
 }
 
-// Обробка відправки форми Request
+// Обробка відправки форми Request Magnet
 async function handleRequestSubmit(form) {
     const comment = document.getElementById('magnet-request-text').value;
 
@@ -165,53 +217,7 @@ async function handleRequestSubmit(form) {
     await sendMagnetRequest(formData);
 }
 
-// Функція обробки створення туру
-async function handleTourSubmit(e) {
-    e.preventDefault();
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
-
-    // Блокуємо кнопку
-    const originalText = submitBtn.innerText;
-    submitBtn.disabled = true;
-    submitBtn.innerText = 'Публікація...';
-
-    const formData = new FormData(form);
-
-    try {
-        const response = await fetch(`${API_URL}/tours`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            },
-            body: formData // FormData автоматично ставить правильний Content-Type
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert('Тур успішно створено!');
-            form.reset();
-            document.getElementById('tour-file-name').innerText = 'Натисніть щоб завантажити фото';
-            document.getElementById('modal-agent-add-tour').classList.remove('active');
-
-            // Якщо ми на сторінці турів або профілю, можна перезавантажити сторінку
-            if (window.location.pathname.includes('main_page_tours') || window.location.pathname.includes('my_profile')) {
-                window.location.reload();
-            }
-        } else {
-            alert(data.error || 'Помилка при створенні туру');
-        }
-    } catch (error) {
-        console.error('Error creating tour:', error);
-        alert('Помилка з\'єднання з сервером');
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerText = originalText;
-    }
-}
-
-// Спільна функція відправки на сервер
+// Спільна функція відправки магнітів на сервер
 async function sendMagnetRequest(formData) {
     const modal = document.getElementById('modal-agent-add-magnet');
 
