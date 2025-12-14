@@ -183,7 +183,10 @@ function toggleSwitch(element, isActive) {
 }
 
 /* =========================================
-   3. ЛОГІКА ХОЛОДИЛЬНИКА (ОНОВЛЕНО ДЛЯ GRID)
+   3. ЛОГІКА ХОЛОДИЛЬНИКА
+   ========================================= */
+/* =========================================
+   3. ЛОГІКА ХОЛОДИЛЬНИКА
    ========================================= */
 async function initFridge() {
     const fridgeDoor = document.getElementById('fridge-door');
@@ -193,44 +196,51 @@ async function initFridge() {
         initDragAndDrop(fridgeDoor);
     }
 
-    // 1. Завантажуємо доступні магніти
+    // === ОНОВЛЕНО: Проста логіка кнопки "Зберегти" ===
+    const saveBtn = document.getElementById('save-fridge-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', async () => {
+            // 1. Просто зберігаємо (функція вже має логіку відправки на сервер)
+            await saveFridgeOnlyLayout();
+
+            // 2. Показуємо звичайне повідомлення, як на інших вкладках
+            alert('Зміни успішно збережено!');
+        });
+    }
+    // ==================================================
+
+    // 1. Завантажуємо доступні магніти (Ваш існуючий код для Grid)
     try {
         const response = await fetch(`${API_URL}/fridge/magnets/available`, { headers: getHeaders() });
         const data = await response.json();
 
-        // --- ВИПРАВЛЕННЯ: Створення Grid-сітки програмно ---
         let grid = panel.querySelector('#magnet-grid');
 
-        // Якщо сітки немає в HTML, створюємо її динамічно
         if (!grid) {
-            // Очищаємо панель від старого списку, але залишаємо заголовок
             const title = panel.querySelector('h3');
             panel.innerHTML = '';
             if (title) panel.appendChild(title);
 
             grid = document.createElement('div');
             grid.id = 'magnet-grid';
-            // Застосовуємо стилі Grid
             grid.style.display = 'grid';
             grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
             grid.style.gap = '1rem';
             grid.style.width = '100%';
             panel.appendChild(grid);
         } else {
-            grid.innerHTML = ''; // Очищаємо, якщо вже є
+            grid.innerHTML = '';
         }
 
         if (data.magnets && data.magnets.length > 0) {
             data.magnets.forEach(m => {
                 const el = createMagnetElement(m, false);
-                // Додаємо клас для фіксації ширини, щоб не розтягувались
                 el.style.width = '100%';
                 el.style.boxSizing = 'border-box';
                 grid.appendChild(el);
             });
         }
 
-        // Додаємо підказку назад внизу панелі
         const hintExists = panel.querySelector('.text-gray-500.border-t');
         if (!hintExists) {
             panel.insertAdjacentHTML('beforeend', '<p class="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-100">Перетягніть магніт на холодильник</p>');
@@ -240,10 +250,8 @@ async function initFridge() {
         console.error('Error loading available magnets:', e);
     }
 
-    // 2. Завантажуємо розстановку користувача
     loadUserFridgeLayout();
 
-    // 3. Логіка кліку на колір (миттєве оновлення UI)
     const colorOptions = document.querySelectorAll('.color-option');
     colorOptions.forEach(opt => {
         opt.addEventListener('click', () => {
@@ -254,7 +262,6 @@ async function initFridge() {
         });
     });
 
-    // 4. Логіка кліку на тумблери
     document.querySelectorAll('.toggle-switch').forEach(sw => {
         sw.addEventListener('click', () => {
             sw.classList.toggle('active');
