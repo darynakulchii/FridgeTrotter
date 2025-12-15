@@ -1,13 +1,12 @@
 import { API_URL, getHeaders } from '../api-config.js';
 
 let bookingPicker = null;
-let currentTourId = null; // Для збереження контексту модалки
+let currentTourId = null;
 
 document.addEventListener("DOMContentLoaded", function() {
     loadTours();
-    setupViewToggles(); // Налаштування перемикача "Тури / Рейтинг"
+    setupViewToggles();
 
-    // Обробка форми коментарів
     const commentForm = document.getElementById('tour-comment-form');
     if (commentForm) {
         commentForm.addEventListener('submit', handleCommentSubmit);
@@ -37,8 +36,6 @@ function setupViewToggles() {
             btnViewTours.classList.remove('btn-solid');
 
             if(pageTitle) pageTitle.innerText = "Рейтинг тур агенцій";
-
-            // Завантажуємо агенції при кліку
             loadAgencies();
         });
 
@@ -75,7 +72,6 @@ async function loadAgencies() {
         }
 
         data.agencies.forEach((agency, index) => {
-            // Визначаємо іконку місця
             let rankIcon = `<div class="text-2xl font-bold text-gray-400">#${index + 1}</div>`;
             if (index === 0) rankIcon = `<div class="text-4xl mb-2">🏆</div><div class="text-2xl font-bold text-[#48192E]">#1</div>`;
             if (index === 1) rankIcon = `<div class="text-4xl mb-2">🥈</div><div class="text-2xl font-bold text-[#2D4952]">#2</div>`;
@@ -162,35 +158,31 @@ function createTourCard(tour) {
     }
 
     return `
-        <div class="universal-card cursor-pointer" onclick="openTourDetails(${tour.tour_id})">
+        <div class="universal-card cursor-pointer group" onclick="openTourDetails(${tour.tour_id})">
             <div class="card-header-user">
                 <div class="card-avatar" style="background-color: #281822;">
                     <i class="fas fa-briefcase"></i>
                 </div>
                 <div class="card-user-info">
-                    <div class="card-user-name">${tour.agency_name || 'Агенція'}</div>
-                    <div class="card-user-sub">
-                        <span>Офіційний тур</span>
+                    <div class="card-user-name hover:underline">${tour.agency_name || 'Агенція'}</div>
+                    <div class="card-user-sub text-[#2D4952]">
+                        <i class="fas fa-map-marker-alt mr-1"></i> ${tour.location}
                     </div>
                 </div>
             </div>
 
-            <div class="card-image-middle">
-                <img src="${image}" alt="${tour.title}">
+            <div class="card-image-middle h-64 bg-gray-50 relative overflow-hidden">
+                <img src="${image}" alt="${tour.title}" class="w-full h-full object-contain transition duration-500 group-hover:scale-105">
                 <span class="card-badge">${tour.category_name || 'Тур'}</span>
             </div>
 
-            <div class="card-body flex flex-col h-full">
-                <h3 class="card-title line-clamp-2 mb-3">${tour.title}</h3>
+            <div class="card-body flex flex-col p-4 pb-0">
+                <h3 class="card-title line-clamp-2 mb-2 hover:text-[#48192E] transition">${tour.title}</h3>
                 
-                <div class="space-y-2 mb-4 bg-gray-50 p-3 rounded-lg">
+                <div class="space-y-2 mb-2 bg-gray-50 p-3 rounded-lg">
                     <div class="flex items-center gap-3 text-sm text-gray-700">
                         <i class="far fa-calendar-alt text-[#2D4952] w-5 text-center"></i>
                         <span>${dateText}</span>
-                    </div>
-                    <div class="flex items-center gap-3 text-sm text-gray-700">
-                        <i class="fas fa-map-marker-alt text-[#2D4952] w-5 text-center"></i>
-                        <span class="line-clamp-1">${tour.location}</span>
                     </div>
                     <div class="flex items-center gap-3 text-sm text-gray-700">
                         <i class="fas fa-star text-yellow-500 w-5 text-center"></i>
@@ -200,7 +192,7 @@ function createTourCard(tour) {
                 </div>
             </div>
 
-            <div class="card-footer gap-2 px-4 py-3 border-t border-gray-100 flex items-center">
+            <div class="card-footer gap-2 px-4 py-3 border-t border-gray-100 flex items-center !mt-0">
                 <div class="font-bold text-xl text-[#281822] whitespace-nowrap mr-auto">
                     ${parseInt(tour.price_uah).toLocaleString()} ₴
                 </div>
@@ -230,11 +222,10 @@ window.openTourDetails = async (id) => {
 
     modal.classList.add('active');
 
-    // 1. Отримуємо посилання на елементи (додали нові: programEl та datesEl)
     const titleEl = document.getElementById('modal-tour-title');
     const descEl = document.getElementById('modal-tour-desc');
-    const programEl = document.getElementById('modal-tour-program'); // НОВЕ
-    const datesEl = document.getElementById('modal-tour-dates');     // НОВЕ
+    const programEl = document.getElementById('modal-tour-program');
+    const datesEl = document.getElementById('modal-tour-dates');
     const imgEl = document.getElementById('modal-tour-image');
     const galleryEl = document.getElementById('modal-tour-gallery');
     const locEl = document.getElementById('modal-tour-loc');
@@ -244,11 +235,10 @@ window.openTourDetails = async (id) => {
     const saveBtn = document.getElementById('modal-save-btn');
     const bookBtn = document.getElementById('modal-book-btn');
 
-    // 2. Очищення перед завантаженням (щоб не показувати старі дані)
     titleEl.innerText = 'Завантаження...';
     descEl.innerText = '';
-    programEl.innerText = 'Завантаження...'; // НОВЕ
-    datesEl.innerHTML = '';                  // НОВЕ
+    programEl.innerText = 'Завантаження...';
+    datesEl.innerHTML = '';
     galleryEl.innerHTML = '';
     imgEl.src = '';
     document.getElementById('tour-comments-list').innerHTML = '<p class="text-gray-400 text-sm">Завантаження відгуків...</p>';
@@ -260,7 +250,6 @@ window.openTourDetails = async (id) => {
         const data = await response.json();
         const tour = data.tour;
 
-        // 3. Заповнення стандартними даними
         titleEl.innerText = tour.title;
         descEl.innerText = tour.description;
         locEl.innerText = tour.location;
@@ -268,30 +257,21 @@ window.openTourDetails = async (id) => {
         priceEl.innerText = `${tour.price_uah} ₴`;
         ratingEl.innerText = tour.rating || '0.0';
 
-        // === 4. НОВЕ: Заповнення програми ===
         if (tour.program) {
             programEl.innerText = tour.program;
-            // Прибираємо стиль "курсив", якщо текст є
             programEl.classList.remove('italic', 'text-gray-400');
         } else {
             programEl.innerText = 'Детальна програма уточнюється в організатора.';
-            // Додаємо стиль, щоб виглядало як заглушка
             programEl.classList.add('italic', 'text-gray-400');
         }
 
-        // === 5. НОВЕ: Заповнення дат ===
         if (tour.available_dates && tour.available_dates.length > 0) {
-            // Якщо дати прийшли як рядки, відсортуємо їх
             const sortedDates = tour.available_dates.sort();
-
-            // Створюємо гарні плашки для кожної дати
             datesEl.innerHTML = sortedDates.map(dateStr => {
                 const dateObj = new Date(dateStr);
-                // Форматуємо: 01 січня 2025
                 const formatted = dateObj.toLocaleDateString('uk-UA', {
                     day: 'numeric', month: 'long', year: 'numeric'
                 });
-
                 return `<span class="bg-[#F3F4F6] text-[#281822] border border-gray-200 px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2">
                             <i class="far fa-calendar-check text-[#48192E]"></i> ${formatted}
                         </span>`;
@@ -324,7 +304,6 @@ window.openTourDetails = async (id) => {
     }
 };
 
-// Перевірка чи збережено
 async function checkIfSaved(id, btn) {
     if (!localStorage.getItem('token')) {
         updateSaveBtnUI(btn, false);
@@ -373,18 +352,16 @@ function updateSaveBtnUI(btn, isSaved) {
         btn.classList.add('saved', 'text-[#48192E]');
         btn.classList.remove('text-gray-400');
         icon.classList.remove('far');
-        icon.classList.add('fas'); // Solid icon
-        text.innerText = 'В обраному';
+        icon.classList.add('fas');
+        if(text) text.innerText = 'В обраному';
     } else {
         btn.classList.remove('saved', 'text-[#48192E]');
         btn.classList.add('text-gray-400');
         icon.classList.remove('fas');
-        icon.classList.add('far'); // Outline icon
-        text.innerText = 'В обране';
+        icon.classList.add('far');
+        if(text) text.innerText = 'В обране';
     }
 }
-
-// === КОМЕНТАРІ ===
 
 async function loadTourComments(tourId) {
     const list = document.getElementById('tour-comments-list');
@@ -450,7 +427,6 @@ async function handleCommentSubmit(e) {
     } catch (e) { console.error(e); }
 }
 
-// === БРОНЮВАННЯ (З ПОПЕРЕДНЬОГО КОДУ) ===
 function openBookingModal(tour) {
     const modal = document.getElementById('tour-booking-modal');
     modal.classList.add('active');

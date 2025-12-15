@@ -39,7 +39,6 @@ function initCreateAdButton() {
                 window.location.href = 'login.html';
                 return;
             }
-            // Перенаправлення на сторінку створення
             window.location.href = 'create_ad.html';
         });
     }
@@ -66,39 +65,32 @@ async function loadCompanions() {
         }
 
         data.ads.forEach(ad => {
-            // === ЛОГІКА ПОСИЛАННЯ НА ПРОФІЛЬ ===
-            // Якщо я автор -> my_profile.html, інакше -> other_user_profile.html
             const isMe = currentUser && currentUser.userId == ad.user_id;
             const profileLink = isMe ? 'my_profile.html' : `other_user_profile.html?user_id=${ad.user_id}`;
 
-            const ageDisplay = ad.author_age ? `${ad.author_age} років` : '';
-            const start = new Date(ad.start_date).toLocaleDateString('uk-UA');
-            const end = new Date(ad.end_date).toLocaleDateString('uk-UA');
+            const ageDisplay = ad.author_age ? `• ${ad.author_age} років` : '';
+            const start = new Date(ad.start_date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+            const end = new Date(ad.end_date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
 
             // Бюджет
             let budgetHtml = '';
             if (ad.budget_min || ad.budget_max) {
                 const min = ad.budget_min ? parseInt(ad.budget_min) : 0;
                 const max = ad.budget_max ? parseInt(ad.budget_max) : '...';
-                budgetHtml = `<div class="flex items-center gap-2 text-sm text-[#48192E] font-semibold mt-1">
-                                <i class="fas fa-wallet w-5 text-center"></i> ${min} - ${max} грн
-                              </div>`;
+                budgetHtml = `
+                    <div class="flex items-center gap-2 text-sm text-gray-700">
+                        <i class="fas fa-wallet text-[#2D4952] w-5 text-center"></i>
+                        <span>${min} - ${max} грн</span>
+                    </div>`;
             }
 
-            // Фото (обкладинка)
-            let adImageHtml = '';
+            // Фото
+            let mainImage = 'https://via.placeholder.com/400x200?text=No+Image';
             if (ad.images && ad.images.length > 0) {
-                const imgUrl = ad.images[0];
-                // Додаємо onclick для відкриття деталей
-                adImageHtml = `
-                    <div class="w-full h-40 mb-4 rounded-lg overflow-hidden cursor-pointer group relative" onclick="openAdDetails(${ad.ad_id})">
-                        <img src="${imgUrl}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
-                        ${ad.images.length > 1 ? `<span class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded font-bold">+${ad.images.length - 1}</span>` : ''}
-                    </div>
-                `;
+                mainImage = ad.images[0];
             }
 
-            // Аватар (Виправлено стилі)
+            // Аватар
             let avatarContent;
             if (ad.author_avatar) {
                 avatarContent = `<img src="${ad.author_avatar}" class="w-full h-full object-cover">`;
@@ -107,53 +99,59 @@ async function loadCompanions() {
             }
 
             const html = `
-                <div class="companion-card flex flex-col h-full">
-                    <div class="flex items-start gap-4 mb-3">
-                         <a href="${profileLink}" class="w-12 h-12 rounded-full bg-[#48192E] text-[#D3CBC4] flex items-center justify-center font-bold text-lg shrink-0 overflow-hidden hover:opacity-80 transition cursor-pointer">
+                <div class="universal-card cursor-pointer group" onclick="openAdDetails(${ad.ad_id})">
+                    
+                    <div class="card-header-user">
+                        <a href="${profileLink}" class="card-avatar" style="background-color: #2D4952;">
                             ${avatarContent}
                         </a>
-                        
-                        <div>
+                        <div class="card-user-info">
                             <div class="flex items-center gap-2">
-                                <a href="${profileLink}" class="font-bold text-[#281822] text-lg hover:underline hover:text-[#48192E] transition">
+                                <a href="${profileLink}" class="card-user-name hover:underline">
                                     ${ad.first_name} ${ad.last_name}
                                 </a>
-                                <span class="text-gray-500 text-sm">${ageDisplay ? '• ' + ageDisplay : ''}</span>
+                                <span class="text-xs text-gray-500">${ageDisplay}</span>
                             </div>
-                            <p class="text-[#48192E] font-semibold mt-0.5 cursor-pointer hover:underline" onclick="openAdDetails(${ad.ad_id})">
+                            <div class="text-[#48192E] font-semibold text-sm mt-0.5">
                                 <i class="fas fa-map-marker-alt mr-1"></i> ${ad.destination_country}
-                            </p>
+                            </div>
                         </div>
                     </div>
-                    
-                    ${adImageHtml}
-                    
-                    <p class="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 cursor-pointer hover:text-gray-800" onclick="openAdDetails(${ad.ad_id})">
-                        ${ad.description}
-                    </p>
-                    
-                    <div class="space-y-2 mb-4 bg-gray-50 p-3 rounded-lg mt-auto">
-                        <div class="flex items-center gap-3 text-sm text-gray-700">
-                            <i class="far fa-calendar text-[#2D4952] w-5 text-center"></i><span>${start} - ${end}</span>
-                        </div>
-                         <div class="flex items-center gap-3 text-sm text-gray-700">
-                            <i class="fas fa-user-friends text-[#2D4952] w-5 text-center"></i><span>${ad.min_group_size}-${ad.max_group_size} особи</span>
-                        </div>
-                        ${budgetHtml}
+
+                    <div class="card-image-middle h-56 bg-gray-50 relative overflow-hidden">
+                        <img src="${mainImage}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
                     </div>
-                    
-                     <div class="flex flex-wrap gap-2 mb-6">
-                        ${(ad.tags || []).map(tag => `<span class="tag-pill">${tag}</span>`).join('')}
+
+                    <div class="card-body flex flex-col p-4 pb-0">
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">
+                            ${ad.description}
+                        </p>
+                        
+                        <div class="space-y-2 mb-2 bg-gray-50 p-3 rounded-lg mt-auto">
+                            <div class="flex items-center gap-2 text-sm text-gray-700">
+                                <i class="far fa-calendar text-[#2D4952] w-5 text-center"></i>
+                                <span>${start} - ${end}</span>
+                            </div>
+                             <div class="flex items-center gap-2 text-sm text-gray-700">
+                                <i class="fas fa-user-friends text-[#2D4952] w-5 text-center"></i>
+                                <span>${ad.min_group_size}-${ad.max_group_size} особи</span>
+                            </div>
+                            ${budgetHtml}
+                        </div>
+                        
+                         <div class="flex flex-wrap gap-2 mt-2">
+                            ${(ad.tags || []).slice(0, 3).map(tag => `<span class="tag-pill">${tag}</span>`).join('')}
+                        </div>
                     </div>
-                    
-                    <div class="flex gap-3">
-                        <button onclick="toggleSaveAd(${ad.ad_id}, event)" class="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-500">
+
+                    <div class="card-footer gap-2 px-4 py-3 border-t border-gray-100 flex items-center !mt-0">
+                        <div class="mr-auto"></div> <button onclick="toggleSaveAd(${ad.ad_id}, event)" class="btn-icon-square" title="Зберегти">
                             <i class="far fa-bookmark" id="ad-bookmark-${ad.ad_id}"></i>
                         </button>
-                        <button onclick="openAdDetails(${ad.ad_id})" class="flex-1 border border-[#2D4952] text-[#2D4952] py-2 rounded-lg font-medium hover:bg-gray-50 transition">
+                        <button onclick="openAdDetails(${ad.ad_id})" class="btn-outline px-4 text-sm h-10">
                             Деталі
                         </button>
-                        <button onclick="contactUser(${ad.user_id})" class="flex-1 btn-solid py-2 text-center transition hover:opacity-90">
+                        <button onclick="contactUser(${ad.user_id})" class="btn-fill px-4 text-sm h-10">
                             Написати
                         </button>
                     </div>
@@ -171,7 +169,6 @@ window.openAdDetails = async (adId) => {
     const modal = document.getElementById('ad-details-modal');
     modal.classList.add('active');
 
-    // Очищення полів перед завантаженням
     document.getElementById('modal-ad-country').innerText = 'Завантаження...';
     document.getElementById('modal-ad-main-image').classList.add('hidden');
     document.getElementById('modal-ad-gallery').innerHTML = '';
@@ -181,7 +178,6 @@ window.openAdDetails = async (adId) => {
         const data = await response.json();
         const ad = data.ad;
 
-        // 1. Заповнення текстових полів
         document.getElementById('modal-ad-country').innerText = ad.destination_country;
         document.getElementById('modal-ad-desc').innerText = ad.description;
 
@@ -195,11 +191,9 @@ window.openAdDetails = async (adId) => {
 
         document.getElementById('modal-ad-group').innerText = `${ad.min_group_size} - ${ad.max_group_size} осіб`;
 
-        // Теги
         const tagsContainer = document.getElementById('modal-ad-tags');
         tagsContainer.innerHTML = (ad.tags || []).map(t => `<span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">${t}</span>`).join('');
 
-        // 2. Автор і посилання
         const isMe = currentUser && currentUser.userId == ad.user_id;
         const profileLink = isMe ? 'my_profile.html' : `other_user_profile.html?user_id=${ad.user_id}`;
 
@@ -209,7 +203,6 @@ window.openAdDetails = async (adId) => {
         document.getElementById('modal-author-link').href = profileLink;
         document.getElementById('modal-author-age').innerText = ad.author_age ? `${ad.author_age} років` : 'Вік приховано';
 
-        // Аватар автора
         const avatarEl = document.getElementById('modal-ad-avatar');
         if (ad.author_avatar) {
             avatarEl.innerHTML = `<img src="${ad.author_avatar}" class="w-full h-full object-cover">`;
@@ -217,22 +210,18 @@ window.openAdDetails = async (adId) => {
             avatarEl.innerText = (ad.first_name[0] + ad.last_name[0]).toUpperCase();
         }
 
-        // Кнопка написати
         const contactBtn = document.getElementById('modal-contact-btn');
         contactBtn.onclick = () => contactUser(ad.user_id);
         if (isMe) contactBtn.style.display = 'none';
         else contactBtn.style.display = 'block';
 
-        // 3. Галерея зображень
         const mainImg = document.getElementById('modal-ad-main-image');
         const gallery = document.getElementById('modal-ad-gallery');
 
         if (ad.images && ad.images.length > 0) {
-            // Показуємо головне фото
             mainImg.src = ad.images[0];
             mainImg.classList.remove('hidden');
 
-            // Якщо фото більше одного, будуємо галерею
             if (ad.images.length > 1) {
                 ad.images.forEach(imgUrl => {
                     const thumb = document.createElement('img');
@@ -272,7 +261,7 @@ window.toggleSaveAd = async (adId, event) => {
         if(res.ok) {
             icon.classList.toggle('fas');
             icon.classList.toggle('far');
-            icon.parentElement.classList.toggle('text-[#48192E]'); // Змінити колір кнопки
+            icon.parentElement.classList.toggle('text-[#48192E]');
         }
     } catch(e) { console.error(e); }
 };
