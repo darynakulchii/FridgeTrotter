@@ -245,16 +245,20 @@ function createTourCard(tour) {
 
     // === ЛОГІКА ПОСИЛАННЯ НА ПРОФІЛЬ АГЕНЦІЇ ===
     let agencyProfileLink = `other_user_profile.html?user_id=${tour.owner_id}`;
-    // Якщо поточний юзер є власником цієї агенції -> ведемо на його адмінку
     if (currentUser && currentUser.userId === tour.owner_id) {
         agencyProfileLink = 'agency_page.html';
     }
 
     // === ЛОГІКА КНОПКИ "ЗБЕРЕГТИ" ===
-    // Якщо юзер агент -> ховаємо кнопку або робимо неактивною (тут просто приховаємо клас active, бекенд перевірить права)
     const isSaved = tour.is_saved;
-    const bookmarkIconClass = isSaved ? 'fas' : 'far'; // fas = зафарбована, far = контур
+    const bookmarkIconClass = isSaved ? 'fas' : 'far';
     const bookmarkBtnClass = isSaved ? 'active' : '';
+
+    // === ПІДГОТОВКА ДАНИХ ДЛЯ БРОНЮВАННЯ ===
+    // 1. Екрануємо назву (на випадок апострофів)
+    const safeTitle = tour.title.replace(/'/g, "\\'");
+    // 2. Перетворюємо масив дат на JSON і екрануємо подвійні лапки для HTML атрибута
+    const availableDatesJson = JSON.stringify(tour.available_dates || []).replace(/"/g, "&quot;");
 
     return `
         <div class="universal-card cursor-pointer group" onclick="openTourDetails(${tour.tour_id})">
@@ -309,7 +313,8 @@ function createTourCard(tour) {
                     Деталі
                 </button>
                 
-                <button class="btn-fill px-4 text-sm h-10" onclick="event.stopPropagation(); openBookingModal({tour_id: ${tour.tour_id}, title: '${tour.title.replace(/'/g, "\\'")}'})">
+                <button class="btn-fill px-4 text-sm h-10" 
+                        onclick="event.stopPropagation(); openBookingModal({tour_id: ${tour.tour_id}, title: '${safeTitle}', available_dates: ${availableDatesJson}})">
                     Забронювати
                 </button>
             </div>

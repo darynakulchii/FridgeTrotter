@@ -215,7 +215,6 @@ function initBugReportSubmit() {
         modal.classList.remove('active');
     });
 }
-}
 
 function redirectAgentProfileLinks() {
     const user = JSON.parse(localStorage.getItem('user'));
