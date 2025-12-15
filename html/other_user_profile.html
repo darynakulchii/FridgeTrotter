@@ -30,7 +30,7 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Холодильник (Тільки перегляд) */
-        .fridge-container-single { max-width: 800px; margin: 0 auto; }
+        .fridge-container-single { min-width: 860px; margin: 0 auto; }
         .fridge-view { background-color: #f3f4f6; height: 600px; border-radius: 12px; position: relative; box-shadow: inset 0 0 20px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05); overflow: hidden; }
         .fridge-handle { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); width: 8px; height: 120px; background-color: #281822; border-radius: 10px; opacity: 0.8; }
 
@@ -43,7 +43,19 @@
         .post-card { background: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
 
         /* Кнопки */
-        .btn-action { padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+        /*.btn-action { padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }*/
+        .btn-action {
+            height: 36px;
+            min-width: 110px;
+            max-width: 110px;
+            padding: 0 14px;
+            font-size: 0.95rem;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+        }
         .btn-follow { background-color: #48192E; color: white; }
         .btn-follow.following { background-color: white; color: #48192E; border: 1px solid #48192E; }
         .btn-message { background-color: #2D4952; color: white; margin-left: 0.5rem; }
@@ -56,75 +68,96 @@
 <main class="container-wide">
     <button onclick="history.back()" class="mb-4 text-[#281822] hover:underline font-medium"><i class="fas fa-arrow-left"></i> Назад</button>
 
-    <div class="profile-header-card">
-        <div id="profile-loading" class="text-center py-8"><i class="fas fa-spinner fa-spin text-2xl"></i></div>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        <div id="profile-content" class="hidden">
-            <div class="profile-top-section">
-                <div id="user-avatar-container">
+        <!-- Ліва панель: профіль -->
+        <div class="lg:col-span-1">
+            <div class="profile-header-card sticky top-6">
+
+                <div id="profile-loading" class="text-center py-8">
+                    <i class="fas fa-spinner fa-spin text-2xl"></i>
                 </div>
 
-                <div class="flex-grow">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-                        <div>
-                            <h1 class="text-3xl font-bold text-[#281822]" id="user-name">Ім'я Користувача</h1>
-                            <p class="text-gray-500 mt-1" id="user-location"><i class="fas fa-map-marker-alt mr-1"></i> Локація</p>
-                        </div>
-                        <div class="flex" id="action-buttons">
+                <div id="profile-content" class="hidden">
+                    <div class="profile-top-section">
+                        <div id="user-avatar-container"></div>
+
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h2 id="user-name" class="text-xl font-bold text-[#281822]"></h2>
+                                    <p id="user-location" class="text-sm text-gray-500 mb-2"></p>
+                                </div>
+
+<!--                                <div id="action-buttons"></div>-->
+                            </div>
+                            <p id="user-bio"></p>
+
+                            <div id="user-contacts" class="mt-4 space-y-2 text-sm text-gray-700">
+                                <!-- сюди динамічно підставляється JS -->
+                            </div>
+
+                            <div class="flex gap-4 text-sm mb-4">
+                                <span><strong id="stat-countries">0</strong> Країн:</span>
+                                <span><strong id="stat-cities">0</strong> Міст:</span>
+                                <span><strong id="stat-followers">0</strong> Підписників:</span>
+                            </div>
+                            <div id="action-buttons" class="flex gap-2"></div>
                         </div>
                     </div>
 
-                    <p class="text-gray-700 leading-relaxed max-w-2xl mb-6" id="user-bio">
-                        Користувач ще не додав інформацію про себе.
-                    </p>
+                    <div class="nav-pills">
+                        <button class="nav-pill active" data-tab="fridge">Холодильник</button>
+                        <button class="nav-pill" data-tab="posts">Пости</button>
+                        <button class="nav-pill" data-tab="info">Інтереси</button>
+                    </div>
+                </div>
 
-                    <div class="flex gap-8 text-center md:text-left">
-                        <div>
-                            <span class="block text-2xl font-bold text-[#48192E]" id="stat-countries">0</span>
-                            <span class="text-xs text-gray-500 uppercase tracking-wide">Країн</span>
-                        </div>
-                        <div>
-                            <span class="block text-2xl font-bold text-[#48192E]" id="stat-cities">0</span>
-                            <span class="text-xs text-gray-500 uppercase tracking-wide">Міст</span>
-                        </div>
-                        <div>
-                            <span class="block text-2xl font-bold text-[#48192E]" id="stat-followers">0</span>
-                            <span class="text-xs text-gray-500 uppercase tracking-wide">Підписників</span>
+            </div>
+
+        </div>
+
+        <!-- Права панель: холодильник -->
+        <div class="lg:col-span-2">
+            <div id="tab-fridge" class="tab-content active">
+                <div class="fridge-container-single">
+                    <div class="fridge-view h-[420px]" id="fridge-door">
+                        <div class="fridge-handle"></div>
+                        <div id="fridge-placeholder"
+                             class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 pointer-events-none">
+                            <p>Холодильник порожній або приватний</p>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <div class="nav-pills">
-                <button class="nav-pill active" data-tab="fridge">Холодильник</button>
-                <button class="nav-pill" data-tab="posts">Публікації</button>
-                <button class="nav-pill" data-tab="info">Інтереси</button>
+            <!-- Пости -->
+            <div id="tab-posts" class="tab-content">
+                <div id="posts-container"></div>
             </div>
-        </div>
-    </div>
 
-    <div id="tab-fridge" class="tab-content active">
-        <div class="fridge-container-single">
-            <div class="fridge-view" id="fridge-door">
-                <div class="fridge-handle"></div>
-                <div id="fridge-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 pointer-events-none">
-                    <p>Холодильник порожній або приватний</p>
+            <!-- Інтереси -->
+            <div id="tab-info" class="tab-content">
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-bold text-[#281822] mb-4">Інтереси</h3>
+                    <p id="user-interests"></p>
                 </div>
             </div>
         </div>
+
     </div>
 
-    <div id="tab-posts" class="tab-content max-w-3xl mx-auto">
-        <div id="posts-container">
-        </div>
-    </div>
 
-    <div id="tab-info" class="tab-content max-w-3xl mx-auto">
-        <div class="bg-white p-6 rounded-xl shadow-sm">
-            <h3 class="text-lg font-bold text-[#281822] mb-4">Інтереси в подорожах</h3>
-            <p id="user-interests" class="text-gray-700">Інформація відсутня.</p>
-        </div>
-    </div>
+<!--    <div id="tab-posts" class="tab-content max-w-3xl mx-auto">-->
+<!--        <div id="posts-container">-->
+<!--        </div>-->
+<!--    </div>-->
+
+<!--    <div id="tab-info" class="tab-content max-w-3xl mx-auto">-->
+<!--        <div class="bg-white p-6 rounded-xl shadow-sm">-->
+<!--            <h3 class="text-lg font-bold text-[#281822] mb-4">Інтереси в подорожах</h3>-->
+<!--            <p id="user-interests" class="text-gray-700">Інформація відсутня.</p>-->
+<!--        </div>-->
+<!--    </div>-->
 
 </main>
 
