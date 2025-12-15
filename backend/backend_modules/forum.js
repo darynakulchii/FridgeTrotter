@@ -323,6 +323,31 @@ router.delete('/saved', authenticateToken, async (req, res) => {
 });
 
 /**
+ * POST /api/forum/posts/:id/save
+ * Додавання поста в збережені.
+ */
+router.post('/posts/:id/save', authenticateToken, async (req, res) => {
+    const postId = req.params.id;
+    const userId = req.user.userId;
+
+    // Перевірка на агента (якщо агентам заборонено зберігати, як і тури)
+    if (req.user.isAgent) {
+        return res.status(403).json({ error: 'Турагенти не можуть додавати пости в обране.' });
+    }
+
+    try {
+        await pool.query(
+            `INSERT INTO user_saved_posts (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [userId, postId]
+        );
+        res.json({ message: 'Пост збережено.' });
+    } catch (error) {
+        console.error('Помилка збереження поста:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+/**
  * DELETE /api/forum/saved/:id
  * Видалення одного збереженого поста.
  */

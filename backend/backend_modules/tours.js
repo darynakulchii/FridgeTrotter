@@ -93,15 +93,38 @@ router.delete('/saved', authenticateToken, async (req, res) => {
  */
 router.get('/', async (req, res) => {
     const { search, category, sort } = req.query;
+
+    // Отримуємо ID користувача з токена (якщо він є), щоб перевірити is_saved
+    let currentUserId = null;
+    const authHeader = req.headers['authorization'];
+    if (authHeader) {
+        const token = authHeader.split(' ')[1];
+        try {
+            const jwt = require('jsonwebtoken');
+            const { JWT_SECRET } = require('../auth_middleware');
+            const decoded = jwt.verify(token, JWT_SECRET);
+            currentUserId = decoded.userId;
+        } catch (e) { /* ігноруємо помилку токена */ }
+    }
+
+    // Оновлений запит: додано a.owner_id та перевірку is_saved
     let query = `
-        SELECT t.*, a.name AS agency_name, tc.name_ukr AS category_name
+        SELECT 
+            t.*, 
+            a.name AS agency_name, 
+            a.owner_id, 
+            tc.name_ukr AS category_name,
+            (CASE WHEN ust.user_id IS NOT NULL THEN true ELSE false END) as is_saved
         FROM tours t
                  JOIN agencies a ON t.agency_id = a.agency_id
                  LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
+                 LEFT JOIN user_saved_tours ust ON t.tour_id = ust.tour_id AND ust.user_id = $1
         WHERE 1 = 1
     `;
-    const queryParams = [];
-    let paramIndex = 1;
+
+    // Зверніть увагу: $1 тепер зарезервовано для currentUserId
+    const queryParams = [currentUserId];
+    let paramIndex = 2; // Починаємо з 2, бо 1 зайнятий
 
     if (search) {
         query += ` AND (t.title ILIKE $${paramIndex} OR t.description ILIKE $${paramIndex} OR t.location ILIKE $${paramIndex})`;

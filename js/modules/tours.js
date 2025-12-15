@@ -2,6 +2,7 @@ import { API_URL, getHeaders } from '../api-config.js';
 
 let bookingPicker = null;
 let currentTourId = null;
+const currentUser = JSON.parse(localStorage.getItem('user'));
 
 // Стан фільтрів
 let filters = {
@@ -202,14 +203,14 @@ async function loadTours() {
     const toursContainer = document.getElementById('tours-view');
     if (!toursContainer) return;
 
-    // Формуємо параметри запиту
     const params = new URLSearchParams();
     if (filters.search) params.append('search', filters.search);
     if (filters.category && filters.category !== 'Всі категорії') params.append('category', filters.category);
     if (filters.sort) params.append('sort', filters.sort);
 
     try {
-        const response = await fetch(`${API_URL}/tours?${params}`);
+        // Передаємо заголовки, щоб бекенд розпізнав юзера і повернув is_saved
+        const response = await fetch(`${API_URL}/tours?${params}`, { headers: getHeaders() });
         if (!response.ok) throw new Error('Failed to fetch tours');
 
         const data = await response.json();
@@ -236,21 +237,35 @@ async function loadTours() {
 function createTourCard(tour) {
     const image = tour.image_url || 'https://via.placeholder.com/400x300?text=No+Image';
 
-    // Формування тексту дати
     let dateText = `${tour.duration_days} днів`;
     if (tour.available_dates && tour.available_dates.length > 0) {
         const nextDate = new Date(tour.available_dates[0]).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
         dateText += ` • з ${nextDate}`;
     }
 
+    // === ЛОГІКА ПОСИЛАННЯ НА ПРОФІЛЬ АГЕНЦІЇ ===
+    let agencyProfileLink = `other_user_profile.html?user_id=${tour.owner_id}`;
+    // Якщо поточний юзер є власником цієї агенції -> ведемо на його адмінку
+    if (currentUser && currentUser.userId === tour.owner_id) {
+        agencyProfileLink = 'agency_page.html';
+    }
+
+    // === ЛОГІКА КНОПКИ "ЗБЕРЕГТИ" ===
+    // Якщо юзер агент -> ховаємо кнопку або робимо неактивною (тут просто приховаємо клас active, бекенд перевірить права)
+    const isSaved = tour.is_saved;
+    const bookmarkIconClass = isSaved ? 'fas' : 'far'; // fas = зафарбована, far = контур
+    const bookmarkBtnClass = isSaved ? 'active' : '';
+
     return `
         <div class="universal-card cursor-pointer group" onclick="openTourDetails(${tour.tour_id})">
             <div class="card-header-user">
-                <div class="card-avatar" style="background-color: #281822;">
+                <div class="card-avatar cursor-pointer" style="background-color: #281822;" 
+                     onclick="event.stopPropagation(); window.location.href='${agencyProfileLink}'">
                     <i class="fas fa-briefcase"></i>
                 </div>
                 <div class="card-user-info">
-                    <div class="card-user-name hover:underline" onclick="event.stopPropagation(); filterByAgency('${tour.agency_name}')">
+                    <div class="card-user-name hover:underline cursor-pointer" 
+                         onclick="event.stopPropagation(); window.location.href='${agencyProfileLink}'">
                         ${tour.agency_name || 'Агенція'}
                     </div>
                     <div class="card-user-sub text-[#2D4952]">
@@ -275,7 +290,6 @@ function createTourCard(tour) {
                     <div class="flex items-center gap-3 text-sm text-gray-700">
                         <i class="fas fa-star text-yellow-500 w-5 text-center"></i>
                         <span class="font-bold">${tour.rating || 'New'}</span> 
-                        <span class="text-xs text-gray-400 font-normal">(Рейтинг)</span>
                     </div>
                 </div>
             </div>
@@ -285,8 +299,10 @@ function createTourCard(tour) {
                     ${parseInt(tour.price_uah).toLocaleString()} ₴
                 </div>
 
-                <button onclick="event.stopPropagation(); toggleSaveTour(${tour.tour_id}, this)" class="btn-icon-square" title="В обране">
-                    <i class="far fa-bookmark"></i>
+                <button onclick="event.stopPropagation(); toggleSaveTour(${tour.tour_id}, this)" 
+                        class="btn-icon-square ${bookmarkBtnClass}" 
+                        title="В обране">
+                    <i class="${bookmarkIconClass} fa-bookmark"></i>
                 </button>
                 
                 <button class="btn-outline px-4 text-sm h-10" onclick="event.stopPropagation(); openTourDetails(${tour.tour_id})">
@@ -310,7 +326,7 @@ window.openTourDetails = async (id) => {
 
     modal.classList.add('active');
 
-    // Отримуємо елементи модалки
+    // Отримуємо елементи модалки (кнопку SAVE видалено)
     const titleEl = document.getElementById('modal-tour-title');
     const descEl = document.getElementById('modal-tour-desc');
     const programEl = document.getElementById('modal-tour-program');
@@ -321,7 +337,6 @@ window.openTourDetails = async (id) => {
     const durEl = document.getElementById('modal-tour-duration');
     const priceEl = document.getElementById('modal-tour-price');
     const ratingEl = document.getElementById('modal-tour-rating');
-    const saveBtn = document.getElementById('modal-save-btn');
     const bookBtn = document.getElementById('modal-book-btn');
 
     // Стан завантаження
@@ -340,6 +355,7 @@ window.openTourDetails = async (id) => {
         const data = await response.json();
         const tour = data.tour;
 
+        // Заповнення полів
         titleEl.innerText = tour.title;
         descEl.innerText = tour.description;
         locEl.innerText = tour.location;
@@ -383,13 +399,10 @@ window.openTourDetails = async (id) => {
             });
         }
 
+        // Налаштування кнопки бронювання в модалці
         bookBtn.onclick = () => openBookingModal(tour);
-        checkIfSaved(id, saveBtn);
-        // Видаляємо старі слухачі (через замикання) і ставимо новий
-        const newSaveBtn = saveBtn.cloneNode(true);
-        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-        newSaveBtn.onclick = () => toggleSaveTour(id, newSaveBtn);
 
+        // Завантаження коментарів
         loadTourComments(id);
 
     } catch (error) {
@@ -398,25 +411,26 @@ window.openTourDetails = async (id) => {
     }
 };
 
-async function checkIfSaved(id, btn) {
-    if (!localStorage.getItem('token')) {
-        updateSaveBtnUI(btn, false);
-        return;
-    }
-    try {
-        const res = await fetch(`${API_URL}/tours/${id}/is-saved`, { headers: getHeaders() });
-        const data = await res.json();
-        updateSaveBtnUI(btn, data.saved);
-    } catch (e) { console.error(e); }
-}
-
-async function toggleSaveTour(id, btn) {
-    if (!localStorage.getItem('token')) {
+// Функція toggleSaveTour (Оновлена для роботи з кнопкою на картці)
+window.toggleSaveTour = async (id, btn) => {
+    // 1. Перевірка авторизації
+    const token = localStorage.getItem('token');
+    if (!token) {
         alert('Увійдіть, щоб зберігати тури.');
         return;
     }
 
-    const isSaved = btn.classList.contains('saved');
+    // 2. Перевірка на агента
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    if (currentUser && currentUser.isAgent) {
+        alert('Турагенти не можуть додавати тури в обране.');
+        return;
+    }
+
+    // 3. Визначаємо поточний стан (за класом іконки)
+    // fas = solid (збережено), far = regular (не збережено)
+    const icon = btn.querySelector('i');
+    const isSaved = icon.classList.contains('fas');
     const method = isSaved ? 'DELETE' : 'POST';
 
     try {
@@ -428,7 +442,18 @@ async function toggleSaveTour(id, btn) {
         const data = await res.json();
 
         if (res.ok) {
-            updateSaveBtnUI(btn, !isSaved);
+            // 4. Оновлюємо UI кнопки
+            if (isSaved) {
+                // Було збережено -> видаляємо
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                btn.classList.remove('active'); // Прибираємо підсвітку кнопки
+            } else {
+                // Не було -> зберігаємо
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                btn.classList.add('active'); // Додаємо підсвітку кнопки
+            }
         } else {
             alert(data.error || 'Помилка збереження');
         }
@@ -436,30 +461,7 @@ async function toggleSaveTour(id, btn) {
         console.error(e);
         alert('Помилка з\'єднання');
     }
-}
-
-function updateSaveBtnUI(btn, isSaved) {
-    const icon = btn.querySelector('i');
-    const text = btn.querySelector('span'); // Якщо є текст
-
-    if (isSaved) {
-        btn.classList.add('saved', 'text-[#48192E]', 'border-[#48192E]');
-        btn.classList.remove('text-gray-400', 'border-gray-200');
-        if(icon) {
-            icon.classList.remove('far');
-            icon.classList.add('fas');
-        }
-        if(text) text.innerText = 'В обраному';
-    } else {
-        btn.classList.remove('saved', 'text-[#48192E]', 'border-[#48192E]');
-        btn.classList.add('text-gray-400', 'border-gray-200'); // Повертаємо сірий
-        if(icon) {
-            icon.classList.remove('fas');
-            icon.classList.add('far');
-        }
-        if(text) text.innerText = 'В обране';
-    }
-}
+};
 
 async function loadTourComments(tourId) {
     const list = document.getElementById('tour-comments-list');
@@ -527,11 +529,17 @@ async function handleCommentSubmit(e) {
 
 // === 4. БРОНЮВАННЯ ===
 
-function openBookingModal(tour) {
+// Експортуємо функцію в глобальну область видимості (для виклику з HTML onclick)
+window.openBookingModal = (tourData) => {
     const modal = document.getElementById('tour-booking-modal');
     modal.classList.add('active');
-    document.getElementById('booking-tour-id').value = tour.tour_id;
-    document.getElementById('booking-tour-info').innerText = tour.title;
+
+    // Уніфікація даних: якщо викликаємо з картки, там поля можуть називатись інакше, ніж з детального API
+    const tId = tourData.tour_id || tourData.id;
+    const tTitle = tourData.title;
+
+    document.getElementById('booking-tour-id').value = tId;
+    document.getElementById('booking-tour-info').innerText = tTitle;
 
     const dateInput = document.getElementById('booking-date-picker');
     if (bookingPicker) bookingPicker.destroy();
@@ -543,9 +551,12 @@ function openBookingModal(tour) {
             minDate: "today",
             disableMobile: "true"
         };
-        if (tour.available_dates && tour.available_dates.length > 0) {
-            config.enable = tour.available_dates;
+
+        // Якщо передано доступні дати (масив рядків)
+        if (tourData.available_dates && tourData.available_dates.length > 0) {
+            config.enable = tourData.available_dates;
         }
+
         bookingPicker = flatpickr(dateInput, config);
     }
 }
