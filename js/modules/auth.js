@@ -72,12 +72,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Зберігаємо токен
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
 
-                    // Перенаправляємо на профіль
-                    window.location.href = 'my_profile.html';
+                    if (data.user.isAgent) {
+                        window.location.href = 'agency_page.html';
+                    } else {
+                        window.location.href = 'my_profile.html';
+                    };
                 } else {
                     alert(data.error || 'Помилка входу');
                 }
@@ -147,9 +149,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('token', loginData.token);
                     localStorage.setItem('user', JSON.stringify(loginData.user));
                     alert('Реєстрація успішна! Ласкаво просимо.');
-                    window.location.href = 'my_profile.html';
+                    if (loginData.user.isAgent) {
+                        window.location.href = 'agency_page.html';
+                    } else {
+                        window.location.href = 'my_profile.html';
+                    }
                 } else {
-                    // Якщо реєстрація пройшла, а авто-логін ні (рідкісний випадок)
                     alert('Реєстрація успішна. Будь ласка, увійдіть.');
                     window.location.href = 'login.html';
                 }

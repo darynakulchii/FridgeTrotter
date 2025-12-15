@@ -42,6 +42,15 @@ function handleGlobalClicks(e) {
         return;
     }
 
+    const btnAccount = e.target.closest('#agent-btn-account');
+    if (btnAccount) {
+        // Закриваємо модалку меню агента
+        document.getElementById('agent-mode-modal')?.classList.remove('active');
+        // Переходимо на сторінку агенції
+        window.location.href = 'agency_page.html';
+        return;
+    }
+
     // --- ЛОГІКА МАГНІТІВ ---
 
     // 1. Відкриття модального вікна "Додати магніт"
