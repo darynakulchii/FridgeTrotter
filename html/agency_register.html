@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Реєстрація агенції</title>
+    <title>Реєстрація організатора</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -13,29 +13,38 @@
 <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md relative">
 
     <div class="text-center mb-6">
-        <h2 class="text-2xl font-bold text-[#281822]">Реєстрація агенції</h2>
-        <p class="text-sm text-gray-500">Створіть новий бізнес-акаунт</p>
+        <h2 class="text-2xl font-bold text-[#281822]">Реєстрація організатора</h2>
+        <p class="text-sm text-gray-500">Для агенцій, гідів та авторів турів</p>
     </div>
 
     <form id="agency-register-form" class="space-y-4">
 
         <div>
-            <label class="block text-sm font-medium text-[#281822] mb-1">Назва агенції</label>
-            <input type="text" name="name" required placeholder="Travel Company LLC"
+            <label class="block text-sm font-medium text-[#281822] mb-1">Тип організації</label>
+            <select name="org_type" id="org-type" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E] bg-white cursor-pointer">
+                <option value="agency">Туристична компанія (ТОВ/ПП)</option>
+                <option value="guide">Приватний гід / ФОП</option>
+            </select>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Назва компанії або Ім'я гіда</label>
+            <input type="text" name="name" required placeholder="Travel Company LLC або Іван Петренко"
                    class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]">
         </div>
 
         <div>
-            <label class="block text-sm font-medium text-[#281822] mb-1">Код ЄДРПОУ</label>
+            <label class="block text-sm font-medium text-[#281822] mb-1">Код ЄДРПОУ або РНОКПП (ІПН)</label>
             <input type="text" name="license" required placeholder="12345678"
                    class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]">
+            <p class="text-xs text-gray-500 mt-1">Для ідентифікації вас як перевіреного партнера</p>
         </div>
 
         <div>
             <label class="block text-sm font-medium text-[#281822] mb-1">Електронна пошта (Логін)</label>
             <div class="relative">
                 <i class="far fa-envelope absolute left-3 top-3 text-gray-400"></i>
-                <input type="email" name="email" required placeholder="agency@example.com"
+                <input type="email" name="email" required placeholder="partner@example.com"
                        class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]">
             </div>
         </div>
@@ -47,7 +56,7 @@
                 <input type="password" name="password" required placeholder="••••••••"
                        class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]">
             </div>
-            <p class="text-xs text-gray-500 mt-1">Використовуватиметься для входу в кабінет агента</p>
+            <p class="text-xs text-gray-500 mt-1">Використовуватиметься для входу в кабінет партнера</p>
         </div>
 
         <div>
@@ -68,25 +77,25 @@
             </div>
         </div>
 
-        <div class="flex items-start gap-2 pt-2">
-            <input type="checkbox" id="agreement" name="agreement" required class="mt-1 accent-[#48192E] w-4 h-4 cursor-pointer">
-            <label for="agreement" class="text-xs text-gray-600 cursor-pointer select-none">
+        <div class="flex items-start gap-2 mt-2">
+            <input type="checkbox" id="reg-consent" class="mt-1 accent-[#48192E] w-4 h-4 cursor-pointer">
+            <label for="reg-consent" class="text-xs text-gray-600 cursor-pointer select-none">
                 Я даю згоду на обробку персональних даних та погоджуюсь з
                 <a href="#" id="open-privacy-modal-link" class="text-[#48192E] font-bold underline hover:text-[#281822]">Політикою конфіденційності</a>.
             </label>
         </div>
 
-        <div class="flex items-start gap-2 pt-2">
+        <div class="flex items-start gap-2 pt-0">
             <input type="checkbox" id="rules-agreement" name="rules-agreement" required class="mt-1 accent-[#48192E] w-4 h-4 cursor-pointer">
             <label for="rules-agreement" class="text-xs text-gray-600 cursor-pointer select-none">
-                Я погоджуюсь з
-                <a href="#" id="open-rules-modal-agency-link" class="text-[#48192E] font-bold underline hover:text-[#281822]">Правилами платформи</a>
+                Я підтверджую законність діяльності та погоджуюсь з
+                <a href="#" id="open-rules-modal-agency-link" class="text-[#48192E] font-bold underline hover:text-[#281822]">Правилами для Організаторів</a>
                 (сайт не несе відповідальності за тури).
             </label>
         </div>
 
         <button type="submit" class="btn-solid w-full bg-[#281822] text-white py-2 rounded-md font-bold hover:bg-[#48192E] transition">
-            Зареєструвати агенцію
+            Стати партнером
         </button>
 
         <div class="mt-4 text-center text-sm">
@@ -100,11 +109,90 @@
     </form>
 </div>
 
+<div id="privacy-modal" class="modal-backdrop">
+    <div class="modal-content max-w-2xl h-[80vh] flex flex-col">
+        <div class="modal-header shrink-0">
+            <h3 class="text-xl font-bold text-[#281822]">Політика конфіденційності</h3>
+            <button class="modal-close-btn" id="close-privacy-modal">&times;</button>
+        </div>
+        <div class="modal-body overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4 p-6">
+            <p><strong>Останнє оновлення: 8 грудня 2025 року</strong></p>
+
+            <h4 class="font-bold text-[#281822] text-lg">1. Загальні положення</h4>
+            <p>Ця Політика конфіденційності описує, як FridgeTrotter збирає, використовує та розкриває вашу інформацію у зв'язку з використанням вами нашого веб-сайту. Реєструючись на сайті, ви погоджуєтесь з умовами цієї політики.</p>
+
+            <h4 class="font-bold text-[#281822] text-lg">2. Збір інформації</h4>
+            <p>Ми збираємо наступні типи інформації:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li><strong>Персональні дані:</strong> Ім'я, прізвище, адреса електронної пошти, дата народження, які ви надаєте під час реєстрації.</li>
+                <li><strong>Дані профілю:</strong> Інформація про ваші подорожі, відвідані країни, фотографії та біографія.</li>
+                <li><strong>Технічні дані:</strong> IP-адреса, тип браузера, дані про пристрій.</li>
+            </ul>
+
+            <h4 class="font-bold text-[#281822] text-lg">3. Використання інформації</h4>
+            <p>Ми використовуємо ваші дані для:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Надання послуг платформи (створення магнітів, пошук компаньйонів).</li>
+                <li>Персоналізації вашого досвіду користування.</li>
+                <li>Надсилання важливих сповіщень та оновлень.</li>
+                <li>Забезпечення безпеки акаунту.</li>
+            </ul>
+
+            <h4 class="font-bold text-[#281822] text-lg">4. Захист даних</h4>
+            <p>Ми вживаємо належних заходів безпеки для захисту від несанкціонованого доступу, зміни, розкриття або знищення ваших персональних даних. Паролі зберігаються у зашифрованому вигляді.</p>
+
+            <h4 class="font-bold text-[#281822] text-lg">5. Розкриття інформації третім сторонам</h4>
+            <p>Ми не продаємо і не передаємо ваші персональні дані третім сторонам, за винятком випадків, передбачених законодавством України, або для забезпечення функціонування сервісу (хостинг, технічна підтримка).</p>
+
+            <h4 class="font-bold text-[#281822] text-lg">6. Ваші права</h4>
+            <p>Ви маєте право:</p>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Отримувати доступ до своїх даних.</li>
+                <li>Вимагати виправлення неточних даних.</li>
+                <li>Вимагати видалення свого акаунту та всіх пов'язаних даних.</li>
+            </ul>
+
+            <h4 class="font-bold text-[#281822] text-lg">7. Контакти</h4>
+            <p>Якщо у вас виникли запитання щодо цієї Політики, зв'яжіться з нами через форму підтримки або напишіть на email: privacy@fridgetrotter.com.</p>
+        </div>
+        <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl text-center shrink-0">
+            <button id="accept-privacy-btn" class="bg-[#48192E] text-white px-6 py-2 rounded-md font-bold hover:bg-[#281822] transition">Зрозуміло</button>
+        </div>
+    </div>
+</div>
+
+<div id="rules-modal" class="modal-backdrop">
+    <div class="modal-content max-w-2xl h-[80vh] flex flex-col">
+        <div class="modal-header shrink-0">
+            <h3 class="text-xl font-bold text-[#281822]">Умови використання для Партнерів</h3>
+            <button class="modal-close-btn rules-close-btn">&times;</button>
+        </div>
+        <div class="modal-body overflow-y-auto text-sm text-gray-700 leading-relaxed space-y-4 p-6">
+            <h4 class="font-bold text-[#281822] text-lg">1. Статус Платформи</h4>
+            <p>FridgeTrotter є інформаційним майданчиком. Ми не є туроператором і не надаємо послуг безпосередньо. Ми надаємо технічну можливість Організаторам розміщувати свої пропозиції.</p>
+
+            <h4 class="font-bold text-[#281822] text-lg">2. Відповідальність Організатора</h4>
+            <ul class="list-disc pl-5 space-y-1">
+                <li>Ви гарантуєте, що здійснюєте діяльність законно (маєте реєстрацію ФОП/ТОВ або ліцензії).</li>
+                <li>Ви несете повну відповідальність за якість, безпеку та відповідність турів опису.</li>
+                <li>Ви зобов'язуєтесь вирішувати будь-які спори з клієнтами самостійно.</li>
+            </ul>
+
+            <h4 class="font-bold text-[#281822] text-lg">3. Використання даних</h4>
+            <p>Код ЄДРПОУ або РНОКПП запитується виключно для внутрішньої верифікації партнера та запобігання шахрайству.</p>
+        </div>
+        <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl text-center shrink-0">
+            <button class="bg-[#48192E] text-white px-6 py-2 rounded-md font-bold hover:bg-[#281822] transition rules-close-btn">Зрозуміло</button>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
 
 <script type="module">
     import { API_URL } from '../js/api-config.js';
 
+    // === Логіка модального вікна правил ===
     const rulesModal = document.getElementById('rules-modal');
     const rulesLink = document.getElementById('open-rules-modal-agency-link');
     const closeBtns = document.querySelectorAll('.rules-close-btn');
@@ -117,8 +205,14 @@
 
         closeBtns.forEach(btn => btn.addEventListener('click', () => {
             rulesModal.classList.remove('active');
+            // Автоматично ставимо галочку при прочитанні
             document.getElementById('rules-agreement').checked = true;
         }));
+
+        // Закриття по кліку за межами
+        window.addEventListener('click', (e) => {
+            if (e.target === rulesModal) rulesModal.classList.remove('active');
+        });
     }
 
     const form = document.getElementById('agency-register-form');
@@ -127,7 +221,7 @@
         e.preventDefault();
 
         if(!document.getElementById('rules-agreement').checked) {
-            alert("Будь ласка, погодьтесь з Правилами платформи.");
+            alert("Будь ласка, підтвердіть згоду з Правилами для Організаторів.");
             return;
         }
 
@@ -140,8 +234,10 @@
         const data = Object.fromEntries(formData.entries());
         data.agreement = document.getElementById('agreement').checked;
 
+        // Додаємо тип організації до даних (хоча він і так є в formData, переконаємось)
+        data.org_type = document.getElementById('org-type').value;
+
         try {
-            // Запит без заголовка Authorization
             const response = await fetch(`${API_URL}/agencies/register`, {
                 method: 'POST',
                 headers: {
@@ -153,20 +249,20 @@
             const result = await response.json();
 
             if (response.ok) {
-                // ЛОГІКА ПЕРЕМИКАННЯ АКАУНТІВ
+                // Очищаємо старі дані
                 localStorage.removeItem('token');
                 localStorage.removeItem('user');
 
-                // 2. Зберігаємо дані НОВОГО користувача (агента)
+                // Зберігаємо нові
                 if (result.token && result.user) {
                     localStorage.setItem('token', result.token);
                     localStorage.setItem('user', JSON.stringify(result.user));
 
-                    alert('Вітаємо! Агенцію успішно зареєстровано. Ви увійшли як турагент.');
+                    alert('Вітаємо! Ви успішно зареєструвались як партнер.');
                     window.location.href = 'agency_page.html';
                 } else {
-                    alert('Агенцію зареєстровано. Будь ласка, увійдіть з новим паролем.');
-                    window.location.href = 'login.html';
+                    alert('Реєстрація успішна. Увійдіть з новим паролем.');
+                    window.location.href = 'agency_login.html';
                 }
             } else {
                 alert(result.error || 'Помилка реєстрації');
@@ -176,7 +272,7 @@
             alert('Помилка з\'єднання з сервером');
         } finally {
             submitBtn.disabled = false;
-            submitBtn.innerText = 'Зареєструвати агенцію';
+            submitBtn.innerText = 'Стати партнером';
         }
     });
 </script>
