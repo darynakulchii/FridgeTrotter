@@ -132,6 +132,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 return; // Зупиняємо відправку форми
             }
 
+            const rulesCheckbox = document.getElementById('reg-rules-consent');
+
             if (rulesCheckbox && !rulesCheckbox.checked) {
                 alert('Будь ласка, погодьтесь з Правилами використання сайту.');
                 return;
