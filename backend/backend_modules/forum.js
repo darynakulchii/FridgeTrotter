@@ -195,7 +195,7 @@ router.get('/posts/:id', async (req, res) => {
  * POST /api/forum/posts
  * Створення нового поста (з підтримкою фото).
  */
-router.post('/posts', authenticateToken, upload.array('images', 5), async (req, res) => {
+router.post('/posts', authenticateToken, upload.array('images', 8), async (req, res) => {
     const { title, content, category } = req.body;
     const authorId = req.user.userId;
     const files = req.files; // Масив файлів
