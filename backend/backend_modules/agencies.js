@@ -246,13 +246,15 @@ router.post('/magnets', authenticateToken, upload.single('image'), async (req, r
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING magnet_id;
         `;
+
         await client.query(insertQuery, [
             country,
             city,
-            'star', // icon_class (заглушка)
-            'teal', // color_group (заглушка)
+            'fa-magnet',
+            'blue',
             imageUrl,
-            shape || 'square'
+            shape,
+            linked_tour_id || null
         ]);
 
         await client.query('COMMIT');

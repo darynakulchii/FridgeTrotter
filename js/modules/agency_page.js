@@ -1,8 +1,10 @@
 import { API_URL, getHeaders } from '../api-config.js';
 
+let agencyOwnerId = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     initAgencyTabs();
-    loadAgencyInfo(); // Завантажує локальні/статичні дані (або можна переробити на fetch)
+    loadAgencyInfo();
     initLogoUpload();
     initAwards();
     initSaveInfoButton();
@@ -37,6 +39,7 @@ function initAgencyTabs() {
         });
     });
 }
+
 
 // =========================================================
 // ЛОГІКА БРОНЮВАНЬ (НОВА)
@@ -148,21 +151,47 @@ let agencyData = {
 };
 
 // ---- Завантаження початкових даних ----
-function loadAgencyInfo() {
-    document.getElementById('agency-name').innerText = agencyData.name;
-    const descEl = document.getElementById('agency-description');
-    if (descEl.tagName === 'TEXTAREA' || descEl.tagName === 'INPUT') {
-        descEl.value = agencyData.description;
-    } else {
-        descEl.innerText = agencyData.description;
+async function loadAgencyInfo() {
+    try {
+        const response = await fetch(`${API_URL}/agencies/me`, {
+            headers: getHeaders()
+        });
+
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+
+        document.getElementById('agency-name').innerText = agencyData.name;
+        const descEl = document.getElementById('agency-description');
+        if (descEl.tagName === 'TEXTAREA' || descEl.tagName === 'INPUT') {
+            descEl.value = agencyData.description;
+        } else {
+            descEl.innerText = agencyData.description;
+        }
+        document.getElementById('agency-phone').innerText = agencyData.phone || '—';
+        document.getElementById('agency-email').innerText = agencyData.email || '—';
+        document.getElementById('agency-website').innerText = agencyData.website || '—';
+        if (agencyData.logo) {
+            document.getElementById('agency-logo').src = agencyData.logo;
+        }
+        document.body.style.backgroundColor = agencyData.bgColor;
+
+        checkOwnerAccess(currentUser);
+    } catch (e) {
+        console.error("Помилка завантаження даних агенції", e);
     }
-    document.getElementById('agency-phone').innerText = agencyData.phone || '—';
-    document.getElementById('agency-email').innerText = agencyData.email || '—';
-    document.getElementById('agency-website').innerText = agencyData.website || '—';
-    if (agencyData.logo) {
-        document.getElementById('agency-logo').src = agencyData.logo;
+}
+
+// === ВИПРАВЛЕНА ФУНКЦІЯ ===
+function checkOwnerAccess(user) {
+    if (!user) return;
+
+    if (user.isAgent) {
+        const ownerElements = document.querySelectorAll('.owner-only');
+        ownerElements.forEach(el => {
+            // МИ НЕ СТАВИМО display: block, бо це ламає таби
+            // Ми просто видаляємо клас, який їх приховує
+            el.classList.remove('owner-only');
+        });
     }
-    document.body.style.backgroundColor = agencyData.bgColor;
 }
 
 // ---- Логотип агенції ----

@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <title>Сторінка агенції</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
+
     <link rel="stylesheet" href="../css/main_page.css">
+
     <link rel="stylesheet" href="../css/agency_page.css">
 
     <style>
@@ -70,6 +73,8 @@
 <body>
 
 <header id="main-header"></header>
+<script type="module" src="../js/modules/navigation.js"></script>
+<script type="module" src="../js/modules/agency_page.js"></script>
 
 <main class="container-wide agency-page">
 
@@ -116,18 +121,15 @@
 
 
     <section id="tab-agency-tours" class="tab-content">
-        <div id="agency-tours-grid">
-        </div>
+        <div id="agency-tours-grid"></div>
     </section>
 
     <section id="tab-agency-posts" class="tab-content">
-        <div id="agency-posts-list">
-        </div>
+        <div id="agency-posts-list"></div>
     </section>
 
     <section id="tab-agency-magnets" class="tab-content">
-        <div id="agency-magnets-grid">
-        </div>
+        <div id="agency-magnets-grid"></div>
     </section>
 
     <section id="tab-agency-bookings" class="tab-content owner-only p-6 bg-white rounded-lg shadow-md">
@@ -139,47 +141,29 @@
     </section>
 
     <section id="tab-agency-settings" class="tab-content owner-only p-6 bg-gray-100 rounded-lg shadow-md">
-        <h3 class="font-semibold mb-4 text-lg">Редагування даних профілю</h3>
+        <h3 class="font-semibold mb-2">Редагування агенції</h3>
+        <input id="edit-agency-name" placeholder="Назва агенції" class="mb-2 p-2 rounded border w-full">
+        <textarea id="edit-agency-description" placeholder="Опис агенції" class="mb-2 p-2 rounded border w-full"></textarea>
 
-        <div class="space-y-3">
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Назва агенції</label>
-                <input id="edit-agency-name" placeholder="Назва агенції" class="p-2 rounded border w-full outline-none focus:border-[#48192E]">
-            </div>
+        <input id="edit-agency-phone" placeholder="Телефон" class="mb-2 p-2 rounded border w-full">
+        <input id="edit-agency-email" placeholder="Email" class="mb-2 p-2 rounded border w-full">
+        <input id="edit-agency-website" placeholder="Сайт" class="mb-2 p-2 rounded border w-full">
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Контактний телефон</label>
-                <input id="edit-agency-phone" placeholder="Телефон" class="p-2 rounded border w-full outline-none focus:border-[#48192E]">
-            </div>
+        <label class="block mb-4">
+            Фон сторінки:
+            <select id="page-bg-select" class="ml-2 p-1 border rounded">
+                <option value="#D3CBC4">Світлий</option>
+                <option value="#F0F0F0">Сірий</option>
+                <option value="#FFF7E1">Бежевий</option>
+                <option value="#E8F6F3">Блакитний</option>
+            </select>
+        </label>
 
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email для зв'язку</label>
-                <input id="edit-agency-email" placeholder="Email" class="p-2 rounded border w-full outline-none focus:border-[#48192E]">
-            </div>
-
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Веб-сайт</label>
-                <input id="edit-agency-website" placeholder="Сайт" class="p-2 rounded border w-full outline-none focus:border-[#48192E]">
-            </div>
-
-            <div class="pt-4 border-t border-gray-200">
-                <label class="block mb-2 font-medium">Колір фону сторінки:</label>
-                <select id="page-bg-select" class="p-2 border rounded w-full bg-white outline-none">
-                    <option value="#D3CBC4">Світлий (Стандарт)</option>
-                    <option value="#F0F0F0">Сірий</option>
-                    <option value="#FFF7E1">Бежевий</option>
-                    <option value="#E8F6F3">Блакитний</option>
-                </select>
-            </div>
-        </div>
-
-        <button id="save-agency-settings" class="btn-burgundy-solid mt-6 w-full md:w-auto">Зберегти налаштування</button>
+        <button id="save-agency-settings" class="btn-burgundy-solid">Зберегти зміни</button>
     </section>
 
 </main>
 
-<script type="module" src="../js/modules/navigation.js"></script>
-<script type="module" src="../js/modules/agency_page.js"></script>
 <script type="module" src="../js/index.js"></script>
 
 </body>
