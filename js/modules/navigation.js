@@ -204,7 +204,6 @@ function initBugReportSubmit() {
 
         // очищаємо форму
         textarea.value = '';
-
         const previewImg = document.getElementById('bug-image-preview');
         const placeholder = document.getElementById('bug-image-placeholder');
         const fileInput = document.getElementById('bug-image-input');
