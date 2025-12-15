@@ -198,7 +198,7 @@ router.get('/posts/:id', async (req, res) => {
 router.post('/posts', authenticateToken, upload.array('images', 8), async (req, res) => {
     const { title, content, category } = req.body;
     const authorId = req.user.userId;
-    const files = req.files; // Масив файлів
+    const files = req.files;
 
     if (!title || !content) {
         return res.status(400).json({ error: 'Необхідно вказати заголовок та контент.' });
@@ -222,20 +222,16 @@ router.post('/posts', authenticateToken, upload.array('images', 8), async (req, 
 
         // 2. Завантаження зображень (якщо є)
         if (files && files.length > 0) {
-            // Паралельне завантаження на Cloudinary
             const uploadPromises = files.map(file => uploadToCloudinary(file.buffer));
             const uploadResults = await Promise.all(uploadPromises);
 
-            // Збір URL
             uploadResults.forEach(result => imageUrls.push(result.secure_url));
 
-            // Збереження URL у БД
             const imageInsertQuery = `
                 INSERT INTO post_images (post_id, image_url)
                 VALUES ($1, $2);
             `;
 
-            // Послідовна вставка (можна оптимізувати через один INSERT, але так безпечніше для помилок)
             for (const url of imageUrls) {
                 await client.query(imageInsertQuery, [postId, url]);
             }
