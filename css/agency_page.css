@@ -1,0 +1,22 @@
+/* Сторінка агенції */
+
+#agency-tours-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+#agency-posts-list .post-card {
+    margin-bottom: 1.5rem;
+}
+
+#agency-magnets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* Вкладка налаштувань — тільки для власника */
+/*.owner-only {*/
+/*    display: none;*/
+/*}*/
