@@ -200,9 +200,11 @@ window.openTourDetails = async (id) => {
 
     modal.classList.add('active');
 
-    // Елементи
+    // 1. Отримуємо посилання на елементи (додали нові: programEl та datesEl)
     const titleEl = document.getElementById('modal-tour-title');
     const descEl = document.getElementById('modal-tour-desc');
+    const programEl = document.getElementById('modal-tour-program'); // НОВЕ
+    const datesEl = document.getElementById('modal-tour-dates');     // НОВЕ
     const imgEl = document.getElementById('modal-tour-image');
     const galleryEl = document.getElementById('modal-tour-gallery');
     const locEl = document.getElementById('modal-tour-loc');
@@ -212,8 +214,11 @@ window.openTourDetails = async (id) => {
     const saveBtn = document.getElementById('modal-save-btn');
     const bookBtn = document.getElementById('modal-book-btn');
 
-    // Очищення
+    // 2. Очищення перед завантаженням (щоб не показувати старі дані)
     titleEl.innerText = 'Завантаження...';
+    descEl.innerText = '';
+    programEl.innerText = 'Завантаження...'; // НОВЕ
+    datesEl.innerHTML = '';                  // НОВЕ
     galleryEl.innerHTML = '';
     imgEl.src = '';
     document.getElementById('tour-comments-list').innerHTML = '<p class="text-gray-400 text-sm">Завантаження відгуків...</p>';
@@ -225,13 +230,45 @@ window.openTourDetails = async (id) => {
         const data = await response.json();
         const tour = data.tour;
 
-        // Заповнення даними
+        // 3. Заповнення стандартними даними
         titleEl.innerText = tour.title;
         descEl.innerText = tour.description;
         locEl.innerText = tour.location;
         durEl.innerText = `${tour.duration_days} днів`;
         priceEl.innerText = `${tour.price_uah} ₴`;
         ratingEl.innerText = tour.rating || '0.0';
+
+        // === 4. НОВЕ: Заповнення програми ===
+        if (tour.program) {
+            programEl.innerText = tour.program;
+            // Прибираємо стиль "курсив", якщо текст є
+            programEl.classList.remove('italic', 'text-gray-400');
+        } else {
+            programEl.innerText = 'Детальна програма уточнюється в організатора.';
+            // Додаємо стиль, щоб виглядало як заглушка
+            programEl.classList.add('italic', 'text-gray-400');
+        }
+
+        // === 5. НОВЕ: Заповнення дат ===
+        if (tour.available_dates && tour.available_dates.length > 0) {
+            // Якщо дати прийшли як рядки, відсортуємо їх
+            const sortedDates = tour.available_dates.sort();
+
+            // Створюємо гарні плашки для кожної дати
+            datesEl.innerHTML = sortedDates.map(dateStr => {
+                const dateObj = new Date(dateStr);
+                // Форматуємо: 01 січня 2025
+                const formatted = dateObj.toLocaleDateString('uk-UA', {
+                    day: 'numeric', month: 'long', year: 'numeric'
+                });
+
+                return `<span class="bg-[#F3F4F6] text-[#281822] border border-gray-200 px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2">
+                            <i class="far fa-calendar-check text-[#48192E]"></i> ${formatted}
+                        </span>`;
+            }).join('');
+        } else {
+            datesEl.innerHTML = '<span class="text-gray-500 text-sm italic">Дати уточнюються менеджером</span>';
+        }
 
         const mainImage = tour.image_url || (tour.images && tour.images[0]) || 'https://via.placeholder.com/600x400';
         imgEl.src = mainImage;
@@ -246,21 +283,14 @@ window.openTourDetails = async (id) => {
             });
         }
 
-        // Кнопка Бронювання
         bookBtn.onclick = () => openBookingModal(tour);
-
-        // Перевірка статусу "Збережено"
         checkIfSaved(id, saveBtn);
-
-        // Налаштування кнопки збереження
         saveBtn.onclick = () => toggleSaveTour(id, saveBtn);
-
-        // Завантаження коментарів
         loadTourComments(id);
 
     } catch (error) {
         console.error(error);
-        titleEl.innerText = 'Помилка';
+        titleEl.innerText = 'Помилка завантаження';
     }
 };
 
