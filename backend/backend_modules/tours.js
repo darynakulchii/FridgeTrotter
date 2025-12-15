@@ -373,4 +373,62 @@ router.post('/', authenticateToken, upload.single('image'), async (req, res) => 
     }
 });
 
+/**
+ * POST /api/tours/:id/save
+ * Додати тур в обране
+ */
+router.post('/:id/save', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const tourId = req.params.id;
+
+    try {
+        await pool.query(
+            `INSERT INTO user_saved_tours (user_id, tour_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [userId, tourId]
+        );
+        res.json({ message: 'Тур збережено', saved: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+/**
+ * DELETE /api/tours/:id/save
+ * Видалити тур з обраного
+ */
+router.delete('/:id/save', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const tourId = req.params.id;
+
+    try {
+        await pool.query(
+            `DELETE FROM user_saved_tours WHERE user_id = $1 AND tour_id = $2`,
+            [userId, tourId]
+        );
+        res.json({ message: 'Тур видалено з обраного', saved: false });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+/**
+ * GET /api/tours/:id/is-saved
+ * Перевірка, чи збережено тур (для відображення іконки)
+ */
+router.get('/:id/is-saved', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const tourId = req.params.id;
+    try {
+        const result = await pool.query(
+            `SELECT 1 FROM user_saved_tours WHERE user_id = $1 AND tour_id = $2`,
+            [userId, tourId]
+        );
+        res.json({ saved: result.rows.length > 0 });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 module.exports = { router };

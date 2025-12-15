@@ -133,24 +133,49 @@
 </main>
 
 <div id="tour-details-modal" class="modal-backdrop">
-    <div class="modal-content max-w-2xl">
-        <div class="modal-header">
-            <h3 class="text-xl font-bold text-[#281822]" id="modal-tour-title">Назва туру</h3>
-            <button class="modal-close-btn">&times;</button>
-        </div>
-        <div class="modal-body">
-            <img id="modal-tour-image" src="" class="w-full h-64 object-cover rounded-lg mb-2" alt="Фото туру">
-            <div id="modal-tour-gallery" class="grid grid-cols-4 gap-2 mb-4"></div>
-            <p class="text-gray-600 mb-4" id="modal-tour-desc">Опис туру...</p>
-            <div class="grid grid-cols-2 gap-4 text-sm text-[#2D4952] mb-6">
-                <div><i class="fas fa-map-marker-alt mr-2"></i> <span id="modal-tour-loc">Локація</span></div>
-                <div><i class="far fa-calendar-alt mr-2"></i> <span id="modal-tour-duration">Тривалість</span></div>
-                <div><i class="fas fa-user-friends mr-2"></i> <span>2-4 особи</span></div>
-                <div><i class="fas fa-star mr-2"></i> <span>4.9</span></div>
+    <div class="modal-content max-w-2xl h-[90vh] flex flex-col"> <div class="modal-header shrink-0">
+        <h3 class="text-xl font-bold text-[#281822]" id="modal-tour-title">Назва туру</h3>
+        <button class="modal-close-btn">&times;</button>
+    </div>
+
+        <div class="modal-body overflow-y-auto flex-grow p-0">
+            <div class="p-6">
+                <img id="modal-tour-image" src="" class="w-full h-64 object-cover rounded-lg mb-2" alt="Фото туру">
+                <div id="modal-tour-gallery" class="grid grid-cols-4 gap-2 mb-4"></div>
+
+                <div class="flex justify-end mb-2">
+                    <button id="modal-save-btn" class="text-gray-400 hover:text-[#48192E] text-xl transition">
+                        <i class="far fa-bookmark"></i> <span class="text-sm font-medium ml-1">В обране</span>
+                    </button>
+                </div>
+
+                <p class="text-gray-600 mb-4" id="modal-tour-desc">Опис туру...</p>
+
+                <div class="grid grid-cols-2 gap-4 text-sm text-[#2D4952] mb-6">
+                    <div><i class="fas fa-map-marker-alt mr-2"></i> <span id="modal-tour-loc">Локація</span></div>
+                    <div><i class="far fa-calendar-alt mr-2"></i> <span id="modal-tour-duration">Тривалість</span></div>
+                    <div><i class="fas fa-user-friends mr-2"></i> <span>2-4 особи</span></div>
+                    <div><i class="fas fa-star mr-2"></i> <span id="modal-tour-rating">0.0</span></div>
+                </div>
+
+                <div class="flex justify-between items-center pt-4 border-t mb-6">
+                    <span class="text-2xl font-bold text-[#48192E]" id="modal-tour-price">0 ₴</span>
+                    <button class="btn-solid" id="modal-book-btn">Забронювати</button>
+                </div>
             </div>
-            <div class="flex justify-between items-center pt-4 border-t">
-                <span class="text-2xl font-bold text-[#48192E]" id="modal-tour-price">0 ₴</span>
-                <button class="btn-solid">Забронювати</button>
+
+            <div class="bg-gray-50 p-6 border-t border-gray-200">
+                <h4 class="font-bold text-[#281822] mb-4">Відгуки та питання</h4>
+
+                <div id="tour-comments-list" class="space-y-4 mb-4 min-h-[100px]">
+                </div>
+
+                <form id="tour-comment-form" class="flex gap-2">
+                    <input type="text" id="tour-comment-input" class="flex-grow border p-2 rounded-md text-sm outline-none focus:border-[#48192E]" placeholder="Напишіть відгук...">
+                    <button type="submit" class="bg-[#2D4952] text-white px-4 py-2 rounded-md hover:bg-[#1a2e33]">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </div>
