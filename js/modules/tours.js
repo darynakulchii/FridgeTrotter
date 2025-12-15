@@ -154,38 +154,68 @@ async function loadTours() {
 function createTourCard(tour) {
     const image = tour.image_url || 'https://via.placeholder.com/400x300?text=No+Image';
 
+    // Формування дати
+    let dateText = `${tour.duration_days} днів`;
+    if (tour.available_dates && tour.available_dates.length > 0) {
+        const nextDate = new Date(tour.available_dates[0]).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+        dateText += ` • з ${nextDate}`;
+    }
+
     return `
-        <div class="tour-card tour-card-trigger cursor-pointer" onclick="openTourDetails(${tour.tour_id})">
-            <div class="tour-image-container">
-                <img src="${image}" alt="${tour.title}">
-                <span class="absolute top-4 right-4 bg-[#281822] text-[#D3CBC4] px-3 py-1 rounded-md text-xs font-bold uppercase">
-                    ${tour.category_name || 'Тур'}
-                </span>
+        <div class="universal-card cursor-pointer" onclick="openTourDetails(${tour.tour_id})">
+            <div class="card-header-user">
+                <div class="card-avatar" style="background-color: #281822;">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="card-user-info">
+                    <div class="card-user-name">${tour.agency_name || 'Агенція'}</div>
+                    <div class="card-user-sub">
+                        <span>Офіційний тур</span>
+                    </div>
+                </div>
             </div>
-            <div class="p-6 flex flex-col flex-grow">
-                <div class="flex justify-between items-start mb-1">
-                    <h3 class="text-xl font-bold text-[#281822]">${tour.title}</h3>
-                </div>
-                <p class="text-gray-500 mb-4 text-sm line-clamp-2">${tour.description || ''}</p>
 
-                <div class="space-y-2 mb-6">
-                    <div class="flex items-center gap-2 text-sm text-[#2D4952]">
-                        <i class="fas fa-map-marker-alt w-4 text-center"></i> <span>${tour.location}</span>
+            <div class="card-image-middle">
+                <img src="${image}" alt="${tour.title}">
+                <span class="card-badge">${tour.category_name || 'Тур'}</span>
+            </div>
+
+            <div class="card-body flex flex-col h-full">
+                <h3 class="card-title line-clamp-2 mb-3">${tour.title}</h3>
+                
+                <div class="space-y-2 mb-4 bg-gray-50 p-3 rounded-lg">
+                    <div class="flex items-center gap-3 text-sm text-gray-700">
+                        <i class="far fa-calendar-alt text-[#2D4952] w-5 text-center"></i>
+                        <span>${dateText}</span>
                     </div>
-                    <div class="flex items-center gap-2 text-sm text-[#2D4952]">
-                        <i class="far fa-calendar w-4 text-center"></i> <span>${tour.duration_days} днів</span>
+                    <div class="flex items-center gap-3 text-sm text-gray-700">
+                        <i class="fas fa-map-marker-alt text-[#2D4952] w-5 text-center"></i>
+                        <span class="line-clamp-1">${tour.location}</span>
                     </div>
-                    <div class="flex items-center gap-2 text-sm mt-1">
-                        <i class="fas fa-star text-[#48192E] w-4 text-center"></i>
-                        <span class="font-bold text-[#281822]">${tour.rating || '0.0'}</span>
-                        <span class="text-xs text-gray-500">• ${tour.agency_name || 'Агенція'}</span>
+                    <div class="flex items-center gap-3 text-sm text-gray-700">
+                        <i class="fas fa-star text-yellow-500 w-5 text-center"></i>
+                        <span class="font-bold">${tour.rating || 'New'}</span> 
+                        <span class="text-xs text-gray-400 font-normal">(Рейтинг туру)</span>
                     </div>
+                </div>
+            </div>
+
+            <div class="card-footer gap-2 px-4 py-3 border-t border-gray-100 flex items-center">
+                <div class="font-bold text-xl text-[#281822] whitespace-nowrap mr-auto">
+                    ${parseInt(tour.price_uah).toLocaleString()} ₴
                 </div>
 
-                <div class="mt-auto flex justify-between items-center border-t border-gray-100 pt-4">
-                    <span class="text-2xl font-bold text-[#48192E]">${tour.price_uah} ₴</span>
-                    <button class="btn-solid text-sm px-4">Деталі</button>
-                </div>
+                <button onclick="event.stopPropagation(); toggleSaveTour(${tour.tour_id}, this)" class="btn-icon-square" title="В обране">
+                    <i class="far fa-bookmark"></i>
+                </button>
+                
+                <button class="btn-outline px-4 text-sm h-10" onclick="event.stopPropagation(); openTourDetails(${tour.tour_id})">
+                    Деталі
+                </button>
+                
+                <button class="btn-fill px-4 text-sm h-10" onclick="event.stopPropagation(); openBookingModal({tour_id: ${tour.tour_id}, title: '${tour.title.replace(/'/g, "\\'")}'})">
+                    Забронювати
+                </button>
             </div>
         </div>
     `;

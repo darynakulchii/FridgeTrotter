@@ -71,54 +71,67 @@ async function loadPosts() {
         }
 
         posts.forEach(post => {
-            // Визначаємо головне фото (перше в масиві)
-            let mainImageHtml = '';
+            // Аватар
+            let avatarContent = post.author_avatar
+                ? `<img src="${post.author_avatar}" class="w-full h-full object-cover rounded-full">`
+                : `<div class="w-full h-full flex items-center justify-center font-bold text-white text-sm">${(post.first_name[0] + post.last_name[0]).toUpperCase()}</div>`;
+
+            // Фото (якщо є)
+            let imageSection = '';
             if (post.images && post.images.length > 0) {
-                // Використовуємо перше фото як обкладинку
-                mainImageHtml = `
-                    <div class="h-48 mb-4 rounded-lg overflow-hidden relative cursor-pointer" onclick="openPostDetails(${post.post_id})">
-                        <img src="${post.images[0]}" class="w-full h-full object-cover hover:scale-105 transition duration-500">
-                        ${post.images.length > 1 ? `<span class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded font-bold">+${post.images.length - 1}</span>` : ''}
+                imageSection = `
+                    <div class="card-image-middle h-48">
+                        <img src="${post.images[0]}" alt="${post.title}">
                     </div>
                 `;
+            } else {
+                imageSection = `<div class="h-2 bg-[#2D4952] w-full"></div>`;
             }
 
             const html = `
-                <div class="forum-card flex flex-col h-full">
-                    <div class="flex justify-between mb-3">
-                        <a href="other_user_profile.html?user_id=${post.author_id}" class="flex items-center gap-3 group text-decoration-none" onclick="event.stopPropagation()">
-                            <div class="avatar-circle bg-[#281822] overflow-hidden">
-                                ${post.author_avatar
-                ? `<img src="${post.author_avatar}" class="w-full h-full object-cover">`
-                : (post.first_name[0] + post.last_name[0])}
+                <div class="universal-card cursor-pointer" onclick="openPostDetails(${post.post_id})">
+                    <div class="card-header-user" onclick="event.stopPropagation(); window.location.href='other_user_profile.html?user_id=${post.author_id}'">
+                        <div class="card-avatar" style="background-color: #48192E;">
+                            ${avatarContent}
+                        </div>
+                        <div class="card-user-info">
+                            <div class="card-user-name hover:underline">${post.first_name} ${post.last_name}</div>
+                            <div class="card-user-sub">
+                                <span>${new Date(post.created_at).toLocaleDateString()}</span>
+                                <span>• ${post.category}</span>
                             </div>
-                            <div class="flex flex-col">
-                                <span class="font-bold text-[#281822] text-sm group-hover:underline">
-                                    ${post.first_name} ${post.last_name}
-                                </span>
-                                <span class="text-gray-400 text-xs">${new Date(post.created_at).toLocaleDateString()}</span>
-                            </div>
-                        </a>
-                        <span class="tag-pill h-fit">${post.category}</span>
+                        </div>
                     </div>
-                    
-                    ${mainImageHtml} <div class="flex-grow cursor-pointer" onclick="openPostDetails(${post.post_id})">
-                        <h3 class="font-bold text-lg mb-2 text-[#281822] hover:text-[#48192E] transition">${post.title}</h3>
-                        <p class="text-gray-600 text-sm mb-4 leading-relaxed line-clamp-3">${post.content}</p>
+
+                    ${imageSection}
+
+                    <div class="card-body">
+                        <h3 class="card-title line-clamp-2 hover:text-[#48192E] transition">${post.title}</h3>
+                        <p class="text-gray-600 text-sm line-clamp-3 mb-4">${post.content}</p>
                     </div>
-                    
-                    <div class="flex gap-6 border-t border-gray-100 pt-3 mt-auto items-center">
-                        <span class="action-icon hover:text-[#48192E]" onclick="toggleLike(${post.post_id}, event)">
-                            <i class="far fa-thumbs-up"></i> ${post.likes_count}
-                        </span>
-                        <span class="action-icon hover:text-[#2D4952]" onclick="openPostDetails(${post.post_id})">
-                            <i class="far fa-comment-alt"></i> ${post.comments_count || 0}
-                        </span>
-                        <span class="action-icon hover:text-[#48192E]" onclick="toggleSavePost(${post.post_id}, event)">
+
+                    <div class="card-footer gap-2 px-4 py-3 border-t border-gray-100 flex items-center">
+                        
+                        <button onclick="toggleLike(${post.post_id}, event)" class="btn-icon-square px-3 w-auto flex items-center gap-2 text-sm" title="Подобається">
+                            <i class="far fa-thumbs-up"></i> <span>${post.likes_count}</span>
+                        </button>
+
+                        <button onclick="openPostDetails(${post.post_id})" class="btn-icon-square px-3 w-auto flex items-center gap-2 text-sm" title="Коментарі">
+                            <i class="far fa-comment-alt"></i> <span>${post.comments_count || 0}</span>
+                        </button>
+
+                        <button onclick="toggleSavePost(${post.post_id}, event)" class="btn-icon-square" title="Зберегти">
                             <i class="far fa-bookmark" id="post-bookmark-${post.post_id}"></i>
-                        </span>
-                        <button onclick="contactAuthor(${post.author_id}, event)" class="ml-auto text-xs text-[#2D4952] font-bold hover:underline flex items-center gap-1">
-                            <i class="far fa-envelope"></i> Написати
+                        </button>
+                        
+                        <div class="flex-grow"></div>
+
+                        <button class="btn-outline px-4 text-sm h-10" onclick="event.stopPropagation(); openPostDetails(${post.post_id})">
+                            Деталі
+                        </button>
+                        
+                        <button class="btn-fill px-4 text-sm h-10" onclick="event.stopPropagation(); contactAuthor(${post.author_id}, event)">
+                            Написати
                         </button>
                     </div>
                 </div>
