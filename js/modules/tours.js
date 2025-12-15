@@ -307,7 +307,6 @@ async function checkIfSaved(id, btn) {
     } catch (e) { console.error(e); }
 }
 
-// Тогл збереження
 async function toggleSaveTour(id, btn) {
     if (!localStorage.getItem('token')) {
         alert('Увійдіть, щоб зберігати тури.');
@@ -323,12 +322,16 @@ async function toggleSaveTour(id, btn) {
             headers: getHeaders()
         });
 
+        const data = await res.json();
+
         if (res.ok) {
             updateSaveBtnUI(btn, !isSaved);
+        } else {
+            alert(data.error || 'Помилка збереження');
         }
     } catch (e) {
         console.error(e);
-        alert('Помилка збереження');
+        alert('Помилка з\'єднання');
     }
 }
 
@@ -443,7 +446,6 @@ function openBookingModal(tour) {
 
 document.getElementById('booking-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    // (Логіка бронювання залишається такою ж, як і була)
     const tourId = document.getElementById('booking-tour-id').value;
     const phone = document.getElementById('booking-phone').value;
     const participants = document.getElementById('booking-participants').value;
@@ -457,12 +459,14 @@ document.getElementById('booking-form')?.addEventListener('submit', async (e) =>
             headers: getHeaders(),
             body: JSON.stringify({ phone, date, participants })
         });
+
         const data = await res.json();
+
         if(res.ok) {
             alert(data.message);
             document.getElementById('tour-booking-modal').classList.remove('active');
         } else {
-            alert(data.error);
+            alert(data.error || 'Помилка бронювання');
         }
     } catch(e) { console.error(e); }
 });

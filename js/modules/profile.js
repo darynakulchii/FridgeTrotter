@@ -865,10 +865,15 @@ function initContentTabs() {
     window.removeSavedTour = async (id) => {
         if(!confirm('Видалити зі збережених?')) return;
         try {
-            await fetch(`${API_URL}/tours/save`, {
-                method: 'POST', headers: getHeaders(), body: JSON.stringify({ tourId: id })
+            const response = await fetch(`${API_URL}/tours/${id}/save`, {
+                method: 'DELETE',
+                headers: getHeaders()
             });
-            loadSavedTours();
+            if (response.ok) {
+                loadSavedTours();
+            } else {
+                alert('Помилка видалення');
+            }
         } catch(e) { console.error(e); }
     };
 

@@ -252,6 +252,10 @@ router.post('/:id/book', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const { phone, date, participants } = req.body;
 
+    if (req.user.isAgent) {
+        return res.status(403).json({ error: 'Турагенти не можуть бронювати тури.' });
+    }
+
     if (!phone || !participants) return res.status(400).json({ error: 'Заповніть обовʼязкові поля' });
 
     try {
@@ -380,6 +384,10 @@ router.post('/', authenticateToken, upload.single('image'), async (req, res) => 
 router.post('/:id/save', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
     const tourId = req.params.id;
+
+    if (req.user.isAgent) {
+        return res.status(403).json({ error: 'Турагенти не можуть додавати тури в обране.' });
+    }
 
     try {
         await pool.query(
