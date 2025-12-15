@@ -350,4 +350,121 @@ router.post('/bookings/:id/confirm', authenticateToken, async (req, res) => {
     }
 });
 
+// =================================================================
+// 5. ПУБЛІЧНИЙ ПРОФІЛЬ АГЕНЦІЇ (GET /:id)
+// =================================================================
+router.get('/:id', async (req, res) => {
+    const agencyId = req.params.id;
+
+    const client = await pool.connect();
+    try {
+        // 1. Інфо про агенцію
+        const agencyQuery = `
+            SELECT a.*, up.profile_image_url as logo_url, up.location
+            FROM agencies a
+            JOIN user_profiles up ON a.owner_id = up.user_id
+            WHERE a.agency_id = $1;
+        `;
+        const agencyRes = await client.query(agencyQuery, [agencyId]);
+
+        if (agencyRes.rows.length === 0) {
+            return res.status(404).json({ error: 'Агенцію не знайдено.' });
+        }
+
+        // 2. Тури агенції
+        const toursQuery = `
+            SELECT t.*, tc.name_ukr as category_name 
+            FROM tours t
+            LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
+            WHERE t.agency_id = $1
+            ORDER BY t.tour_id DESC;
+        `;
+        const toursRes = await client.query(toursQuery, [agencyId]);
+
+        // 3. Відгуки
+        const reviewsQuery = `
+            SELECT ar.*, up.first_name, up.last_name, up.profile_image_url
+            FROM agency_reviews ar
+            JOIN user_profiles up ON ar.user_id = up.user_id
+            WHERE ar.agency_id = $1
+            ORDER BY ar.created_at DESC;
+        `;
+        const reviewsRes = await client.query(reviewsQuery, [agencyId]);
+
+        res.json({
+            agency: agencyRes.rows[0],
+            tours: toursRes.rows,
+            reviews: reviewsRes.rows
+        });
+
+    } catch (error) {
+        console.error('Get Public Agency Error:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    } finally {
+        client.release();
+    }
+});
+
+// =================================================================
+// 6. ДОДАТИ ВІДГУК (POST /:id/reviews)
+// =================================================================
+router.post('/:id/reviews', authenticateToken, async (req, res) => {
+    const agencyId = req.params.id;
+    const userId = req.user.userId;
+    const { rating, comment } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: 'Рейтинг має бути від 1 до 5.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Перевірка: не можна оцінювати власну агенцію
+        const checkOwner = await client.query('SELECT owner_id FROM agencies WHERE agency_id = $1', [agencyId]);
+        if (checkOwner.rows.length > 0 && checkOwner.rows[0].owner_id === userId) {
+            await client.query('ROLLBACK');
+            return res.status(403).json({ error: 'Не можна оцінювати власну агенцію.' });
+        }
+
+        // 2. Додаємо новий відгук (без перевірки на існуючі)
+        const insertQuery = `
+            INSERT INTO agency_reviews (agency_id, user_id, rating, comment)
+            VALUES ($1, $2, $3, $4)
+            RETURNING review_id;
+        `;
+        await client.query(insertQuery, [agencyId, userId, rating, comment]);
+
+        // 3. Перерахунок рейтингу (враховуючи всі відгуки)
+        const statsQuery = `
+            SELECT COUNT(*) as count, AVG(rating) as avg
+            FROM agency_reviews
+            WHERE agency_id = $1;
+        `;
+        const statsRes = await client.query(statsQuery, [agencyId]);
+
+        const newCount = statsRes.rows[0].count;
+        // Округлюємо до 1 знаку після коми
+        const newAvg = statsRes.rows[0].avg ? parseFloat(statsRes.rows[0].avg).toFixed(1) : 0.0;
+
+        // 4. Оновлення таблиці agencies
+        await client.query(`
+            UPDATE agencies 
+            SET avg_rating = $1, review_count = $2 
+            WHERE agency_id = $3
+        `, [newAvg, newCount, agencyId]);
+
+        await client.query('COMMIT');
+        res.json({ message: 'Відгук додано!', newRating: newAvg, newCount: newCount });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Post Review Error:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    } finally {
+        client.release();
+    }
+});
+
 module.exports = { router };

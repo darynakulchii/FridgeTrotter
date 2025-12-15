@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Профіль Агенції</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../css/main_page.css">
+    <link rel="stylesheet" href="../css/agency_page.css">
+    <style>
+        body { background-color: #D3CBC4; min-height: 100vh; }
+        .agency-header-card { background-color: white; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+        /* Стилі для табів */
+        .nav-pills { display: flex; gap: 1rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        .nav-pill { padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 600; color: #555; transition: 0.2s; cursor: pointer; background: transparent; border: none; }
+        .nav-pill:hover { background-color: #f3f4f6; }
+        .nav-pill.active { background-color: #48192E; color: white; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Зірки рейтингу */
+        .rating-stars { display: flex; gap: 5px; flex-direction: row-reverse; justify-content: flex-end; }
+        .rating-stars input { display: none; }
+        .rating-stars label { cursor: pointer; font-size: 2rem; color: #ddd; transition: color 0.2s; }
+        .rating-stars label:hover, .rating-stars label:hover ~ label, .rating-stars input:checked ~ label { color: #f59e0b; }
+    </style>
+</head>
+<body>
+
+<script type="module" src="../js/modules/navigation.js"></script>
+
+<main class="container-wide">
+    <button onclick="history.back()" class="mb-4 text-[#281822] hover:underline font-medium flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i> Назад
+    </button>
+
+    <div class="agency-header-card flex flex-col md:flex-row gap-8 items-start">
+        <div class="w-32 h-32 shrink-0 bg-gray-100 rounded-xl overflow-hidden border border-gray-200 flex items-center justify-center">
+            <img id="agency-logo" src="" alt="Logo" class="w-full h-full object-cover hidden">
+            <i id="agency-logo-placeholder" class="fas fa-briefcase text-4xl text-gray-300"></i>
+        </div>
+
+        <div class="flex-grow w-full">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 id="agency-name" class="text-3xl font-bold text-[#281822] mb-1">Завантаження...</h1>
+                    <div class="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                        <span class="flex items-center gap-1 text-[#f59e0b] font-bold text-lg">
+                            <i class="fas fa-star"></i> <span id="agency-rating">0.0</span>
+                        </span>
+                        <span id="agency-reviews-count">(0 відгуків)</span>
+                        <span id="agency-location" class="hidden md:inline-block"><i class="fas fa-map-marker-alt ml-2"></i> ...</span>
+                    </div>
+                </div>
+                <button id="write-msg-btn" class="bg-[#2D4952] text-white px-6 py-2 rounded-lg hover:bg-[#1a2e33] transition hidden">
+                    <i class="far fa-comments mr-2"></i> Написати
+                </button>
+            </div>
+
+            <p id="agency-desc" class="text-gray-700 leading-relaxed mb-4 max-w-3xl"></p>
+
+            <div class="flex flex-wrap gap-6 text-sm text-[#48192E] font-medium border-t border-gray-100 pt-4">
+                <a id="agency-phone" href="#" class="hover:underline flex items-center gap-2"><i class="fas fa-phone"></i> <span>-</span></a>
+                <a id="agency-email" href="#" class="hover:underline flex items-center gap-2"><i class="far fa-envelope"></i> <span>-</span></a>
+                <a id="agency-website" href="#" target="_blank" class="hover:underline flex items-center gap-2"><i class="fas fa-globe"></i> <span>-</span></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-pills">
+        <button class="nav-pill active" onclick="switchTab('tours')">Тури</button>
+        <button class="nav-pill" onclick="switchTab('reviews')">Відгуки</button>
+    </div>
+
+    <div id="tab-tours" class="tab-content active">
+        <div id="tours-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        </div>
+    </div>
+
+    <div id="tab-reviews" class="tab-content max-w-3xl">
+
+        <div id="review-form-container" class="bg-white p-6 rounded-xl shadow-sm mb-8 border border-gray-100">
+            <h3 class="text-lg font-bold text-[#281822] mb-4">Оцінити агенцію</h3>
+            <form id="review-form">
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Ваша оцінка:</label>
+                    <div class="rating-stars">
+                        <input type="radio" name="rating" id="star5" value="5"><label for="star5" title="Чудово">★</label>
+                        <input type="radio" name="rating" id="star4" value="4"><label for="star4" title="Добре">★</label>
+                        <input type="radio" name="rating" id="star3" value="3"><label for="star3" title="Нормально">★</label>
+                        <input type="radio" name="rating" id="star2" value="2"><label for="star2" title="Погано">★</label>
+                        <input type="radio" name="rating" id="star1" value="1"><label for="star1" title="Жахливо">★</label>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Ваш відгук:</label>
+                    <textarea id="review-text" rows="3" class="w-full border p-3 rounded-lg outline-none focus:border-[#48192E]" placeholder="Поділіться враженнями про роботу агенції..."></textarea>
+                </div>
+                <button type="submit" class="bg-[#48192E] text-white px-6 py-2 rounded-lg hover:bg-[#281822] transition">Опублікувати відгук</button>
+            </form>
+        </div>
+
+        <div id="reviews-list" class="space-y-4">
+        </div>
+    </div>
+
+</main>
+
+<script type="module" src="../js/index.js"></script>
+<script type="module" src="../js/modules/other_agency_profile.js"></script>
+
+</body>
+</html>

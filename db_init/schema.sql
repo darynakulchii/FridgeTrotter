@@ -356,3 +356,12 @@ CREATE TABLE IF NOT EXISTS user_saved_companion_ads (
                                                         saved_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
                                                         PRIMARY KEY (user_id, ad_id)
 );
+
+CREATE TABLE IF NOT EXISTS agency_reviews (
+                                              review_id SERIAL PRIMARY KEY,
+                                              agency_id INT NOT NULL REFERENCES agencies(agency_id) ON DELETE CASCADE,
+                                              user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                                              rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
+                                              comment TEXT,
+                                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
