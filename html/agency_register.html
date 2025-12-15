@@ -76,6 +76,15 @@
             </label>
         </div>
 
+        <div class="flex items-start gap-2 pt-2">
+            <input type="checkbox" id="rules-agreement" name="rules-agreement" required class="mt-1 accent-[#48192E] w-4 h-4 cursor-pointer">
+            <label for="rules-agreement" class="text-xs text-gray-600 cursor-pointer select-none">
+                Я погоджуюсь з
+                <a href="#" id="open-rules-modal-agency-link" class="text-[#48192E] font-bold underline hover:text-[#281822]">Правилами платформи</a>
+                (сайт не несе відповідальності за тури).
+            </label>
+        </div>
+
         <button type="submit" class="btn-solid w-full bg-[#281822] text-white py-2 rounded-md font-bold hover:bg-[#48192E] transition">
             Зареєструвати агенцію
         </button>
@@ -96,10 +105,31 @@
 <script type="module">
     import { API_URL } from '../js/api-config.js';
 
+    const rulesModal = document.getElementById('rules-modal');
+    const rulesLink = document.getElementById('open-rules-modal-agency-link');
+    const closeBtns = document.querySelectorAll('.rules-close-btn');
+
+    if(rulesLink && rulesModal) {
+        rulesLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            rulesModal.classList.add('active');
+        });
+
+        closeBtns.forEach(btn => btn.addEventListener('click', () => {
+            rulesModal.classList.remove('active');
+            document.getElementById('rules-agreement').checked = true;
+        }));
+    }
+
     const form = document.getElementById('agency-register-form');
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        if(!document.getElementById('rules-agreement').checked) {
+            alert("Будь ласка, погодьтесь з Правилами платформи.");
+            return;
+        }
 
         const submitBtn = form.querySelector('button[type="submit"]');
         submitBtn.disabled = true;

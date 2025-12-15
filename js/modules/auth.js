@@ -40,6 +40,31 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // === ЛОГІКА ДЛЯ ПРАВИЛ (Rules) ===
+    const rulesLink = document.getElementById('open-rules-modal-link');
+    const rulesModal = document.getElementById('rules-modal');
+    const closeRulesBtns = document.querySelectorAll('.rules-close-btn');
+
+    if (rulesLink && rulesModal) {
+        rulesLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            rulesModal.classList.add('active');
+        });
+
+        closeRulesBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                rulesModal.classList.remove('active');
+                // Автоматично ставимо галочку при закритті кнопкою "Зрозуміло" (опціонально)
+                const checkbox = document.getElementById('reg-rules-consent');
+                if (checkbox) checkbox.checked = true;
+            });
+        });
+
+        window.addEventListener('click', (e) => {
+            if (e.target === rulesModal) rulesModal.classList.remove('active');
+        });
+    }
+
     // --- 1. ОБРОБКА ФОРМИ ВХОДУ (login.html) ---
     const loginForm = document.getElementById('login-form');
 
@@ -105,6 +130,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (consentCheckbox && !consentCheckbox.checked) {
                 alert('Будь ласка, підтвердіть згоду на обробку персональних даних.');
                 return; // Зупиняємо відправку форми
+            }
+
+            if (rulesCheckbox && !rulesCheckbox.checked) {
+                alert('Будь ласка, погодьтесь з Правилами використання сайту.');
+                return;
             }
 
             // Збираємо дані (використовуємо IDs з register.html)

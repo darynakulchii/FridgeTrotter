@@ -97,7 +97,8 @@ function initializeNavigationEvents() {
         { btnId: 'agent-mode-btn', modalId: 'agent-mode-modal' },
         { btnId: 'bug-report-btn', modalId: 'bug-report-modal' },
         { btnId: 'privacy-policy-btn', modalId: 'privacy-modal' },
-        { btnId: 'notifications-btn', modalId: 'notifications-modal' }
+        { btnId: 'notifications-btn', modalId: 'notifications-modal' },
+        { btnId: 'rules-btn', modalId: 'rules-modal' }
     ];
 
     modalButtons.forEach(({ btnId, modalId }) => {
@@ -125,6 +126,12 @@ function initializeNavigationEvents() {
         });
     });
 
+    document.querySelectorAll('.rules-close-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = document.getElementById('rules-modal');
+            if (modal) modal.classList.remove('active');
+        });
+    });
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal-backdrop')) {
             e.target.classList.remove('active');
