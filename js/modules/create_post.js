@@ -1,50 +1,53 @@
 /* js/modules/create_post.js */
 import { API_URL } from '../api-config.js';
 
+// Локальний стан для зберігання вибраних файлів
 let selectedFiles = [];
 const MAX_PHOTOS = 8;
 
 export function initPostForm(onSuccessCallback) {
     const form = document.getElementById('create-post-form');
-    // Отримуємо елементи. Використовуємо let, бо будемо замінювати input
-    let imageInput = document.getElementById('new-post-images');
-    const previewContainer = document.getElementById('image-preview-container');
+    // Знаходимо елементи за новими ID, які ми додали в HTML
+    let photoInput = document.getElementById('postPhotosInput');
+    const previewContainer = document.getElementById('postPhotoPreviewContainer');
 
-    if (!form || !imageInput || !previewContainer) return;
+    if (!form || !photoInput || !previewContainer) return;
 
-    // 1. Скидаємо масив файлів при ініціалізації (важливо для модалок)
+    // Скидання стану при відкритті модалки (якщо передано колбек)
     if (onSuccessCallback) {
         selectedFiles = [];
+        photoInput.value = '';
     }
 
-    // 2. Клонуємо інпут, щоб позбутися старих слухачів подій (важливо при повторному відкритті)
-    const newInput = imageInput.cloneNode(true);
-    // Очищаємо value, щоб подія change спрацьовувала навіть на той самий файл
-    newInput.value = '';
-    imageInput.parentNode.replaceChild(newInput, imageInput);
-    imageInput = newInput;
-
-    // 3. Функція оновлення відображення
+    // === Функція оновлення відображення сітки фото ===
     const updatePhotoDisplay = () => {
-        previewContainer.innerHTML = '';
+        previewContainer.innerHTML = ''; // Очищаємо контейнер
 
-        // Спочатку малюємо вибрані фото
+        // 1. Відображаємо вже вибрані фото
         selectedFiles.forEach((file, index) => {
             const div = document.createElement('div');
             div.className = 'photo-upload-placeholder preview';
 
-            // Кнопка видалення
+            // Кнопка видалення фото
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'photo-delete-btn';
-            deleteBtn.type = 'button'; // Важливо, щоб не сабмітило форму
             deleteBtn.innerHTML = '<i class="fas fa-times"></i>';
+            deleteBtn.type = 'button';
             deleteBtn.onclick = (e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // Зупиняємо спливання події
                 removeFile(index);
             };
             div.appendChild(deleteBtn);
 
-            // Прев'ю картинки
+            // Позначка "Головне" для першого фото в списку
+            if (index === 0) {
+                const mainLabel = document.createElement('span');
+                mainLabel.className = 'photo-main-label';
+                mainLabel.textContent = 'Головне';
+                div.appendChild(mainLabel);
+            }
+
+            // Використовуємо FileReader для створення прев'ю
             const reader = new FileReader();
             reader.onload = (e) => {
                 div.style.backgroundImage = `url('${e.target.result}')`;
@@ -54,32 +57,49 @@ export function initPostForm(onSuccessCallback) {
             previewContainer.appendChild(div);
         });
 
-        // Потім додаємо кнопку "+ Додати", якщо є місце
+        // 2. Додаємо кнопку "+ Додати фото", якщо не досягнуто ліміту
         if (selectedFiles.length < MAX_PHOTOS) {
             const addBtn = document.createElement('div');
             addBtn.className = 'photo-upload-placeholder add-photo-btn';
             addBtn.innerHTML = '<i class="fas fa-plus"></i> Додати фото';
 
-            // При кліку на div програмно клікаємо на input
-            addBtn.onclick = () => imageInput.click();
+            // Важливо: завжди шукаємо актуальний input за ID
+            addBtn.onclick = () => {
+                const activeInput = document.getElementById('postPhotosInput');
+                if (activeInput) activeInput.click();
+            };
 
             previewContainer.appendChild(addBtn);
         }
 
-        // Додаємо пусті квадратики для краси (опціонально, щоб заповнити сітку)
-        const totalSlots = selectedFiles.length < MAX_PHOTOS ? selectedFiles.length + 1 : selectedFiles.length;
-        // Заповнюємо до 5 або 8 слотів візуально, якщо хочете фіксовану сітку,
-        // але тут залишимо динамічну, просто додаємо кнопку.
+        // 3. Додаємо пусті плейсхолдери для збереження структури сітки (мінімум 4 елементи)
+        const filledSlots = selectedFiles.length + (selectedFiles.length < MAX_PHOTOS ? 1 : 0);
+        for (let i = filledSlots; i < 4; i++) {
+            const emptyDiv = document.createElement('div');
+            emptyDiv.className = 'photo-upload-placeholder';
+            previewContainer.appendChild(emptyDiv);
+        }
     };
 
+    // === Функція видалення файлу з масиву ===
     const removeFile = (index) => {
-        selectedFiles.splice(index, 1);
-        imageInput.value = ''; // Скидаємо інпут, щоб можна було вибрати той самий файл знову
-        updatePhotoDisplay();
+        selectedFiles.splice(index, 1); // Видаляємо файл за індексом
+
+        // Очищаємо значення інпуту, щоб можна було вибрати той самий файл повторно
+        const activeInput = document.getElementById('postPhotosInput');
+        if (activeInput) activeInput.value = '';
+
+        updatePhotoDisplay(); // Оновлюємо вигляд
     };
 
-    // 4. Слухач вибору файлів
-    imageInput.addEventListener('change', (e) => {
+    // === Обробка вибору файлів ===
+    // Клонуємо інпут, щоб позбутися старих слухачів подій при повторній ініціалізації
+    const newInput = photoInput.cloneNode(true);
+    newInput.value = '';
+    photoInput.parentNode.replaceChild(newInput, photoInput);
+    photoInput = newInput; // Оновлюємо посилання
+
+    photoInput.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
 
@@ -88,15 +108,16 @@ export function initPostForm(onSuccessCallback) {
             alert(`Можна додати ще максимум ${availableSlots} фото.`);
         }
 
+        // Додаємо лише ту кількість файлів, яка вміщується в ліміт
         const filesToAdd = files.slice(0, availableSlots);
         selectedFiles = [...selectedFiles, ...filesToAdd];
 
-        imageInput.value = ''; // Очищаємо, щоб можна було додати ще файли
+        photoInput.value = ''; // Очищаємо інпут після вибору
         updatePhotoDisplay();
     });
 
-    // 5. Обробка відправки форми
-    // Клонуємо форму, щоб прибрати старі слухачі submit
+    // === Обробка відправки форми ===
+    // Клонуємо форму для очищення старих слухачів submit
     const newForm = form.cloneNode(true);
     form.parentNode.replaceChild(newForm, form);
 
@@ -112,12 +133,14 @@ export function initPostForm(onSuccessCallback) {
         formData.append('category', document.getElementById('new-post-category').value);
         formData.append('content', document.getElementById('new-post-content').value);
 
+        // ВАЖЛИВО: Додаємо всі файли з нашого локального масиву selectedFiles
         selectedFiles.forEach(file => {
             formData.append('images', file);
         });
 
         try {
             const token = localStorage.getItem('token');
+            // Припускаємо, що бекенд вже налаштований на прийом декількох файлів у полі 'images'
             const response = await fetch(`${API_URL}/forum/posts`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
@@ -126,7 +149,7 @@ export function initPostForm(onSuccessCallback) {
 
             if (response.ok) {
                 newForm.reset();
-                selectedFiles = [];
+                selectedFiles = []; // Очищаємо масив після успішної відправки
                 updatePhotoDisplay();
 
                 if (onSuccessCallback) {
@@ -147,16 +170,15 @@ export function initPostForm(onSuccessCallback) {
         }
     });
 
-    // Перший рендер (порожня сітка з кнопкою)
+    // Перший виклик для відображення початкового стану (пуста сітка з кнопкою "Додати")
     updatePhotoDisplay();
 }
 
-// === АВТОЗАПУСК ДЛЯ ОКРЕМОЇ СТОРІНКИ ===
+// Автоініціалізація, якщо скрипт підключено на сторінці, де форма є не в модалці (на майбутнє)
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('create-post-form');
     const modal = document.getElementById('create-post-modal');
-
-    // Якщо ми на сторінці create_post.html (є форма, немає модалки)
+    // Якщо форма є, але немає модалки (значить це окрема сторінка створення), ініціалізуємо одразу
     if (form && !modal) {
         initPostForm();
     }

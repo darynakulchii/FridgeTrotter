@@ -383,4 +383,57 @@ router.post('/posts/:id/like', authenticateToken, async (req, res) => {
     }
 });
 
+/**
+ * GET /api/forum/posts/:id/comments
+ * Отримання коментарів до поста
+ */
+router.get('/posts/:id/comments', async (req, res) => {
+    const postId = req.params.id;
+    const query = `
+        SELECT 
+            c.comment_id, c.content, c.created_at,
+            c.user_id, up.first_name, up.last_name, up.profile_image_url AS author_avatar
+        FROM comments c
+        JOIN user_profiles up ON c.user_id = up.user_id
+        WHERE c.post_id = $1
+        ORDER BY c.created_at ASC;
+    `;
+    try {
+        const result = await pool.query(query, [postId]);
+        res.json({ comments: result.rows });
+    } catch (error) {
+        console.error('Помилка отримання коментарів:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+/**
+ * POST /api/forum/posts/:id/comments
+ * Додавання коментаря
+ */
+router.post('/posts/:id/comments', authenticateToken, async (req, res) => {
+    const postId = req.params.id;
+    const userId = req.user.userId;
+    const { content } = req.body;
+
+    if (!content) return res.status(400).json({ error: 'Коментар не може бути порожнім.' });
+
+    try {
+        const query = `
+            INSERT INTO comments (post_id, user_id, content)
+            VALUES ($1, $2, $3)
+            RETURNING comment_id, created_at;
+        `;
+        const result = await pool.query(query, [postId, userId, content]);
+
+        res.status(201).json({
+            message: 'Коментар додано.',
+            comment: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Помилка додавання коментаря:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
 module.exports = { router };
