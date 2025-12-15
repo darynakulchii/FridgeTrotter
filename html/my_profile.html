@@ -246,8 +246,9 @@
             <button class="nav-pill" data-tab="fridge-settings">Налаштування холодильника</button>
             <button class="nav-pill" data-tab="info">Моя інформація</button>
             <button class="nav-pill" data-tab="my-posts">Мої пости</button>
-            <button class="nav-pill" data-tab="saved-tours">Вибрані тури</button>
-            <button class="nav-pill" data-tab="saved-posts">Вибрані пости</button>
+            <button class="nav-pill" data-tab="saved-tours">Збережені тури</button>
+            <button class="nav-pill" data-tab="saved-posts">Збережені пости</button>
+            <button class="nav-pill" data-tab="saved-companions">Збережені компанії для подорожі</button>
             <button class="nav-pill" data-tab="settings">Налаштування</button>
         </div>
     </div>
@@ -467,18 +468,30 @@
     <div id="tab-saved-tours" class="tab-content">
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h2 class="text-2xl text-[#281822] font-normal">Вибрані тури</h2>
+                <h2 class="text-2xl text-[#281822] font-normal">Збережені тури</h2>
             </div>
             <button class="bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Очистити всі</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         </div>
     </div>
 
     <div id="tab-saved-posts" class="tab-content">
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h2 class="text-2xl text-[#281822] font-normal">Вибрані пости</h2>
+                <h2 class="text-2xl text-[#281822] font-normal">Збережені пости</h2>
             </div>
             <button class="bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Очистити всі</button>
+        </div>
+    </div>
+
+    <div id="tab-saved-companions" class="tab-content">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl text-[#281822] font-normal">Збережені компанії для подорожі</h2>
+            <button class="bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50" onclick="clearSavedCompanions()">Очистити всі</button>
+        </div>
+        <div id="saved-companions-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         </div>
     </div>
 

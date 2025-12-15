@@ -114,6 +114,9 @@ async function loadPosts() {
                         <span class="action-icon hover:text-[#2D4952]" onclick="openPostDetails(${post.post_id})">
                             <i class="far fa-comment-alt"></i> ${post.comments_count || 0}
                         </span>
+                        <span class="action-icon hover:text-[#48192E]" onclick="toggleSavePost(${post.post_id}, event)">
+                            <i class="far fa-bookmark" id="post-bookmark-${post.post_id}"></i>
+                        </span>
                         <button onclick="contactAuthor(${post.author_id}, event)" class="ml-auto text-xs text-[#2D4952] font-bold hover:underline flex items-center gap-1">
                             <i class="far fa-envelope"></i> Написати
                         </button>
@@ -296,4 +299,24 @@ window.contactAuthor = (userId, event) => {
         return;
     }
     window.location.href = `chat.html?user_id=${userId}`;
+};
+
+window.toggleSavePost = async (postId, event) => {
+    if(event) event.stopPropagation();
+    const token = localStorage.getItem('token');
+    if(!token) return alert('Увійдіть, щоб зберігати пости');
+
+    const icon = document.getElementById(`post-bookmark-${postId}`);
+    const isSaved = icon.classList.contains('fas'); // fas = filled (saved)
+    const method = isSaved ? 'DELETE' : 'POST';
+    // Для DELETE використовуємо старий маршрут /saved/:id, для POST новий
+    const url = isSaved ? `${API_URL}/forum/saved/${postId}` : `${API_URL}/forum/posts/${postId}/save`;
+
+    try {
+        const res = await fetch(url, { method: method, headers: getHeaders() });
+        if(res.ok) {
+            icon.classList.toggle('fas');
+            icon.classList.toggle('far');
+        }
+    } catch(e) { console.error(e); }
 };

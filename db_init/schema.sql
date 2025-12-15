@@ -349,3 +349,10 @@ CREATE TABLE IF NOT EXISTS tour_comments (
                                              content TEXT NOT NULL,
                                              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS user_saved_companion_ads (
+                                                        user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+                                                        ad_id INT REFERENCES companion_ads(ad_id) ON DELETE CASCADE,
+                                                        saved_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                                                        PRIMARY KEY (user_id, ad_id)
+);

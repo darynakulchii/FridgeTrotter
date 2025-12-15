@@ -147,6 +147,9 @@ async function loadCompanions() {
                     </div>
                     
                     <div class="flex gap-3">
+                        <button onclick="toggleSaveAd(${ad.ad_id}, event)" class="w-10 h-10 flex items-center justify-center border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-500">
+                            <i class="far fa-bookmark" id="ad-bookmark-${ad.ad_id}"></i>
+                        </button>
                         <button onclick="openAdDetails(${ad.ad_id})" class="flex-1 border border-[#2D4952] text-[#2D4952] py-2 rounded-lg font-medium hover:bg-gray-50 transition">
                             Деталі
                         </button>
@@ -254,3 +257,22 @@ function debounce(func, timeout = 300){
         timer = setTimeout(() => { func.apply(this, args); }, timeout);
     };
 }
+
+window.toggleSaveAd = async (adId, event) => {
+    if(event) event.stopPropagation();
+    const token = localStorage.getItem('token');
+    if(!token) return alert('Увійдіть, щоб зберігати оголошення');
+
+    const icon = document.getElementById(`ad-bookmark-${adId}`);
+    const isSaved = icon.classList.contains('fas');
+    const method = isSaved ? 'DELETE' : 'POST';
+
+    try {
+        const res = await fetch(`${API_URL}/companion/ads/${adId}/save`, { method: method, headers: getHeaders() });
+        if(res.ok) {
+            icon.classList.toggle('fas');
+            icon.classList.toggle('far');
+            icon.parentElement.classList.toggle('text-[#48192E]'); // Змінити колір кнопки
+        }
+    } catch(e) { console.error(e); }
+};
