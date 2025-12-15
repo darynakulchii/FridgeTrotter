@@ -232,7 +232,7 @@
         // Збір даних з форми
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
-        data.agreement = document.getElementById('agreement').checked;
+        data.agreement = document.getElementById('reg-consent').checked;
 
         // Додаємо тип організації до даних (хоча він і так є в formData, переконаємось)
         data.org_type = document.getElementById('org-type').value;
