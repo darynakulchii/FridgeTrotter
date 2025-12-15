@@ -246,8 +246,9 @@
             <button class="nav-pill" data-tab="fridge-settings">Налаштування холодильника</button>
             <button class="nav-pill" data-tab="info">Моя інформація</button>
             <button class="nav-pill" data-tab="my-posts">Мої пости</button>
-            <button class="nav-pill" data-tab="saved-tours">Вибрані тури</button>
-            <button class="nav-pill" data-tab="saved-posts">Вибрані пости</button>
+            <button class="nav-pill" data-tab="saved-tours">Збережені тури</button>
+            <button class="nav-pill" data-tab="saved-posts">Збережені пости</button>
+            <button class="nav-pill" data-tab="saved-companions">Збережені компанії для подорожі</button>
             <button class="nav-pill" data-tab="settings">Налаштування</button>
         </div>
     </div>
@@ -467,99 +468,30 @@
     <div id="tab-saved-tours" class="tab-content">
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h2 class="text-2xl text-[#281822] font-normal">Вибрані тури</h2>
-                <p class="text-gray-500 text-sm mt-1">4 тури збережено</p>
+                <h2 class="text-2xl text-[#281822] font-normal">Збережені тури</h2>
             </div>
             <button class="bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Очистити всі</button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="tour-card-saved shadow-md flex flex-col h-full overflow-hidden p-0">
-                <div class="relative h-48">
-                    <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=800" alt="Japan" class="w-full h-full object-cover m-0 rounded-none">
-                    <span class="absolute top-3 right-3 bg-[#48192E] text-white text-xs px-2 py-1 rounded font-medium">Культурний</span>
-                    <button class="absolute top-3 left-3 bg-white w-8 h-8 flex items-center justify-center rounded-md shadow text-[#48192E]"><i class="fas fa-bookmark"></i></button>
-                </div>
-                <div class="p-5 flex flex-col flex-grow">
-                    <h3 class="text-lg font-bold text-[#281822] mb-1">Тур по Японії</h3>
-                    <p class="text-sm text-gray-500 mb-4">Відкрийте для себе землю висхідного сонця</p>
-                    <div class="space-y-2 text-sm text-[#2D4952] mb-4">
-                        <div class="flex items-center gap-2"><i class="fas fa-map-marker-alt w-4 text-center"></i> Токіо, Кіото, Осака</div>
-                        <div class="flex items-center gap-2"><i class="far fa-calendar w-4 text-center"></i> 14 днів</div>
-                        <div class="flex items-center gap-2"><i class="fas fa-user-friends w-4 text-center"></i> 10-15 осіб</div>
-                        <div class="flex items-center gap-2"><i class="fas fa-star w-4 text-center text-[#48192E]"></i> 4.9</div>
-                    </div>
-                    <div class="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
-                        <span class="text-xl font-bold text-[#48192E]">85 000 ₴</span>
-                        <div class="flex gap-2">
-                            <button class="bg-[#2D4952] text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-[#1a2e33]">Деталі</button>
-                            <button class="border border-[#48192E] text-[#48192E] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-50">Видалити</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tour-card-saved shadow-md flex flex-col h-full overflow-hidden p-0">
-                <div class="relative h-48">
-                    <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800" alt="Alps" class="w-full h-full object-cover m-0 rounded-none">
-                    <span class="absolute top-3 right-3 bg-[#48192E] text-white text-xs px-2 py-1 rounded font-medium">Пригодницький</span>
-                    <button class="absolute top-3 left-3 bg-white w-8 h-8 flex items-center justify-center rounded-md shadow text-[#48192E]"><i class="fas fa-bookmark"></i></button>
-                </div>
-                <div class="p-5 flex flex-col flex-grow">
-                    <h3 class="text-lg font-bold text-[#281822] mb-1">Альпійські вершини</h3>
-                    <p class="text-sm text-gray-500 mb-4">Підкорення найвищих гір Європи</p>
-                    <div class="space-y-2 text-sm text-[#2D4952] mb-4">
-                        <div class="flex items-center gap-2"><i class="fas fa-map-marker-alt w-4 text-center"></i> Швейцарія, Франція</div>
-                        <div class="flex items-center gap-2"><i class="far fa-calendar w-4 text-center"></i> 10 днів</div>
-                        <div class="flex items-center gap-2"><i class="fas fa-user-friends w-4 text-center"></i> 6-8 осіб</div>
-                        <div class="flex items-center gap-2"><i class="fas fa-star w-4 text-center text-[#48192E]"></i> 4.8</div>
-                    </div>
-                    <div class="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
-                        <span class="text-xl font-bold text-[#48192E]">95 000 ₴</span>
-                        <div class="flex gap-2">
-                            <button class="bg-[#2D4952] text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-[#1a2e33]">Деталі</button>
-                            <button class="border border-[#48192E] text-[#48192E] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-50">Видалити</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         </div>
     </div>
 
     <div id="tab-saved-posts" class="tab-content">
         <div class="flex justify-between items-center mb-6">
             <div>
-                <h2 class="text-2xl text-[#281822] font-normal">Вибрані пости</h2>
-                <p class="text-gray-500 text-sm mt-1">5 постів збережено</p>
+                <h2 class="text-2xl text-[#281822] font-normal">Збережені пости</h2>
             </div>
             <button class="bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50">Очистити всі</button>
         </div>
+    </div>
 
-        <div class="post-card shadow-sm">
-            <div class="flex justify-between items-start mb-3">
-                <div class="flex items-center gap-3">
-                    <div class="avatar-circle bg-[#2D4952]">МК</div>
-                    <div>
-                        <div class="font-bold text-[#281822] text-sm">Марія Коваленко <span class="text-gray-400 font-normal text-xs mx-1">•</span> <span class="text-gray-500 font-normal text-sm">1 день тому</span></div>
-                        <div class="text-sm text-[#281822] font-medium mt-0.5">Топ-10 найкрасивіших місць Ісландії</div>
-                    </div>
-                </div>
-                <div class="flex items-center gap-3">
-                    <span class="text-xs bg-gray-200 px-3 py-1 rounded-full text-gray-600 font-medium">Ісландія</span>
-                    <i class="fas fa-bookmark text-[#48192E]"></i>
-                </div>
-            </div>
-            <p class="text-gray-600 text-sm mb-4 leading-relaxed pl-[52px]">Поділюся моїм списком must-see локацій в Ісландії. Від водоспадів до гейзерів, від льодовиків до чорних пляжів - все що вразило мене найбільше!</p>
-            <div class="flex justify-between items-center border-t border-gray-100 pt-3 pl-[52px]">
-                <div class="flex gap-4 text-gray-500 text-sm">
-                    <span class="flex items-center gap-1"><i class="far fa-thumbs-up"></i> 156</span>
-                    <span class="flex items-center gap-1"><i class="far fa-comment-alt"></i> 34</span>
-                </div>
-                <div class="flex gap-3 text-sm items-center">
-                    <span class="text-xs text-gray-400 mr-2">Збережено 2 дні тому</span>
-                    <button class="border border-[#48192E] text-[#48192E] px-4 py-1 rounded-md text-sm font-medium hover:bg-red-50">Видалити</button>
-                </div>
-            </div>
+    <div id="tab-saved-companions" class="tab-content">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl text-[#281822] font-normal">Збережені компанії для подорожі</h2>
+            <button class="bg-white border border-gray-300 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50" onclick="clearSavedCompanions()">Очистити всі</button>
+        </div>
+        <div id="saved-companions-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
         </div>
     </div>
 

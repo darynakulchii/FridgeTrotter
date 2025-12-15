@@ -195,6 +195,17 @@
                 <textarea name="description" rows="4" required class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]"></textarea>
             </div>
 
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Програма туру</label>
+                <textarea name="program" rows="5" placeholder="День 1: Приліт... День 2: Екскурсія..." class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]"></textarea>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1 text-[#281822]">Доступні дати початку туру</label>
+                <input type="text" id="agent-tour-dates" name="dates" placeholder="Оберіть дати у календарі..." class="w-full border p-2 rounded-md outline-none focus:border-[#48192E] bg-white cursor-pointer" readonly>
+                <p class="text-xs text-gray-500 mt-1">Можна обрати декілька дат.</p>
+            </div>
+
             <div class="form-group" id="photoGroup">
                 <label class="form-label">Фото туру (до 8 шт.) <span style="color: red;">*</span></label>
                 <p class="form-description">Перше фото буде головним (обкладинкою туру).</p>

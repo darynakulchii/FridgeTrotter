@@ -56,6 +56,7 @@ function initTabs() {
             if (tabName === 'my-posts') loadMyPosts();
             if (tabName === 'saved-tours') loadSavedTours();
             if (tabName === 'saved-posts') loadSavedPosts();
+            if (tabName === 'saved-companions') loadSavedCompanions();
         });
     });
 }
@@ -861,14 +862,69 @@ async function loadSavedPosts() {
     } catch (e) { console.error(e); }
 }
 
+async function loadSavedCompanions() {
+    const container = document.getElementById('saved-companions-grid');
+    if (!container) return;
+
+    try {
+        const response = await fetch(`${API_URL}/companion/saved`, { headers: getHeaders() });
+        const data = await response.json();
+
+        container.innerHTML = '';
+        if (!data.ads || data.ads.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 col-span-2">Збережених оголошень немає.</p>';
+            return;
+        }
+
+        data.ads.forEach(ad => {
+            // Спрощена версія картки для профілю
+            const html = `
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-bold text-[#281822]">${ad.destination_country}</h4>
+                        <button onclick="removeSavedAd(${ad.ad_id})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2 line-clamp-2">${ad.description}</p>
+                    <div class="mt-auto text-xs text-gray-500">
+                        <i class="far fa-calendar"></i> ${new Date(ad.start_date).toLocaleDateString()}
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    } catch (e) { console.error(e); }
+}
+
+// Функції видалення (глобальні або експортовані)
+window.removeSavedAd = async (id) => {
+    if(!confirm('Видалити зі збережених?')) return;
+    try {
+        await fetch(`${API_URL}/companion/ads/${id}/save`, { method: 'DELETE', headers: getHeaders() });
+        loadSavedCompanions();
+    } catch(e) { console.error(e); }
+};
+
+window.clearSavedCompanions = async () => {
+    if(!confirm('Очистити список?')) return;
+    try {
+        await fetch(`${API_URL}/companion/saved`, { method: 'DELETE', headers: getHeaders() });
+        loadSavedCompanions();
+    } catch(e) { console.error(e); }
+};
+
 function initContentTabs() {
     window.removeSavedTour = async (id) => {
         if(!confirm('Видалити зі збережених?')) return;
         try {
-            await fetch(`${API_URL}/tours/save`, {
-                method: 'POST', headers: getHeaders(), body: JSON.stringify({ tourId: id })
+            const response = await fetch(`${API_URL}/tours/${id}/save`, {
+                method: 'DELETE',
+                headers: getHeaders()
             });
-            loadSavedTours();
+            if (response.ok) {
+                loadSavedTours();
+            } else {
+                alert('Помилка видалення');
+            }
         } catch(e) { console.error(e); }
     };
 

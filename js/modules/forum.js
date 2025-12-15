@@ -1,27 +1,19 @@
 import { API_URL, getHeaders } from '../api-config.js';
-import { initPostForm } from './create_post.js'; // Імпортуємо логіку форми з фото
+import { initPostForm } from './create_post.js';
+
+let currentPostId = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadPosts();
     initCreatePostModal();
 
-    // Додаємо слухачі подій для фільтрів
     document.getElementById('forum-search')?.addEventListener('input', debounce(loadPosts, 500));
     document.getElementById('forum-category')?.addEventListener('change', loadPosts);
     document.getElementById('forum-sort')?.addEventListener('change', loadPosts);
+
+    document.getElementById('add-comment-form')?.addEventListener('submit', handleCommentSubmit);
 });
 
-// Глобальна функція для написання (якщо не додали її в index.js, можна продублювати або використати спільний модуль)
-window.contactAuthor = (userId) => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-        if(confirm('Увійдіть, щоб написати автору.')) window.location.href = 'login.html';
-        return;
-    }
-    window.location.href = `chat.html?user_id=${userId}`;
-};
-
-// === ЛОГІКА СТВОРЕННЯ ПОСТА (Оновлена для Модалки) ===
 function initCreatePostModal() {
     const createBtn = document.getElementById('create-post-btn');
     const modal = document.getElementById('create-post-modal');
@@ -30,45 +22,26 @@ function initCreatePostModal() {
         createBtn.addEventListener('click', () => {
             const token = localStorage.getItem('token');
             if (!token) {
-                alert('Будь ласка, увійдіть у свій акаунт, щоб створити пост.');
+                alert('Будь ласка, увійдіть у свій акаунт.');
                 window.location.href = 'login.html';
                 return;
             }
-
-            // 1. Відкриваємо модалку
             modal.classList.add('active');
-
-            // 2. Ініціалізуємо логіку форми (з create_post.js)
-            // Передаємо функцію, що робити після успіху
             initPostForm(() => {
                 alert('Пост успішно опубліковано!');
-                modal.classList.remove('active'); // Закриваємо модалку
-                loadPosts(); // Оновлюємо стрічку постів
+                modal.classList.remove('active');
+                loadPosts();
             });
         });
     }
 
-    // Логіка закриття модалки (хрестик)
-    const closeBtn = document.getElementById('close-post-modal');
-    if (closeBtn && modal) {
-        closeBtn.addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
-    }
-
-    // Логіка закриття модалки (кнопка Скасувати всередині форми)
-    const cancelBtn = document.getElementById('cancel-post-btn');
-    if (cancelBtn && modal) {
-        cancelBtn.addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
-    }
+    document.getElementById('cancel-post-btn')?.addEventListener('click', () => {
+        modal.classList.remove('active');
+    });
 }
 
-// === ЗАВАНТАЖЕННЯ ПОСТІВ ===
 async function loadPosts() {
     const container = document.getElementById('forum-posts-container');
-
     const search = document.getElementById('forum-search')?.value || '';
     const category = document.getElementById('forum-category')?.value || '';
     const sort = document.getElementById('forum-sort')?.value || '';
@@ -92,63 +65,69 @@ async function loadPosts() {
         }
 
         posts.forEach(post => {
-            // Генеруємо HTML для блоку зображень, якщо вони є
-            let imagesHtml = '';
-            if (post.images && post.images.length > 0) {
-                // Якщо зображень багато, показуємо перші 3-4 у вигляді сітки
-                const displayCount = Math.min(post.images.length, 4);
-                const gridCols = displayCount === 1 ? 'grid-cols-1' : (displayCount === 2 ? 'grid-cols-2' : 'grid-cols-2 md:grid-cols-4');
+            let avatarContent = post.author_avatar
+                ? `<img src="${post.author_avatar}" class="w-full h-full object-cover rounded-full">`
+                : `<div class="w-full h-full flex items-center justify-center font-bold text-white text-sm">${(post.first_name[0] + post.last_name[0]).toUpperCase()}</div>`;
 
-                imagesHtml = `<div class="grid ${gridCols} gap-2 mb-4 h-48 md:h-64 rounded-lg overflow-hidden">`;
-                post.images.slice(0, displayCount).forEach((imgUrl, index) => {
-                    // Для останнього зображення, якщо їх більше, показуємо лічильник
-                    if (index === displayCount - 1 && post.images.length > displayCount) {
-                        imagesHtml += `
-                            <div class="relative h-full cursor-pointer" onclick="openImageModal('${imgUrl}')">
-                                <img src="${imgUrl}" class="w-full h-full object-cover opacity-50">
-                                <div class="absolute inset-0 flex items-center justify-center text-white font-bold text-xl">
-                                    +${post.images.length - displayCount + 1}
-                                </div>
-                            </div>`;
-                    } else {
-                        imagesHtml += `<img src="${imgUrl}" class="w-full h-full object-cover hover:scale-105 transition duration-300 cursor-pointer" onclick="openImageModal('${imgUrl}')">`;
-                    }
-                });
-                imagesHtml += `</div>`;
+            // === ЗМІНИ ТУТ: Категорія тепер бейдж на фото ===
+            let imageSection = '';
+            if (post.images && post.images.length > 0) {
+                imageSection = `
+                    <div class="card-image-middle h-48 relative overflow-hidden">
+                        <img src="${post.images[0]}" alt="${post.title}" class="w-full h-full object-cover">
+                        <span class="card-badge">${post.category}</span>
+                    </div>
+                `;
+            } else {
+                // Якщо фото немає, показуємо заглушку або просто роздільник,
+                // але бейдж категорії все одно треба десь вивести.
+                // Зробимо стильну заглушку-паттерн або градієнт
+                imageSection = `
+                    <div class="card-image-middle h-24 bg-gradient-to-r from-gray-100 to-gray-200 relative overflow-hidden flex items-center justify-center">
+                        <span class="card-badge relative top-auto right-auto">${post.category}</span>
+                    </div>
+                `;
             }
 
-            // Основна HTML картка поста
             const html = `
-                <div class="forum-card flex flex-col h-full">
-                    <div class="flex justify-between mb-3">
-                        <a href="other_user_profile.html?user_id=${post.author_id}" class="flex items-center gap-3 group text-decoration-none">
-                            <div class="avatar-circle bg-[#281822] group-hover:opacity-80 transition flex-shrink-0 overflow-hidden">
-                                ${post.author_avatar
-                ? `<img src="${post.author_avatar}" class="w-full h-full object-cover">`
-                : getInitials(post.first_name, post.last_name)}
+                <div class="universal-card cursor-pointer group" onclick="openPostDetails(${post.post_id})">
+                    <div class="card-header-user" onclick="event.stopPropagation(); window.location.href='other_user_profile.html?user_id=${post.author_id}'">
+                        <div class="card-avatar" style="background-color: #48192E;">
+                            ${avatarContent}
+                        </div>
+                        <div class="card-user-info">
+                            <div class="card-user-name hover:underline">${post.first_name} ${post.last_name}</div>
+                            <div class="card-user-sub">
+                                <span>${new Date(post.created_at).toLocaleDateString()}</span>
                             </div>
-                            <div class="flex flex-col">
-                                <span class="font-bold text-[#281822] text-sm group-hover:text-[#48192E] group-hover:underline transition">
-                                    ${post.first_name} ${post.last_name}
-                                </span>
-                                <span class="text-gray-400 text-xs">${new Date(post.created_at).toLocaleDateString()}</span>
-                            </div>
-                        </a>
-                        <span class="tag-pill h-fit whitespace-nowrap">${post.category || 'Загальна'}</span>
+                        </div>
                     </div>
-                    
-                    <div class="flex-grow">
-                        <h3 class="font-bold text-lg mb-2 text-[#281822] hover:text-[#48192E] cursor-pointer transition">${post.title}</h3>
-                        <p class="text-gray-600 text-sm mb-4 leading-relaxed line-clamp-3">${post.content}</p>
-                        ${imagesHtml}
+
+                    ${imageSection}
+
+                    <div class="card-body flex flex-col p-4">
+                        <h3 class="card-title line-clamp-2 hover:text-[#48192E] transition">${post.title}</h3>
+                        <p class="text-gray-600 text-sm line-clamp-3 mb-4">${post.content}</p>
                     </div>
-                    
-                    <div class="flex gap-6 border-t border-gray-100 pt-3 mt-auto items-center">
-                        <span class="action-icon cursor-pointer hover:text-[#48192E]" onclick="toggleLike(${post.post_id})"><i class="far fa-thumbs-up"></i> ${post.likes_count}</span>
-                        <span class="action-icon"><i class="far fa-comment-alt"></i> ${post.comments_count || 0}</span>
+
+                    <div class="card-footer gap-2 px-4 py-3 border-t border-gray-100 flex items-center !mt-0">
                         
-                        <button onclick="contactAuthor(${post.author_id})" class="ml-auto text-xs text-[#2D4952] font-bold hover:underline flex items-center gap-1">
-                            <i class="far fa-envelope"></i> Написати
+                        <button onclick="toggleLike(${post.post_id}, event)" class="btn-icon-square px-3 w-auto flex items-center gap-2 text-sm" title="Подобається">
+                            <i class="far fa-thumbs-up"></i> <span>${post.likes_count}</span>
+                        </button>
+
+                        <button onclick="openPostDetails(${post.post_id})" class="btn-icon-square px-3 w-auto flex items-center gap-2 text-sm" title="Коментарі">
+                            <i class="far fa-comment-alt"></i> <span>${post.comments_count || 0}</span>
+                        </button>
+
+                        <button onclick="toggleSavePost(${post.post_id}, event)" class="btn-icon-square" title="Зберегти">
+                            <i class="far fa-bookmark" id="post-bookmark-${post.post_id}"></i>
+                        </button>
+                        
+                        <div class="flex-grow"></div>
+
+                        <button class="btn-outline px-4 text-sm h-10" onclick="event.stopPropagation(); openPostDetails(${post.post_id})">
+                            Деталі
                         </button>
                     </div>
                 </div>
@@ -157,16 +136,139 @@ async function loadPosts() {
         });
     } catch (error) {
         console.error('Error loading posts:', error);
-        container.innerHTML = '<p class="text-red-500 col-span-2 text-center">Помилка завантаження даних.</p>';
     }
 }
 
-// Допоміжна функція для ініціалів
-function getInitials(first, last) {
-    return (first?.[0] || '') + (last?.[0] || '');
+window.openPostDetails = async (postId) => {
+    currentPostId = postId;
+    const modal = document.getElementById('post-details-modal');
+    modal.classList.add('active');
+
+    const els = {
+        title: document.getElementById('detail-post-title'),
+        content: document.getElementById('detail-post-content'),
+        author: document.getElementById('detail-post-author'),
+        date: document.getElementById('detail-post-date'),
+        category: document.getElementById('detail-post-category'),
+        avatar: document.getElementById('detail-post-avatar'),
+        mainImg: document.getElementById('detail-post-main-image'),
+        gallery: document.getElementById('detail-post-gallery'),
+        commentsCount: document.getElementById('detail-comments-count')
+    };
+
+    els.title.innerText = 'Завантаження...';
+    els.mainImg.classList.add('hidden');
+    els.gallery.innerHTML = '';
+    document.getElementById('detail-comments-list').innerHTML = '<p class="text-gray-400 text-sm">Завантаження коментарів...</p>';
+
+    try {
+        const res = await fetch(`${API_URL}/forum/posts/${postId}`);
+        const data = await res.json();
+        const post = data.post;
+
+        els.title.innerText = post.title;
+        els.content.innerText = post.content;
+        els.author.innerText = `${post.first_name} ${post.last_name}`;
+        els.date.innerText = new Date(post.created_at).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long', hour: '2-digit', minute:'2-digit' });
+        els.category.innerText = post.category;
+
+        if(post.author_avatar) {
+            els.avatar.innerHTML = `<img src="${post.author_avatar}" class="w-full h-full object-cover">`;
+        } else {
+            els.avatar.innerText = (post.first_name[0] + post.last_name[0]);
+        }
+
+        if (post.images && post.images.length > 0) {
+            els.mainImg.src = post.images[0];
+            els.mainImg.classList.remove('hidden');
+
+            if (post.images.length > 1) {
+                post.images.forEach(imgUrl => {
+                    const thumb = document.createElement('img');
+                    thumb.src = imgUrl;
+                    thumb.className = "w-full h-16 object-cover rounded cursor-pointer hover:opacity-80 transition border border-transparent hover:border-[#48192E]";
+                    thumb.onclick = () => { els.mainImg.src = imgUrl; };
+                    els.gallery.appendChild(thumb);
+                });
+            }
+        }
+
+        loadComments(postId);
+
+    } catch (e) {
+        console.error(e);
+        alert('Не вдалося завантажити пост');
+        modal.classList.remove('active');
+    }
+};
+
+async function loadComments(postId) {
+    const list = document.getElementById('detail-comments-list');
+    const countEl = document.getElementById('detail-comments-count');
+
+    try {
+        const res = await fetch(`${API_URL}/forum/posts/${postId}/comments`);
+        const data = await res.json();
+
+        list.innerHTML = '';
+        countEl.innerText = data.comments.length;
+
+        if (data.comments.length === 0) {
+            list.innerHTML = '<p class="text-gray-400 text-sm italic">Коментарів поки немає. Будьте першим!</p>';
+            return;
+        }
+
+        data.comments.forEach(c => {
+            const avatarHtml = c.author_avatar
+                ? `<img src="${c.author_avatar}" class="w-8 h-8 rounded-full object-cover">`
+                : `<div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600">${c.first_name[0]}</div>`;
+
+            const html = `
+                <div class="flex gap-3 items-start">
+                    ${avatarHtml}
+                    <div class="bg-white p-3 rounded-lg border border-gray-100 flex-grow shadow-sm">
+                        <div class="flex justify-between items-baseline mb-1">
+                            <span class="font-bold text-sm text-[#281822]">${c.first_name} ${c.last_name}</span>
+                            <span class="text-xs text-gray-400">${new Date(c.created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p class="text-gray-700 text-sm leading-relaxed">${c.content}</p>
+                    </div>
+                </div>
+            `;
+            list.insertAdjacentHTML('beforeend', html);
+        });
+
+    } catch (e) { console.error(e); }
 }
 
-// Функція затримки пошуку (debounce)
+async function handleCommentSubmit(e) {
+    e.preventDefault();
+    const input = document.getElementById('comment-input');
+    const content = input.value.trim();
+
+    if (!content) return;
+    if (!localStorage.getItem('token')) {
+        alert('Увійдіть, щоб коментувати.');
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/forum/posts/${currentPostId}/comments`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ content })
+        });
+
+        if (res.ok) {
+            input.value = '';
+            loadComments(currentPostId);
+            loadPosts();
+        } else {
+            alert('Помилка при відправці.');
+        }
+    } catch (e) { console.error(e); }
+}
+
 function debounce(func, timeout = 300){
     let timer;
     return (...args) => {
@@ -175,22 +277,42 @@ function debounce(func, timeout = 300){
     };
 }
 
-// Функція лайку
-window.toggleLike = async (postId) => {
+window.toggleLike = async (postId, event) => {
+    if(event) event.stopPropagation();
     const token = localStorage.getItem('token');
     if(!token) return alert('Увійдіть, щоб ставити лайки');
 
     try {
-        await fetch(`${API_URL}/forum/posts/${postId}/like`, {
-            method: 'POST',
-            headers: getHeaders()
-        });
-        // Перезавантажуємо пости, щоб оновити лічильник
+        await fetch(`${API_URL}/forum/posts/${postId}/like`, { method: 'POST', headers: getHeaders() });
         loadPosts();
     } catch(e) { console.error(e); }
 };
 
-// Функція для відкриття зображення
-window.openImageModal = (url) => {
-    window.open(url, '_blank');
+window.contactAuthor = (userId, event) => {
+    if(event) event.stopPropagation();
+    const token = localStorage.getItem('token');
+    if (!token) {
+        if(confirm('Увійдіть, щоб написати автору.')) window.location.href = 'login.html';
+        return;
+    }
+    window.location.href = `chat.html?user_id=${userId}`;
+};
+
+window.toggleSavePost = async (postId, event) => {
+    if(event) event.stopPropagation();
+    const token = localStorage.getItem('token');
+    if(!token) return alert('Увійдіть, щоб зберігати пости');
+
+    const icon = document.getElementById(`post-bookmark-${postId}`);
+    const isSaved = icon.classList.contains('fas');
+    const method = isSaved ? 'DELETE' : 'POST';
+    const url = isSaved ? `${API_URL}/forum/saved/${postId}` : `${API_URL}/forum/posts/${postId}/save`;
+
+    try {
+        const res = await fetch(url, { method: method, headers: getHeaders() });
+        if(res.ok) {
+            icon.classList.toggle('fas');
+            icon.classList.toggle('far');
+        }
+    } catch(e) { console.error(e); }
 };

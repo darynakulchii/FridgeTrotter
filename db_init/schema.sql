@@ -307,3 +307,52 @@ CREATE TABLE IF NOT EXISTS tour_images (
                                            image_url VARCHAR(500) NOT NULL,
                                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE companion_ads
+    ADD COLUMN budget_min NUMERIC(10, 2),
+    ADD COLUMN budget_max NUMERIC(10, 2);
+
+CREATE TABLE IF NOT EXISTS companion_ad_images (
+                                                   image_id SERIAL PRIMARY KEY,
+                                                   ad_id INT NOT NULL REFERENCES companion_ads(ad_id) ON DELETE CASCADE,
+                                                   image_url VARCHAR(500) NOT NULL,
+                                                   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 1. Додаємо нові поля до таблиці турів
+ALTER TABLE tours
+    ADD COLUMN IF NOT EXISTS program TEXT, -- Програма туру
+    ADD COLUMN IF NOT EXISTS available_dates TEXT[]; -- Масив доступних дат (наприклад, ["2024-06-01", "2024-07-15"])
+
+-- 2. Додаємо прив'язку магніту до туру
+ALTER TABLE magnets
+    ADD COLUMN IF NOT EXISTS linked_tour_id INT REFERENCES tours(tour_id) ON DELETE SET NULL;
+
+-- 3. Створюємо таблицю бронювань
+CREATE TABLE IF NOT EXISTS tour_bookings (
+                                             booking_id SERIAL PRIMARY KEY,
+                                             user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                                             tour_id INT NOT NULL REFERENCES tours(tour_id) ON DELETE CASCADE,
+                                             booking_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                             selected_date DATE, -- Обрана дата туру
+                                             participants_count INT DEFAULT 1,
+                                             contact_phone VARCHAR(20) NOT NULL,
+                                             status VARCHAR(20) DEFAULT 'pending', -- 'pending', 'confirmed', 'rejected'
+                                             manager_comment TEXT -- Коментар менеджера при підтвердженні/відхиленні
+);
+
+-- 4. Створюємо таблицю коментарів до турів
+CREATE TABLE IF NOT EXISTS tour_comments (
+                                             comment_id SERIAL PRIMARY KEY,
+                                             tour_id INT NOT NULL REFERENCES tours(tour_id) ON DELETE CASCADE,
+                                             user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+                                             content TEXT NOT NULL,
+                                             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_saved_companion_ads (
+                                                        user_id INT REFERENCES users(user_id) ON DELETE CASCADE,
+                                                        ad_id INT REFERENCES companion_ads(ad_id) ON DELETE CASCADE,
+                                                        saved_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+                                                        PRIMARY KEY (user_id, ad_id)
+);

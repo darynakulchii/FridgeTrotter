@@ -195,10 +195,10 @@ router.get('/posts/:id', async (req, res) => {
  * POST /api/forum/posts
  * Створення нового поста (з підтримкою фото).
  */
-router.post('/posts', authenticateToken, upload.array('images', 5), async (req, res) => {
+router.post('/posts', authenticateToken, upload.array('images', 8), async (req, res) => {
     const { title, content, category } = req.body;
     const authorId = req.user.userId;
-    const files = req.files; // Масив файлів
+    const files = req.files;
 
     if (!title || !content) {
         return res.status(400).json({ error: 'Необхідно вказати заголовок та контент.' });
@@ -222,20 +222,16 @@ router.post('/posts', authenticateToken, upload.array('images', 5), async (req, 
 
         // 2. Завантаження зображень (якщо є)
         if (files && files.length > 0) {
-            // Паралельне завантаження на Cloudinary
             const uploadPromises = files.map(file => uploadToCloudinary(file.buffer));
             const uploadResults = await Promise.all(uploadPromises);
 
-            // Збір URL
             uploadResults.forEach(result => imageUrls.push(result.secure_url));
 
-            // Збереження URL у БД
             const imageInsertQuery = `
                 INSERT INTO post_images (post_id, image_url)
                 VALUES ($1, $2);
             `;
 
-            // Послідовна вставка (можна оптимізувати через один INSERT, але так безпечніше для помилок)
             for (const url of imageUrls) {
                 await client.query(imageInsertQuery, [postId, url]);
             }
@@ -384,6 +380,91 @@ router.post('/posts/:id/like', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Помилка сервера.' });
     } finally {
         client.release();
+    }
+});
+
+/**
+ * GET /api/forum/posts/:id/comments
+ * Отримання коментарів до поста
+ */
+router.get('/posts/:id/comments', async (req, res) => {
+    const postId = req.params.id;
+    const query = `
+        SELECT 
+            c.comment_id, c.content, c.created_at,
+            c.user_id, up.first_name, up.last_name, up.profile_image_url AS author_avatar
+        FROM comments c
+        JOIN user_profiles up ON c.user_id = up.user_id
+        WHERE c.post_id = $1
+        ORDER BY c.created_at ASC;
+    `;
+    try {
+        const result = await pool.query(query, [postId]);
+        res.json({ comments: result.rows });
+    } catch (error) {
+        console.error('Помилка отримання коментарів:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+/**
+ * POST /api/forum/posts/:id/comments
+ * Додавання коментаря
+ */
+router.post('/posts/:id/comments', authenticateToken, async (req, res) => {
+    const postId = req.params.id;
+    const userId = req.user.userId;
+    const { content } = req.body;
+
+    if (!content) return res.status(400).json({ error: 'Коментар не може бути порожнім.' });
+
+    try {
+        const query = `
+            INSERT INTO comments (post_id, user_id, content)
+            VALUES ($1, $2, $3)
+            RETURNING comment_id, created_at;
+        `;
+        const result = await pool.query(query, [postId, userId, content]);
+
+        res.status(201).json({
+            message: 'Коментар додано.',
+            comment: result.rows[0]
+        });
+    } catch (error) {
+        console.error('Помилка додавання коментаря:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+// POST /api/forum/posts/:id/save - Додати в обране
+router.post('/posts/:id/save', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const postId = req.params.id;
+
+    try {
+        await pool.query(
+            `INSERT INTO user_saved_posts (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [userId, postId]
+        );
+        res.json({ message: 'Пост збережено', saved: true });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// GET /api/forum/posts/:id/is-saved - Перевірка статусу
+router.get('/posts/:id/is-saved', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const postId = req.params.id;
+    try {
+        const result = await pool.query(
+            `SELECT 1 FROM user_saved_posts WHERE user_id = $1 AND post_id = $2`,
+            [userId, postId]
+        );
+        res.json({ saved: result.rows.length > 0 });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
     }
 });
 

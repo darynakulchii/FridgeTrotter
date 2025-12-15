@@ -17,16 +17,15 @@ document.addEventListener("DOMContentLoaded", function() {
 
             });
 
-            // 3. Ініціалізувати події (Сайдбар, Модалки, Кнопки)
             initializeNavigationEvents();
-
-            // 4. Оновити стан кнопки входу (якщо користувач вже залогінений)
             updateAuthButtonState();
-
             protectNavigationLinks();
 
             initBugReportUpload();
             initBugReportSubmit();
+            redirectAgentProfileLinks();
+            hideAgentRegistrationBtn();
+
         })
         .catch(error => console.error('Error loading navigation:', error));
 });
@@ -215,4 +214,31 @@ function initBugReportSubmit() {
         // закриваємо модалку
         modal.classList.remove('active');
     });
+}
+}
+
+function redirectAgentProfileLinks() {
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    if (user && user.isAgent) {
+        const profileLinks = document.querySelectorAll('a[href="my_profile.html"]');
+
+        profileLinks.forEach(link => {
+            link.setAttribute('href', 'agency_page.html');
+        });
+
+        const headerProfileIcon = document.querySelector('.header-right-group a[href="agency_page.html"] i');
+        if (headerProfileIcon) {
+            headerProfileIcon.className = 'fas fa-briefcase';
+        }
+    }
+}
+
+function hideAgentRegistrationBtn() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const registerBtn = document.getElementById('agent-btn-register');
+
+    if (user && user.isAgent && registerBtn) {
+        registerBtn.style.display = 'none';
+    }
 }

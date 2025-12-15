@@ -57,7 +57,6 @@
                 <h3 class="text-xl font-bold text-[#281822]">Створити новий пост</h3>
                 <button class="modal-close-btn" id="close-post-modal">&times;</button>
             </div>
-            <!-- Важливо: прибрали action і method, бо все через JS -->
             <form id="create-post-form" class="modal-body space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-1 text-[#281822]">Заголовок</label>
@@ -79,12 +78,13 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="block text-sm font-medium mb-1 text-[#281822]">Фотографії (до 8 шт.)</label>
+                    <label class="form-label block text-sm font-medium mb-1 text-[#281822]">Фотографії (до 8 шт.)</label>
+                    <p class="text-xs text-gray-500 mb-2">Перше фото буде головним.</p>
 
-                    <input type="file" id="new-post-images" name="images" multiple accept="image/*" style="display: none;">
+                    <input type="file" id="postPhotosInput" name="images" multiple accept="image/*" style="display: none;">
 
-                    <div class="photo-upload-grid" id="image-preview-container">
-                        <div class="photo-upload-placeholder add-photo-btn" onclick="document.getElementById('new-post-images').click()">
+                    <div class="photo-upload-grid" id="postPhotoPreviewContainer">
+                        <div class="photo-upload-placeholder add-photo-btn" onclick="document.getElementById('postPhotosInput').click()">
                             <i class="fas fa-plus"></i> Додати фото
                         </div>
                         <div class="photo-upload-placeholder"></div>
@@ -92,14 +92,60 @@
                         <div class="photo-upload-placeholder"></div>
                         <div class="photo-upload-placeholder"></div>
                         <div class="photo-upload-placeholder"></div>
+                        <div class="photo-upload-placeholder"></div>
+                        <div class="photo-upload-placeholder"></div>
                     </div>
                 </div>
-
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50" id="cancel-post-btn">Скасувати</button>
                     <button type="submit" class="btn-solid">Опублікувати</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="post-details-modal" class="modal-backdrop">
+        <div class="modal-content max-w-3xl h-[90vh] flex flex-col">
+            <div class="modal-header shrink-0">
+                <h3 class="text-xl font-bold text-[#281822]" id="detail-post-title">Заголовок поста</h3>
+                <button class="modal-close-btn">&times;</button>
+            </div>
+
+            <div class="modal-body overflow-y-auto flex-grow p-0">
+                <div class="p-6 pb-2">
+                    <img id="detail-post-main-image" src="" class="w-full h-80 object-cover rounded-xl mb-3 hidden bg-gray-100" alt="Post Image">
+                    <div id="detail-post-gallery" class="grid grid-cols-5 gap-2 mb-6"></div>
+
+                    <div class="flex items-center gap-3 mb-4">
+                        <div id="detail-post-avatar" class="w-10 h-10 rounded-full bg-[#281822] text-white flex items-center justify-center font-bold overflow-hidden"></div>
+                        <div>
+                            <div id="detail-post-author" class="font-bold text-[#281822] text-sm">Автор</div>
+                            <div id="detail-post-date" class="text-xs text-gray-500">Дата</div>
+                        </div>
+                        <span id="detail-post-category" class="ml-auto text-xs bg-gray-200 px-3 py-1 rounded-full text-gray-600 font-medium">Категорія</span>
+                    </div>
+
+                    <p id="detail-post-content" class="text-gray-700 leading-relaxed whitespace-pre-wrap"></p>
+                </div>
+
+                <div class="bg-gray-50 p-6 border-t border-gray-100 mt-4 min-h-[200px]">
+                    <h4 class="font-bold text-[#281822] mb-4 flex items-center gap-2">
+                        <i class="far fa-comments"></i> Обговорення (<span id="detail-comments-count">0</span>)
+                    </h4>
+
+                    <div id="detail-comments-list" class="space-y-4 mb-6">
+                    </div>
+
+                    <form id="add-comment-form" class="flex gap-3 items-start">
+                        <div class="flex-grow relative">
+                            <input type="text" id="comment-input" class="w-full border p-3 pr-10 rounded-lg focus:border-[#48192E] outline-none text-sm" placeholder="Напишіть коментар..." autocomplete="off">
+                            <button type="submit" class="absolute right-2 top-2 text-[#48192E] p-1 hover:bg-gray-100 rounded">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
