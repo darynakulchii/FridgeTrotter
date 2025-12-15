@@ -39,6 +39,64 @@
     </div>
 </main>
 
+<div id="ad-details-modal" class="modal-backdrop">
+    <div class="modal-content max-w-3xl h-[90vh] flex flex-col">
+        <div class="modal-header shrink-0">
+            <h3 class="text-xl font-bold text-[#281822]" id="modal-ad-country">Країна</h3>
+            <button class="modal-close-btn" onclick="closeAdModal()">&times;</button>
+        </div>
+
+        <div class="modal-body overflow-y-auto flex-grow p-6">
+            <img id="modal-ad-main-image" src="" class="w-full h-80 object-cover rounded-xl mb-3 hidden bg-gray-100" alt="Cover">
+            <div id="modal-ad-gallery" class="grid grid-cols-5 gap-2 mb-6"></div>
+
+            <div class="flex items-center gap-4 mb-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <a id="modal-author-link" href="#" class="shrink-0">
+                    <div id="modal-ad-avatar" class="w-14 h-14 rounded-full bg-[#48192E] text-white flex items-center justify-center font-bold text-xl overflow-hidden"></div>
+                </a>
+                <div class="flex-grow">
+                    <a id="modal-author-name-link" href="#" class="font-bold text-[#281822] text-lg hover:underline">Ім'я Автора</a>
+                    <div class="text-sm text-gray-500" id="modal-author-age">Вік не вказано</div>
+                </div>
+                <button id="modal-contact-btn" class="btn-solid py-2 px-6">
+                    <i class="far fa-comment-dots mr-2"></i> Написати
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <div class="p-3 bg-white border rounded-lg">
+                    <span class="text-gray-500 text-sm block">Дати</span>
+                    <div class="font-semibold text-[#281822] flex items-center gap-2">
+                        <i class="far fa-calendar-alt text-[#2D4952]"></i>
+                        <span id="modal-ad-dates">...</span>
+                    </div>
+                </div>
+                <div class="p-3 bg-white border rounded-lg">
+                    <span class="text-gray-500 text-sm block">Бюджет</span>
+                    <div class="font-semibold text-[#281822] flex items-center gap-2">
+                        <i class="fas fa-wallet text-[#2D4952]"></i>
+                        <span id="modal-ad-budget">...</span>
+                    </div>
+                </div>
+                <div class="p-3 bg-white border rounded-lg">
+                    <span class="text-gray-500 text-sm block">Група</span>
+                    <div class="font-semibold text-[#281822] flex items-center gap-2">
+                        <i class="fas fa-user-friends text-[#2D4952]"></i>
+                        <span id="modal-ad-group">...</span>
+                    </div>
+                </div>
+                <div class="p-3 bg-white border rounded-lg">
+                    <span class="text-gray-500 text-sm block">Теги</span>
+                    <div id="modal-ad-tags" class="flex flex-wrap gap-1 mt-1"></div>
+                </div>
+            </div>
+
+            <h4 class="font-bold text-[#281822] mb-2">Деталі подорожі</h4>
+            <p id="modal-ad-desc" class="text-gray-700 leading-relaxed whitespace-pre-wrap text-sm md:text-base"></p>
+        </div>
+    </div>
+</div>
+
 <script type="module" src="../js/modules/companion.js"></script>
 <script type="module" src="../js/modules/navigation.js"></script>
 <script type="module" src="../js/index.js"></script>

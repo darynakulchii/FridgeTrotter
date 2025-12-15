@@ -89,6 +89,43 @@ router.get('/ads', async (req, res) => {
 });
 
 /**
+ * GET /api/companion/ads/:id
+ * Отримання деталей одного оголошення
+ */
+router.get('/ads/:id', async (req, res) => {
+    const adId = req.params.id;
+
+    const query = `
+        SELECT
+            ca.ad_id, ca.user_id, ca.destination_country, ca.start_date, ca.end_date, 
+            ca.min_group_size, ca.max_group_size, ca.description, ca.created_at,
+            ca.budget_min, ca.budget_max,
+            up.first_name, up.last_name, up.profile_image_url AS author_avatar,
+            EXTRACT(YEAR FROM age(up.date_of_birth)) AS author_age,
+            (SELECT array_agg(t.tag_name) FROM companion_ad_tags cat JOIN tags t ON cat.tag_id = t.tag_id WHERE cat.ad_id = ca.ad_id) AS tags,
+            COALESCE(
+                ARRAY_AGG(cai.image_url) FILTER (WHERE cai.image_url IS NOT NULL), '{}'
+            ) AS images
+        FROM companion_ads ca
+        JOIN user_profiles up ON ca.user_id = up.user_id
+        LEFT JOIN companion_ad_images cai ON ca.ad_id = cai.ad_id
+        WHERE ca.ad_id = $1
+        GROUP BY ca.ad_id, up.user_id;
+    `;
+
+    try {
+        const result = await pool.query(query, [adId]);
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Оголошення не знайдено.' });
+        }
+        res.json({ ad: result.rows[0] });
+    } catch (error) {
+        console.error('Помилка отримання деталей оголошення:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+/**
  * POST /api/companion/ads
  * Обробка: масив фото, бюджет, теги
  */
