@@ -6,24 +6,22 @@ const MAX_PHOTOS = 8;
 
 export function initPostForm(onSuccessCallback) {
     const form = document.getElementById('create-post-form');
-    // Отримуємо початкове посилання, але воно застаріє після клонування
+    // Отримуємо початкове посилання
     let imageInput = document.getElementById('new-post-images');
     const previewContainer = document.getElementById('image-preview-container');
 
     if (!form || !imageInput || !previewContainer) return;
 
-    // --- КЛОНУВАННЯ ІНПУТА (Це робиться на початку) ---
+    // 1. Клонування інпуту (щоб очистити старі події, якщо вони були)
     const newInput = imageInput.cloneNode(true);
     imageInput.parentNode.replaceChild(newInput, imageInput);
+    imageInput = newInput; // Оновлюємо посилання на новий елемент
 
-    // ВАЖЛИВО: Оновлюємо змінну imageInput, щоб вона вказувала на НОВИЙ елемент
-    imageInput = newInput;
-
-    // --- Функція оновлення сітки (відображення) ---
+    // 2. Функція оновлення відображення (сітка фото)
     const updatePhotoDisplay = () => {
         previewContainer.innerHTML = '';
 
-        // 1. Рендеримо вибрані фото
+        // Показуємо вибрані фото
         selectedFiles.forEach((file, index) => {
             const div = document.createElement('div');
             div.className = 'photo-upload-placeholder preview';
@@ -47,20 +45,19 @@ export function initPostForm(onSuccessCallback) {
             previewContainer.appendChild(div);
         });
 
-        // 2. Кнопка "+ Додати"
+        // Кнопка "+ Додати" (якщо є місце)
         if (selectedFiles.length < MAX_PHOTOS) {
             const addBtn = document.createElement('div');
             addBtn.className = 'photo-upload-placeholder add-photo-btn';
             addBtn.innerHTML = '<i class="fas fa-plus"></i> Додати';
 
-            // ТУТ БУЛА ПОМИЛКА: раніше тут викликався клік по старому елементу
-            // Тепер imageInput вказує на актуальний елемент завдяки рядку 19
+            // Клік по плюсику викликає клік по прихованому інпуту
             addBtn.onclick = () => imageInput.click();
 
             previewContainer.appendChild(addBtn);
         }
 
-        // 3. Заповнюємо решту місць
+        // Заповнюємо пустими квадратами для краси
         const filledSlots = selectedFiles.length + (selectedFiles.length < MAX_PHOTOS ? 1 : 0);
         for (let i = filledSlots; i < MAX_PHOTOS; i++) {
             const emptyDiv = document.createElement('div');
@@ -75,7 +72,7 @@ export function initPostForm(onSuccessCallback) {
         updatePhotoDisplay();
     };
 
-    // --- Слухач вибору файлів (на НОВОМУ інпуті) ---
+    // 3. Слухач вибору файлів
     imageInput.addEventListener('change', (e) => {
         const files = Array.from(e.target.files);
         if (!files.length) return;
@@ -92,15 +89,12 @@ export function initPostForm(onSuccessCallback) {
         updatePhotoDisplay();
     });
 
-    // ... (код обробки submit залишається без змін, тільки використовуйте selectedFiles)
-
-    // --- Відправка форми ---
+    // 4. Обробка відправки форми
+    // Клонуємо форму, щоб прибрати старі слухачі 'submit' (важливо для модалок)
     const newForm = form.cloneNode(true);
     form.parentNode.replaceChild(newForm, form);
 
     newForm.addEventListener('submit', async (e) => {
-        // ... Ваш існуючий код сабміту ...
-        // (Весь код всередині такий самий, як у вас був)
         e.preventDefault();
         const submitBtn = newForm.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerText;
@@ -143,9 +137,20 @@ export function initPostForm(onSuccessCallback) {
         }
     });
 
-    // Ініціалізація
+    // Ініціалізація (скидання стану)
     if (onSuccessCallback) {
         selectedFiles = [];
     }
     updatePhotoDisplay();
 }
+
+// === АВТОЗАПУСК ДЛЯ ОКРЕМОЇ СТОРІНКИ ===
+document.addEventListener('DOMContentLoaded', () => {
+    // Перевіряємо, чи є форма, і чи НЕМАЄ модального вікна (це означає, що ми на create_post.html)
+    const form = document.getElementById('create-post-form');
+    const modal = document.getElementById('create-post-modal');
+
+    if (form && !modal) {
+        initPostForm();
+    }
+});
