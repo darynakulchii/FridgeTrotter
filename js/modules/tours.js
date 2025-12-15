@@ -3,7 +3,15 @@ import { API_URL, getHeaders } from '../api-config.js';
 let bookingPicker = null;
 let currentTourId = null;
 
+// Стан фільтрів
+let filters = {
+    search: '',
+    category: '',
+    sort: ''
+};
+
 document.addEventListener("DOMContentLoaded", function() {
+    initFilters();
     loadTours();
     setupViewToggles();
 
@@ -12,6 +20,50 @@ document.addEventListener("DOMContentLoaded", function() {
         commentForm.addEventListener('submit', handleCommentSubmit);
     }
 });
+
+// === 0. ФІЛЬТРИ ТА ПОШУК ===
+
+function initFilters() {
+    const searchInput = document.querySelector('.filters-container input[type="text"]');
+    const categorySelect = document.querySelectorAll('.filters-container select')[0]; // Перший селект - категорія
+    const sortSelect = document.querySelectorAll('.filters-container select')[1]; // Другий селект - сортування
+
+    if (searchInput) {
+        searchInput.addEventListener('input', debounce((e) => {
+            filters.search = e.target.value;
+            loadTours();
+        }, 500));
+    }
+
+    if (categorySelect) {
+        categorySelect.addEventListener('change', (e) => {
+            filters.category = e.target.value;
+            loadTours();
+        });
+    }
+
+    if (sortSelect) {
+        sortSelect.addEventListener('change', (e) => {
+            // Мапимо значення з HTML на API параметри
+            const val = e.target.value;
+            if (val.includes('рейтингом')) filters.sort = 'rating';
+            else if (val.includes('ціною (низька)')) filters.sort = 'price_asc';
+            else if (val.includes('ціною (висока)')) filters.sort = 'price_desc';
+            else if (val.includes('популярністю')) filters.sort = 'popular';
+            else filters.sort = 'newest';
+
+            loadTours();
+        });
+    }
+}
+
+function debounce(func, timeout = 300){
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+}
 
 // === 1. ЛОГІКА РЕЙТИНГУ АГЕНЦІЙ ===
 
@@ -77,6 +129,10 @@ async function loadAgencies() {
             if (index === 1) rankIcon = `<div class="text-4xl mb-2">🥈</div><div class="text-2xl font-bold text-[#2D4952]">#2</div>`;
             if (index === 2) rankIcon = `<div class="text-4xl mb-2">🥉</div><div class="text-2xl font-bold text-[#A8B5B2]">#3</div>`;
 
+            // Посилання на профіль агенції (other_user_profile.html)
+            // Використовуємо owner_id, щоб відкрити сторінку користувача-агента
+            const profileLink = `other_user_profile.html?user_id=${agency.owner_id}`;
+
             const html = `
                 <div class="bg-white rounded-xl p-6 shadow-sm border border-[#2D4952]/20 hover:shadow-lg transition flex items-start gap-6">
                     <div class="flex flex-col items-center min-w-[60px]">
@@ -85,7 +141,10 @@ async function loadAgencies() {
                     <div class="flex-1">
                         <div class="flex justify-between items-start mb-2">
                             <div>
-                                <h3 class="text-xl font-bold text-[#281822]">${agency.name}</h3>
+                                <h3 class="text-xl font-bold text-[#281822] cursor-pointer hover:underline" 
+                                    onclick="window.location.href='${profileLink}'">
+                                    ${agency.name}
+                                </h3>
                                 <p class="text-sm text-[#2D4952]">${agency.description || 'Опис відсутній'}</p>
                             </div>
                             ${index === 0 ? '<span class="bg-[#48192E] text-[#D3CBC4] px-3 py-1 rounded-full text-xs font-bold"><i class="fas fa-award mr-1"></i> Лідер ринку</span>' : ''}
@@ -102,7 +161,8 @@ async function loadAgencies() {
                             </div>
                         </div>
                         <div class="flex gap-2 mt-4">
-                            <button class="btn-solid btn-view-agency-tours text-sm py-2">Всі тури агенції</button>
+                            <button onclick="filterByAgency('${agency.name}')" class="btn-solid text-sm py-2">Всі тури агенції</button>
+                            <button onclick="window.location.href='${profileLink}'" class="px-4 py-2 border border-[#2D4952]/20 rounded-lg text-[#281822] hover:bg-gray-50 font-medium">Про агенцію</button>
                         </div>
                     </div>
                 </div>
@@ -116,14 +176,40 @@ async function loadAgencies() {
     }
 }
 
+// Глобальна функція для фільтрації турів по агенції
+window.filterByAgency = (agencyName) => {
+    // 1. Перемикаємо на вигляд турів
+    const btnTours = document.getElementById('btn-view-tours');
+    if(btnTours) btnTours.click();
+
+    // 2. Вставляємо ім'я в пошук і оновлюємо фільтри
+    const searchInput = document.querySelector('.filters-container input[type="text"]');
+    if(searchInput) {
+        searchInput.value = agencyName;
+        filters.search = agencyName;
+        // Скидаємо категорію
+        filters.category = '';
+        const catSelect = document.querySelectorAll('.filters-container select')[0];
+        if(catSelect) catSelect.value = 'Всі категорії';
+
+        loadTours();
+    }
+};
+
 // === 2. ЗАВАНТАЖЕННЯ ТУРІВ ===
 
 async function loadTours() {
     const toursContainer = document.getElementById('tours-view');
     if (!toursContainer) return;
 
+    // Формуємо параметри запиту
+    const params = new URLSearchParams();
+    if (filters.search) params.append('search', filters.search);
+    if (filters.category && filters.category !== 'Всі категорії') params.append('category', filters.category);
+    if (filters.sort) params.append('sort', filters.sort);
+
     try {
-        const response = await fetch(`${API_URL}/tours`);
+        const response = await fetch(`${API_URL}/tours?${params}`);
         if (!response.ok) throw new Error('Failed to fetch tours');
 
         const data = await response.json();
@@ -132,7 +218,7 @@ async function loadTours() {
         toursContainer.innerHTML = '';
 
         if (!tours || tours.length === 0) {
-            toursContainer.innerHTML = '<p class="text-center text-gray-500 w-full col-span-2">Турів поки немає.</p>';
+            toursContainer.innerHTML = '<p class="text-center text-gray-500 w-full col-span-2">Турів не знайдено.</p>';
             return;
         }
 
@@ -150,7 +236,7 @@ async function loadTours() {
 function createTourCard(tour) {
     const image = tour.image_url || 'https://via.placeholder.com/400x300?text=No+Image';
 
-    // Формування дати
+    // Формування тексту дати
     let dateText = `${tour.duration_days} днів`;
     if (tour.available_dates && tour.available_dates.length > 0) {
         const nextDate = new Date(tour.available_dates[0]).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
@@ -164,7 +250,9 @@ function createTourCard(tour) {
                     <i class="fas fa-briefcase"></i>
                 </div>
                 <div class="card-user-info">
-                    <div class="card-user-name hover:underline">${tour.agency_name || 'Агенція'}</div>
+                    <div class="card-user-name hover:underline" onclick="event.stopPropagation(); filterByAgency('${tour.agency_name}')">
+                        ${tour.agency_name || 'Агенція'}
+                    </div>
                     <div class="card-user-sub text-[#2D4952]">
                         <i class="fas fa-map-marker-alt mr-1"></i> ${tour.location}
                     </div>
@@ -172,7 +260,7 @@ function createTourCard(tour) {
             </div>
 
             <div class="card-image-middle h-64 bg-gray-50 relative overflow-hidden">
-                <img src="${image}" alt="${tour.title}" class="w-full h-full object-contain transition duration-500 group-hover:scale-105">
+                <img src="${image}" alt="${tour.title}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
                 <span class="card-badge">${tour.category_name || 'Тур'}</span>
             </div>
 
@@ -187,7 +275,7 @@ function createTourCard(tour) {
                     <div class="flex items-center gap-3 text-sm text-gray-700">
                         <i class="fas fa-star text-yellow-500 w-5 text-center"></i>
                         <span class="font-bold">${tour.rating || 'New'}</span> 
-                        <span class="text-xs text-gray-400 font-normal">(Рейтинг туру)</span>
+                        <span class="text-xs text-gray-400 font-normal">(Рейтинг)</span>
                     </div>
                 </div>
             </div>
@@ -222,6 +310,7 @@ window.openTourDetails = async (id) => {
 
     modal.classList.add('active');
 
+    // Отримуємо елементи модалки
     const titleEl = document.getElementById('modal-tour-title');
     const descEl = document.getElementById('modal-tour-desc');
     const programEl = document.getElementById('modal-tour-program');
@@ -235,6 +324,7 @@ window.openTourDetails = async (id) => {
     const saveBtn = document.getElementById('modal-save-btn');
     const bookBtn = document.getElementById('modal-book-btn');
 
+    // Стан завантаження
     titleEl.innerText = 'Завантаження...';
     descEl.innerText = '';
     programEl.innerText = 'Завантаження...';
@@ -295,7 +385,11 @@ window.openTourDetails = async (id) => {
 
         bookBtn.onclick = () => openBookingModal(tour);
         checkIfSaved(id, saveBtn);
-        saveBtn.onclick = () => toggleSaveTour(id, saveBtn);
+        // Видаляємо старі слухачі (через замикання) і ставимо новий
+        const newSaveBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+        newSaveBtn.onclick = () => toggleSaveTour(id, newSaveBtn);
+
         loadTourComments(id);
 
     } catch (error) {
@@ -346,19 +440,23 @@ async function toggleSaveTour(id, btn) {
 
 function updateSaveBtnUI(btn, isSaved) {
     const icon = btn.querySelector('i');
-    const text = btn.querySelector('span');
+    const text = btn.querySelector('span'); // Якщо є текст
 
     if (isSaved) {
-        btn.classList.add('saved', 'text-[#48192E]');
-        btn.classList.remove('text-gray-400');
-        icon.classList.remove('far');
-        icon.classList.add('fas');
+        btn.classList.add('saved', 'text-[#48192E]', 'border-[#48192E]');
+        btn.classList.remove('text-gray-400', 'border-gray-200');
+        if(icon) {
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+        }
         if(text) text.innerText = 'В обраному';
     } else {
-        btn.classList.remove('saved', 'text-[#48192E]');
-        btn.classList.add('text-gray-400');
-        icon.classList.remove('fas');
-        icon.classList.add('far');
+        btn.classList.remove('saved', 'text-[#48192E]', 'border-[#48192E]');
+        btn.classList.add('text-gray-400', 'border-gray-200'); // Повертаємо сірий
+        if(icon) {
+            icon.classList.remove('fas');
+            icon.classList.add('far');
+        }
         if(text) text.innerText = 'В обране';
     }
 }
@@ -427,6 +525,8 @@ async function handleCommentSubmit(e) {
     } catch (e) { console.error(e); }
 }
 
+// === 4. БРОНЮВАННЯ ===
+
 function openBookingModal(tour) {
     const modal = document.getElementById('tour-booking-modal');
     modal.classList.add('active');
@@ -450,29 +550,32 @@ function openBookingModal(tour) {
     }
 }
 
-document.getElementById('booking-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const tourId = document.getElementById('booking-tour-id').value;
-    const phone = document.getElementById('booking-phone').value;
-    const participants = document.getElementById('booking-participants').value;
-    const date = document.getElementById('booking-date-picker').value;
+const bookingForm = document.getElementById('booking-form');
+if (bookingForm) {
+    bookingForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const tourId = document.getElementById('booking-tour-id').value;
+        const phone = document.getElementById('booking-phone').value;
+        const participants = document.getElementById('booking-participants').value;
+        const date = document.getElementById('booking-date-picker').value;
 
-    if (!date) { alert("Оберіть дату"); return; }
+        if (!date) { alert("Оберіть дату"); return; }
 
-    try {
-        const res = await fetch(`${API_URL}/tours/${tourId}/book`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ phone, date, participants })
-        });
+        try {
+            const res = await fetch(`${API_URL}/tours/${tourId}/book`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ phone, date, participants })
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        if(res.ok) {
-            alert(data.message);
-            document.getElementById('tour-booking-modal').classList.remove('active');
-        } else {
-            alert(data.error || 'Помилка бронювання');
-        }
-    } catch(e) { console.error(e); }
-});
+            if(res.ok) {
+                alert(data.message);
+                document.getElementById('tour-booking-modal').classList.remove('active');
+            } else {
+                alert(data.error || 'Помилка бронювання');
+            }
+        } catch(e) { console.error(e); }
+    });
+}
