@@ -323,6 +323,31 @@ router.delete('/saved', authenticateToken, async (req, res) => {
 });
 
 /**
+ * POST /api/forum/posts/:id/save
+ * Додавання поста в збережені.
+ */
+router.post('/posts/:id/save', authenticateToken, async (req, res) => {
+    const postId = req.params.id;
+    const userId = req.user.userId;
+
+    // Перевірка на агента (якщо агентам заборонено зберігати, як і тури)
+    if (req.user.isAgent) {
+        return res.status(403).json({ error: 'Турагенти не можуть додавати пости в обране.' });
+    }
+
+    try {
+        await pool.query(
+            `INSERT INTO user_saved_posts (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+            [userId, postId]
+        );
+        res.json({ message: 'Пост збережено.' });
+    } catch (error) {
+        console.error('Помилка збереження поста:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    }
+});
+
+/**
  * DELETE /api/forum/saved/:id
  * Видалення одного збереженого поста.
  */
@@ -433,38 +458,6 @@ router.post('/posts/:id/comments', authenticateToken, async (req, res) => {
     } catch (error) {
         console.error('Помилка додавання коментаря:', error);
         res.status(500).json({ error: 'Помилка сервера.' });
-    }
-});
-
-// POST /api/forum/posts/:id/save - Додати в обране
-router.post('/posts/:id/save', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
-    const postId = req.params.id;
-
-    try {
-        await pool.query(
-            `INSERT INTO user_saved_posts (user_id, post_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-            [userId, postId]
-        );
-        res.json({ message: 'Пост збережено', saved: true });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// GET /api/forum/posts/:id/is-saved - Перевірка статусу
-router.get('/posts/:id/is-saved', authenticateToken, async (req, res) => {
-    const userId = req.user.userId;
-    const postId = req.params.id;
-    try {
-        const result = await pool.query(
-            `SELECT 1 FROM user_saved_posts WHERE user_id = $1 AND post_id = $2`,
-            [userId, postId]
-        );
-        res.json({ saved: result.rows.length > 0 });
-    } catch (error) {
-        res.status(500).json({ error: 'Server error' });
     }
 });
 
