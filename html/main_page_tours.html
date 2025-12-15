@@ -153,6 +153,38 @@
     </div>
 </div>
 
+<div id="tour-booking-modal" class="modal-backdrop">
+    <div class="modal-content max-w-md">
+        <div class="modal-header">
+            <h3 class="text-xl font-bold text-[#281822]">Бронювання туру</h3>
+            <button class="modal-close-btn">&times;</button>
+        </div>
+        <form id="booking-form" class="modal-body space-y-4">
+            <input type="hidden" id="booking-tour-id">
+
+            <div id="booking-tour-info" class="font-bold text-[#48192E]"></div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Дата</label>
+                <select id="booking-date-select" class="w-full border p-2 rounded hidden"></select>
+                <input type="date" id="booking-date-input" class="w-full border p-2 rounded">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Кількість учасників</label>
+                <input type="number" id="booking-participants" min="1" value="1" class="w-full border p-2 rounded">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium mb-1">Контактний телефон</label>
+                <input type="tel" id="booking-phone" required placeholder="+380..." class="w-full border p-2 rounded">
+            </div>
+
+            <button type="submit" class="btn-solid w-full">Підтвердити бронювання</button>
+        </form>
+    </div>
+</div>
+
 <script type="module" src="../js/modules/navigation.js"></script>
 <script type="module" src="../js/modules/tours.js"></script>
 <script type="module" src="../js/index.js"></script>

@@ -219,7 +219,7 @@ router.get('/me/tours', authenticateToken, async (req, res) => {
  */
 router.post('/magnets', authenticateToken, upload.single('image'), async (req, res) => {
     const userId = req.user.userId;
-    const { type, shape, comment, country, city } = req.body;
+    const { type, shape, comment, country, city, linked_tour_id } = req.body;
 
     const client = await pool.connect();
     try {
@@ -242,8 +242,8 @@ router.post('/magnets', authenticateToken, upload.single('image'), async (req, r
 
         // 3. Зберігаємо замовлення
         const insertQuery = `
-            INSERT INTO magnets (country, city, icon_class, color_group, image_url, shape)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            INSERT INTO magnets (country, city, icon_class, color_group, image_url, shape, linked_tour_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING magnet_id;
         `;
         await client.query(insertQuery, [
@@ -262,6 +262,88 @@ router.post('/magnets', authenticateToken, upload.single('image'), async (req, r
         await client.query('ROLLBACK');
         console.error('Magnet Order Error:', error);
         res.status(500).json({ error: 'Помилка додавання магніту.' });
+    } finally {
+        client.release();
+    }
+});
+
+router.get('/bookings', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+
+    // Отримуємо бронювання тільки для турів цієї агенції
+    const query = `
+        SELECT tb.*, t.title AS tour_title, up.first_name, up.last_name, up.email
+        FROM tour_bookings tb
+        JOIN tours t ON tb.tour_id = t.tour_id
+        JOIN agencies a ON t.agency_id = a.agency_id
+        JOIN user_profiles up ON tb.user_id = up.user_id
+        JOIN users u ON up.user_id = u.user_id
+        WHERE a.owner_id = $1
+        ORDER BY tb.booking_date DESC;
+    `;
+
+    try {
+        const result = await pool.query(query, [userId]);
+        res.json({ bookings: result.rows });
+    } catch(e) {
+        res.status(500).json({ error: 'Error fetching bookings' });
+    }
+});
+
+// === ПІДТВЕРДЖЕННЯ БРОНЮВАННЯ ===
+router.post('/bookings/:id/confirm', authenticateToken, async (req, res) => {
+    const bookingId = req.params.id;
+    const userId = req.user.userId; // ID агента
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Перевірка прав (чи це бронювання належить агенції юзера)
+        // ... (код перевірки owner_id через join tables)
+
+        // 2. Оновлення статусу
+        await client.query(`UPDATE tour_bookings SET status = 'confirmed' WHERE booking_id = $1`, [bookingId]);
+
+        // 3. Отримання даних для "Email" та Магніту
+        const bookingData = await client.query(`
+            SELECT tb.user_id, t.title, t.tour_id, m.magnet_id, u.email
+            FROM tour_bookings tb
+            JOIN tours t ON tb.tour_id = t.tour_id
+            JOIN users u ON tb.user_id = u.user_id
+            LEFT JOIN magnets m ON t.tour_id = m.linked_tour_id
+            WHERE tb.booking_id = $1
+        `, [bookingId]);
+
+        const { user_id: clientUserId, title, magnet_id, email: clientEmail } = bookingData.rows[0];
+
+        // 4. "Відправка Email" (імітація)
+        console.log(`[EMAIL SENDING] To: ${clientEmail}. Subject: Тур підтверджено! Tour: ${title}.`);
+
+        // 5. Видача магніту (якщо він прив'язаний до туру)
+        let magnetMessage = '';
+        if (magnet_id) {
+            // Перевіряємо, чи немає вже такого магніту у юзера
+            await client.query(`
+                INSERT INTO user_fridge_magnets (user_id, magnet_id, x_position, y_position)
+                VALUES ($1, $2, 50, 50)
+                ON CONFLICT DO NOTHING
+            `, [clientUserId, magnet_id]);
+            magnetMessage = 'Магніт автоматично додано на холодильник клієнта!';
+        }
+
+        // 6. Створення сповіщення для клієнта
+        await client.query(`
+            INSERT INTO notifications (user_id, message) 
+            VALUES ($1, $2)
+        `, [clientUserId, `Ваше бронювання туру "${title}" підтверджено! ${magnet_id ? 'Вам видано новий магніт!' : ''}`]);
+
+        await client.query('COMMIT');
+        res.json({ message: `Бронювання підтверджено. ${magnetMessage}` });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        res.status(500).json({ error: 'Server error' });
     } finally {
         client.release();
     }

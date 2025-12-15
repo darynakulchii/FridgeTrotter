@@ -99,10 +99,8 @@ router.get('/:id', async (req, res) => {
             t.*,
             a.name AS agency_name,
             tc.name_ukr AS category_name,
-            COALESCE(
-                            ARRAY_AGG(ti.image_url) FILTER (WHERE ti.image_url IS NOT NULL),
-                            '{}'
-            ) AS images
+            COALESCE(ARRAY_AGG(ti.image_url) FILTER (WHERE ti.image_url IS NOT NULL), '{}') AS images,
+            (SELECT magnet_id FROM magnets WHERE linked_tour_id = t.tour_id LIMIT 1) as linked_magnet_id
         FROM tours t
                  JOIN agencies a ON t.agency_id = a.agency_id
                  LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
@@ -127,11 +125,18 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', authenticateToken, upload.array('images', 10), async (req, res) => {
     const userId = req.user.userId;
-    const { title, price, duration, location, description, category_id } = req.body;
-    const files = req.files; // Тут тепер масив файлів
+    const { title, price, duration, location, description, category_id, program, dates } = req.body;
+    const files = req.files;
 
     if (!title || !price || !duration || !location) {
         return res.status(400).json({ error: 'Заповніть всі обов\'язкові поля.' });
+    }
+
+    let datesArray = [];
+    if (dates) {
+        try {
+            datesArray = Array.isArray(dates) ? dates : JSON.parse(dates);
+        } catch(e) { datesArray = []; }
     }
 
     const client = await pool.connect();
@@ -159,20 +164,16 @@ router.post('/', authenticateToken, upload.array('images', 10), async (req, res)
 
         // 3. Створюємо тур (зберігаємо головне фото в image_url для сумісності з картками на головній)
         const insertTourQuery = `
-            INSERT INTO tours (agency_id, title, description, location, duration_days, price_uah, image_url, category_id)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            INSERT INTO tours (agency_id, title, description, location, duration_days, price_uah, image_url, category_id, program, available_dates)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING tour_id;
         `;
 
         const tourRes = await client.query(insertTourQuery, [
-            agencyId,
-            title,
-            description,
-            location,
-            parseInt(duration),
-            parseFloat(price),
-            mainImageUrl,
-            category_id ? parseInt(category_id) : null
+            agencyId, title, description, location,
+            parseInt(duration), parseFloat(price),
+            mainImageUrl, category_id ? parseInt(category_id) : null,
+            program, datesArray
         ]);
 
         const newTourId = tourRes.rows[0].tour_id;
@@ -201,6 +202,65 @@ router.post('/', authenticateToken, upload.array('images', 10), async (req, res)
         res.status(500).json({ error: 'Помилка сервера при створенні туру.' });
     } finally {
         client.release();
+    }
+});
+
+// === КОМЕНТАРІ ДО ТУРІВ ===
+
+// Отримати коментарі
+router.get('/:id/comments', async (req, res) => {
+    const tourId = req.params.id;
+    const query = `
+        SELECT tc.*, up.first_name, up.last_name, up.profile_image_url 
+        FROM tour_comments tc
+        JOIN user_profiles up ON tc.user_id = up.user_id
+        WHERE tc.tour_id = $1
+        ORDER BY tc.created_at DESC;
+    `;
+    try {
+        const result = await pool.query(query, [tourId]);
+        res.json({ comments: result.rows });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Додати коментар
+router.post('/:id/comments', authenticateToken, async (req, res) => {
+    const tourId = req.params.id;
+    const userId = req.user.userId;
+    const { content } = req.body;
+    if(!content) return res.status(400).json({error: 'Пустий коментар'});
+
+    try {
+        await pool.query('INSERT INTO tour_comments (tour_id, user_id, content) VALUES ($1, $2, $3)', [tourId, userId, content]);
+        res.json({ message: 'Коментар додано' });
+    } catch(error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// === БРОНЮВАННЯ ТУРУ ===
+router.post('/:id/book', authenticateToken, async (req, res) => {
+    const tourId = req.params.id;
+    const userId = req.user.userId;
+    const { phone, date, participants } = req.body;
+
+    if (!phone || !participants) return res.status(400).json({ error: 'Заповніть обовʼязкові поля' });
+
+    try {
+        await pool.query(
+            `INSERT INTO tour_bookings (user_id, tour_id, contact_phone, selected_date, participants_count)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [userId, tourId, phone, date || null, participants]
+        );
+
+        // Тут можна додати відправку сповіщення агенту через socket.io
+
+        res.json({ message: 'Заявку на бронювання відправлено! Менеджер звʼяжеться з вами.' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Помилка бронювання' });
     }
 });
 

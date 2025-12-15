@@ -86,7 +86,7 @@ window.openTourDetails = async (id) => {
     const titleEl = document.getElementById('modal-tour-title');
     const descEl = document.getElementById('modal-tour-desc');
     const imgEl = document.getElementById('modal-tour-image');
-    const galleryEl = document.getElementById('modal-tour-gallery'); // Новий елемент
+    const galleryEl = document.getElementById('modal-tour-gallery');
     const locEl = document.getElementById('modal-tour-loc');
     const durEl = document.getElementById('modal-tour-duration');
     const priceEl = document.getElementById('modal-tour-price');
@@ -127,9 +127,72 @@ window.openTourDetails = async (id) => {
             });
         }
 
+        // 1. Відображення програми
+        const programHtml = tour.program
+            ? `<div class="mt-6 border-t pt-4"><h4 class="font-bold mb-2">Програма туру</h4><p class="whitespace-pre-wrap text-sm text-gray-700">${tour.program}</p></div>`
+            : '';
+        document.getElementById('modal-tour-desc').insertAdjacentHTML('afterend', programHtml);
+
+        // 2. Налаштування кнопки "Забронювати"
+        const bookBtn = document.querySelector('#tour-details-modal .btn-solid'); // Знайти кнопку в модалці
+        bookBtn.innerText = 'Забронювати';
+        bookBtn.onclick = () => openBookingModal(tour);
+
+        // 3. Завантаження коментарів
+        loadTourComments(id);
+
     } catch (error) {
         console.error(error);
         titleEl.innerText = 'Помилка';
         descEl.innerText = 'Не вдалося завантажити інформацію про тур.';
     }
 };
+
+function openBookingModal(tour) {
+    const modal = document.getElementById('tour-booking-modal');
+    modal.classList.add('active');
+
+    document.getElementById('booking-tour-id').value = tour.tour_id;
+    document.getElementById('booking-tour-info').innerText = tour.title;
+
+    // Логіка дат
+    const dateSelect = document.getElementById('booking-date-select');
+    const dateInput = document.getElementById('booking-date-input');
+
+    if (tour.available_dates && tour.available_dates.length > 0) {
+        dateInput.classList.add('hidden');
+        dateSelect.classList.remove('hidden');
+        dateSelect.innerHTML = tour.available_dates.map(d => `<option value="${d}">${d}</option>`).join('');
+    } else {
+        dateSelect.classList.add('hidden');
+        dateInput.classList.remove('hidden');
+    }
+}
+
+// Обробка форми бронювання
+document.getElementById('booking-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const tourId = document.getElementById('booking-tour-id').value;
+    const phone = document.getElementById('booking-phone').value;
+    const participants = document.getElementById('booking-participants').value;
+
+    const dateSelect = document.getElementById('booking-date-select');
+    const dateInput = document.getElementById('booking-date-input');
+    const date = !dateSelect.classList.contains('hidden') ? dateSelect.value : dateInput.value;
+
+    try {
+        const res = await fetch(`${API_URL}/tours/${tourId}/book`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ phone, date, participants })
+        });
+        const data = await res.json();
+        if(res.ok) {
+            alert(data.message);
+            document.getElementById('tour-booking-modal').classList.remove('active');
+            document.getElementById('tour-details-modal').classList.remove('active');
+        } else {
+            alert(data.error);
+        }
+    } catch(e) { console.error(e); }
+});
