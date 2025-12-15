@@ -31,6 +31,31 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function handleGlobalClicks(e) {
+
+    const restrictedSelectors = [
+        '#agent-btn-account',
+        '#agent-btn-add-tour',
+        '#agent-btn-add-magnet',
+        '#agent-btn-add-post'
+    ];
+
+    const clickedRestrictedBtn = e.target.closest(restrictedSelectors.join(', '));
+
+    if (clickedRestrictedBtn) {
+        const user = JSON.parse(localStorage.getItem('user'));
+
+        if (!user || !user.isAgent) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('agent-mode-modal')?.classList.remove('active');
+
+            if (confirm('Ця функція доступна лише для авторизованих турагентів. Перейти на сторінку входу для бізнесу?')) {
+                window.location.href = 'agency_login.html';
+            }
+            return;
+        }
+    }
+
     const btnAddTour = e.target.closest('#agent-btn-add-tour');
     if (btnAddTour) {
         document.getElementById('agent-mode-modal')?.classList.remove('active');

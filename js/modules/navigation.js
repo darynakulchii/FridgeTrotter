@@ -20,6 +20,8 @@ document.addEventListener("DOMContentLoaded", function() {
             updateAuthButtonState();
             protectNavigationLinks();
             redirectAgentProfileLinks();
+            hideAgentRegistrationBtn();
+
         })
         .catch(error => console.error('Error loading navigation:', error));
 });
@@ -174,5 +176,14 @@ function redirectAgentProfileLinks() {
         if (headerProfileIcon) {
             headerProfileIcon.className = 'fas fa-briefcase';
         }
+    }
+}
+
+function hideAgentRegistrationBtn() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    const registerBtn = document.getElementById('agent-btn-register');
+
+    if (user && user.isAgent && registerBtn) {
+        registerBtn.style.display = 'none';
     }
 }
