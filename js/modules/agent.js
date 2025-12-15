@@ -1,6 +1,8 @@
 import { API_URL, getHeaders } from '../api-config.js';
 import { setupTourPhotoUpload, getTourPhotos } from './create_tour.js';
 
+let datePickerInstance = null;
+
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Глобальний слухач кліків (делегування)
     document.addEventListener('click', (e) => {
@@ -60,6 +62,7 @@ function handleGlobalClicks(e) {
         if (modal) {
             modal.classList.add('active');
             setupTourPhotoUpload();
+            initDatePicker();
         }
         return;
     }
@@ -115,6 +118,24 @@ function handleGlobalClicks(e) {
     }
 }
 
+function initDatePicker() {
+    const dateInput = document.getElementById('agent-tour-dates');
+    if (dateInput && typeof flatpickr !== 'undefined') {
+        // Якщо вже був створений - знищуємо старий (щоб очистити)
+        if (datePickerInstance) datePickerInstance.destroy();
+
+        datePickerInstance = flatpickr(dateInput, {
+            mode: "multiple", // Дозволяє вибір кількох дат
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            locale: "uk", // Українська локалізація
+            onChange: function(selectedDates, dateStr, instance) {
+                // Можна додати логіку валідації тут
+            }
+        });
+    }
+}
+
 // === ЛОГІКА ТУРІВ ===
 
 async function handleTourSubmit(e) {
@@ -128,11 +149,19 @@ async function handleTourSubmit(e) {
 
     const formData = new FormData(form);
 
-    // Видаляємо дефолтне поле images/photos з інпута
+    let finalDates = [];
+    if (datePickerInstance && datePickerInstance.selectedDates.length > 0) {
+        finalDates = datePickerInstance.selectedDates.map(date => date.toISOString().split('T')[0]);
+    }
+
+    formData.delete('dates');
+    if (finalDates.length > 0) {
+        formData.append('dates', JSON.stringify(finalDates));
+    }
+
     formData.delete('images');
     formData.delete('photos');
 
-    // Отримуємо актуальний масив файлів з create_tour.js
     const files = getTourPhotos();
 
     if (files.length > 0) {

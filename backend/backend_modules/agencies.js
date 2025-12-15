@@ -272,14 +272,13 @@ router.post('/magnets', authenticateToken, upload.single('image'), async (req, r
 router.get('/bookings', authenticateToken, async (req, res) => {
     const userId = req.user.userId;
 
-    // Отримуємо бронювання тільки для турів цієї агенції
     const query = `
-        SELECT tb.*, t.title AS tour_title, up.first_name, up.last_name, up.email
+        SELECT tb.*, t.title AS tour_title, up.first_name, up.last_name, u.email
         FROM tour_bookings tb
-        JOIN tours t ON tb.tour_id = t.tour_id
-        JOIN agencies a ON t.agency_id = a.agency_id
-        JOIN user_profiles up ON tb.user_id = up.user_id
-        JOIN users u ON up.user_id = u.user_id
+                 JOIN tours t ON tb.tour_id = t.tour_id
+                 JOIN agencies a ON t.agency_id = a.agency_id
+                 JOIN user_profiles up ON tb.user_id = up.user_id
+                 JOIN users u ON up.user_id = u.user_id
         WHERE a.owner_id = $1
         ORDER BY tb.booking_date DESC;
     `;

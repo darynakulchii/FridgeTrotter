@@ -136,7 +136,13 @@ router.post('/', authenticateToken, upload.array('images', 10), async (req, res)
     if (dates) {
         try {
             datesArray = Array.isArray(dates) ? dates : JSON.parse(dates);
-        } catch(e) { datesArray = []; }
+        } catch(e) {
+            if (typeof dates === 'string') {
+                datesArray = dates.split(',').map(d => d.trim());
+            } else {
+                datesArray = [];
+            }
+        }
     }
 
     const client = await pool.connect();

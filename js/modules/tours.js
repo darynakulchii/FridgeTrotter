@@ -1,5 +1,7 @@
 import { API_URL, getHeaders } from '../api-config.js';
 
+let bookingPicker = null;
+
 document.addEventListener("DOMContentLoaded", function() {
     loadTours();
 });
@@ -24,7 +26,6 @@ async function loadTours() {
             return;
         }
 
-        // Генеруємо HTML для кожного туру
         tours.forEach(tour => {
             const cardHTML = createTourCard(tour);
             toursContainer.insertAdjacentHTML('beforeend', cardHTML);
@@ -37,7 +38,6 @@ async function loadTours() {
 }
 
 function createTourCard(tour) {
-    // Дефолтне фото, якщо немає image_url
     const image = tour.image_url || 'https://via.placeholder.com/400x300?text=No+Image';
 
     return `
@@ -155,17 +155,29 @@ function openBookingModal(tour) {
     document.getElementById('booking-tour-id').value = tour.tour_id;
     document.getElementById('booking-tour-info').innerText = tour.title;
 
-    // Логіка дат
-    const dateSelect = document.getElementById('booking-date-select');
-    const dateInput = document.getElementById('booking-date-input');
+    const dateInput = document.getElementById('booking-date-picker');
 
-    if (tour.available_dates && tour.available_dates.length > 0) {
-        dateInput.classList.add('hidden');
-        dateSelect.classList.remove('hidden');
-        dateSelect.innerHTML = tour.available_dates.map(d => `<option value="${d}">${d}</option>`).join('');
-    } else {
-        dateSelect.classList.add('hidden');
-        dateInput.classList.remove('hidden');
+    // Знищуємо старий екземпляр, якщо є
+    if (bookingPicker) bookingPicker.destroy();
+
+    // Налаштування Flatpickr
+    if (typeof flatpickr !== 'undefined') {
+        const config = {
+            locale: "uk",
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            disableMobile: "true" // Щоб на мобільних теж працював наш календар, а не нативний
+        };
+
+        if (tour.available_dates && tour.available_dates.length > 0) {
+            config.enable = tour.available_dates;
+        } else {
+            // Якщо масив дат порожній або null -> тур доступний у будь-який день (або можна заблокувати все)
+            // Припустимо, якщо дат немає, дозволяємо обирати будь-яку дату від сьогодні
+            // config.minDate = "today"; (вже встановлено)
+        }
+
+        bookingPicker = flatpickr(dateInput, config);
     }
 }
 
@@ -175,10 +187,12 @@ document.getElementById('booking-form')?.addEventListener('submit', async (e) =>
     const tourId = document.getElementById('booking-tour-id').value;
     const phone = document.getElementById('booking-phone').value;
     const participants = document.getElementById('booking-participants').value;
+    const date = document.getElementById('booking-date-picker').value;
 
-    const dateSelect = document.getElementById('booking-date-select');
-    const dateInput = document.getElementById('booking-date-input');
-    const date = !dateSelect.classList.contains('hidden') ? dateSelect.value : dateInput.value;
+    if (!date) {
+        alert("Будь ласка, оберіть дату туру.");
+        return;
+    }
 
     try {
         const res = await fetch(`${API_URL}/tours/${tourId}/book`, {
