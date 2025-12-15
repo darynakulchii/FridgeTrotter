@@ -2,9 +2,8 @@ import { API_URL, getHeaders } from '../api-config.js';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadCompanions();
-    initCreateAdButton(); // Ініціалізація кнопки створення
+    initCreateAdButton();
 
-    // Слухачі подій для фільтрів
     document.getElementById('companion-search')?.addEventListener('input', debounce(loadCompanions, 500));
     document.getElementById('companion-type')?.addEventListener('change', loadCompanions);
 });
@@ -20,7 +19,6 @@ window.contactUser = (userId) => {
     window.location.href = `chat.html?user_id=${userId}`;
 };
 
-// === Обробка кліку на кнопку "Створити оголошення" ===
 function initCreateAdButton() {
     const createBtn = document.getElementById('create-ad-btn');
     if (createBtn) {
@@ -37,13 +35,11 @@ function initCreateAdButton() {
     }
 }
 
-// === Завантаження та відображення оголошень ===
 async function loadCompanions() {
     const container = document.getElementById('companions-container');
     const search = document.getElementById('companion-search')?.value || '';
     const type = document.getElementById('companion-type')?.value || '';
 
-    // Формування URL з параметрами
     const params = new URLSearchParams();
     if (search) params.append('search', search);
     if (type) params.append('type', type);
@@ -60,35 +56,47 @@ async function loadCompanions() {
         }
 
         data.ads.forEach(ad => {
-            // Розрахунок віку, якщо він є
             const ageDisplay = ad.author_age ? `${ad.author_age} років` : '';
-
-            // Форматування дат
             const start = new Date(ad.start_date).toLocaleDateString('uk-UA');
             const end = new Date(ad.end_date).toLocaleDateString('uk-UA');
 
-            // Генерація HTML картки
+            // Формування рядка бюджету
+            let budgetHtml = '';
+            if (ad.budget_min || ad.budget_max) {
+                const min = ad.budget_min ? `${ad.budget_min}` : '0';
+                const max = ad.budget_max ? `${ad.budget_max}` : '...';
+                budgetHtml = `<div class="flex items-center gap-2 text-sm text-[#48192E] font-semibold mt-1">
+                                <i class="fas fa-wallet w-5 text-center"></i> ${min} - ${max} грн
+                              </div>`;
+            }
+
+            let imageHtml = '';
+            if (ad.images && ad.images.length > 0) {
+                const imgUrl = ad.images[0];
+                imageHtml = `
+                    <div class="w-full h-48 mb-4 rounded-lg overflow-hidden relative">
+                        <img src="${imgUrl}" class="w-full h-full object-cover transition hover:scale-105 duration-500">
+                        ${ad.images.length > 1 ? `<span class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded font-bold">+${ad.images.length - 1}</span>` : ''}
+                    </div>
+                `;
+            }
+
             const html = `
-                <div class="companion-card">
-                    <div class="flex items-start gap-4 mb-4">
-                         <a href="other_user_profile.html?user_id=${ad.user_id}" class="w-12 h-12 rounded-full bg-[#48192E] text-[#D3CBC4] flex items-center justify-center font-bold text-lg shrink-0 overflow-hidden hover:opacity-80 transition cursor-pointer">
-                            ${ad.author_avatar
-                ? `<img src="${ad.author_avatar}" class="w-full h-full object-cover">`
-                : (ad.first_name[0] + ad.last_name[0]).toUpperCase()}
-                        </a>
-                        
+                <div class="companion-card h-full flex flex-col">
+                    <div class="flex items-start gap-4 mb-3">
+                         <a href="other_user_profile.html?user_id=${ad.user_id}" ...>...аватар...</a>
                         <div>
                             <div class="flex items-center gap-2">
-                                <a href="other_user_profile.html?user_id=${ad.user_id}" class="font-bold text-[#281822] text-lg hover:underline hover:text-[#48192E] transition">
-                                    ${ad.first_name} ${ad.last_name}
-                                </a>
+                                <a href="..." class="font-bold text-[#281822] text-lg ...">${ad.first_name} ${ad.last_name}</a>
                                 <span class="text-gray-500 text-sm">${ageDisplay ? '• ' + ageDisplay : ''}</span>
                             </div>
                             <p class="text-[#48192E] font-semibold mt-0.5"><i class="fas fa-map-marker-alt mr-1"></i> ${ad.destination_country}</p>
                         </div>
                     </div>
                     
-                    <p class="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3">${ad.description}</p>
+                    ${imageHtml}
+                    
+                    <p class="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-3 flex-grow">${ad.description}</p>
                     
                     <div class="space-y-2 mb-4 bg-gray-50 p-3 rounded-lg">
                         <div class="flex items-center gap-3 text-sm text-gray-700">
@@ -97,6 +105,7 @@ async function loadCompanions() {
                          <div class="flex items-center gap-3 text-sm text-gray-700">
                             <i class="fas fa-user-friends text-[#2D4952] w-5 text-center"></i><span>${ad.min_group_size}-${ad.max_group_size} особи</span>
                         </div>
+                        ${budgetHtml}
                     </div>
                     
                      <div class="flex flex-wrap gap-2 mb-6">
@@ -118,7 +127,6 @@ async function loadCompanions() {
     }
 }
 
-// === Функція debounce для оптимізації пошуку ===
 function debounce(func, timeout = 300){
     let timer;
     return (...args) => {

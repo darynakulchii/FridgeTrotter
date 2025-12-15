@@ -307,3 +307,14 @@ CREATE TABLE IF NOT EXISTS tour_images (
                                            image_url VARCHAR(500) NOT NULL,
                                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE companion_ads
+    ADD COLUMN budget_min NUMERIC(10, 2),
+    ADD COLUMN budget_max NUMERIC(10, 2);
+
+CREATE TABLE IF NOT EXISTS companion_ad_images (
+                                                   image_id SERIAL PRIMARY KEY,
+                                                   ad_id INT NOT NULL REFERENCES companion_ads(ad_id) ON DELETE CASCADE,
+                                                   image_url VARCHAR(500) NOT NULL,
+                                                   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
