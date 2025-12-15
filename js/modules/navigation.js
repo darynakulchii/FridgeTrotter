@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-    fetch('navigation.html')
+    fetch('/FridgeTrotter/html/navigation.html')
         .then(response => response.text())
         .then(data => {
             // 1. Вставити HTML навігації на початок body
@@ -14,17 +14,40 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (currentPath.includes(page)) {
                     tab.classList.add('active');
                 }
+
             });
 
             initializeNavigationEvents();
             updateAuthButtonState();
             protectNavigationLinks();
+
+            initBugReportUpload();
+            initBugReportSubmit();
             redirectAgentProfileLinks();
             hideAgentRegistrationBtn();
 
         })
         .catch(error => console.error('Error loading navigation:', error));
 });
+
+function initBugReportUpload() {
+    const fileInput = document.getElementById('bug-image-input');
+    const previewImg = document.getElementById('bug-image-preview');
+    const placeholder = document.getElementById('bug-image-placeholder');
+
+    if (!fileInput) return; // модалка ще не існує
+
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        previewImg.src = URL.createObjectURL(file);
+        previewImg.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+    });
+}
+
+
 
 function initializeNavigationEvents() {
     // --- SIDEBAR ---
@@ -160,6 +183,38 @@ function protectNavigationLinks() {
             });
         }
     });
+
+}
+
+function initBugReportSubmit() {
+    const modal = document.getElementById('bug-report-modal');
+    if (!modal) return;
+
+    const submitBtn = modal.querySelector('button.btn-solid');
+    const textarea = modal.querySelector('textarea');
+
+    submitBtn.addEventListener('click', () => {
+        if (!textarea.value.trim()) {
+            alert('Будь ласка, опишіть проблему.');
+            return;
+        }
+
+        alert('Дякуємо! Повідомлення про помилку надіслано!');
+
+        // очищаємо форму
+        textarea.value = '';
+        const previewImg = document.getElementById('bug-image-preview');
+        const placeholder = document.getElementById('bug-image-placeholder');
+        const fileInput = document.getElementById('bug-image-input');
+
+        if (previewImg) previewImg.classList.add('hidden');
+        if (placeholder) placeholder.classList.remove('hidden');
+        if (fileInput) fileInput.value = '';
+
+        // закриваємо модалку
+        modal.classList.remove('active');
+    });
+}
 }
 
 function redirectAgentProfileLinks() {

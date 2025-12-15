@@ -432,7 +432,32 @@
             <button class="modal-close-btn">&times;</button>
         </div>
         <div class="modal-body space-y-4">
-            <textarea class="w-full border p-2 rounded-md h-32" placeholder="Опишіть проблему..."></textarea>
+
+    <textarea
+            id="bug-text"
+            class="w-full border p-2 rounded-md h-32"
+            placeholder="Опишіть проблему..."></textarea>
+
+            <!-- Завантаження зображення -->
+            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:bg-gray-50 relative"
+                 onclick="document.getElementById('bug-image-input').click()">
+
+                <input
+                        type="file"
+                        id="bug-image-input"
+                        accept="image/*"
+                        class="absolute inset-0 opacity-0 cursor-pointer"
+                        onchange="previewBugImage(event)">
+
+                <div id="bug-image-placeholder">
+                    <i class="far fa-image text-2xl text-gray-400 mb-1"></i>
+                    <p class="text-sm text-gray-500">Додати зображення (скріншот)</p>
+                </div>
+
+                <img id="bug-image-preview"
+                     class="hidden max-h-40 mx-auto rounded-md shadow mt-2 object-contain">
+            </div>
+
             <button class="btn-solid w-full">Надіслати</button>
         </div>
     </div>
