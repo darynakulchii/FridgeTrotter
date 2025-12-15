@@ -92,13 +92,47 @@ function renderProfileHeader(user) {
         // Кнопка Повідомлення
         const msgBtn = document.createElement('button');
         msgBtn.className = 'btn-action btn-message';
-        msgBtn.innerHTML = '<i class="far fa-comment-dots"></i> Написати';
+        msgBtn.innerHTML = 'Написати';
         msgBtn.onclick = () => {
             window.location.href = `chat.html?user_id=${targetUserId}`;
         };
 
         actionContainer.appendChild(followBtn);
         actionContainer.appendChild(msgBtn);
+
+        const contacts = document.getElementById('user-contacts');
+        contacts.innerHTML = '';
+
+        if (user.website) {
+            contacts.innerHTML += `
+        <div>
+            <i class="fas fa-globe mr-2 text-gray-400"></i>
+            <a href="${user.website}" target="_blank" class="text-[#48192E] hover:underline">
+                ${user.website}
+            </a>
+        </div>
+    `;
+        }
+
+        if (user.email) {
+            contacts.innerHTML += `
+        <div>
+            <i class="fas fa-envelope mr-2 text-gray-400"></i>
+            <a href="mailto:${user.email}" class="hover:underline">
+                ${user.email}
+            </a>
+        </div>
+    `;
+        }
+
+        if (user.phone) {
+            contacts.innerHTML += `
+        <div>
+            <i class="fas fa-phone mr-2 text-gray-400"></i>
+            ${user.phone}
+        </div>
+    `;
+        }
     }
 }
 
@@ -111,7 +145,7 @@ async function loadFridge() {
         const response = await fetch(`${API_URL}/fridge/${targetUserId}/layout`);
 
         if (response.status === 403) {
-            placeholder.querySelector('p').innerText = 'Цей холодильник приватний 🔒';
+            placeholder.querySelector('p').innerText = 'Цей холодильник приватний';
             return;
         }
 
