@@ -411,28 +411,23 @@ async function saveFridgeOnlyLayout() {
 // --- A. ПОСТИ (Мої та Збережені) ---
 
 async function loadMyPosts() {
-    const container = document.querySelector('#tab-my-posts');
-    // Зберігаємо заголовок перед очищенням
-    const header = container.querySelector('.flex.justify-between');
-
-    // Прив'язка кнопки створення
-    const createBtn = header ? header.querySelector('button') : null;
-    if(createBtn) createBtn.onclick = () => window.location.href = 'create_post.html';
+    // Тепер беремо саме грід-контейнер
+    const container = document.getElementById('my-posts-grid');
+    if (!container) return;
 
     try {
         const response = await fetch(`${API_URL}/forum/posts/my`, { headers: getHeaders() });
         const data = await response.json();
 
-        container.innerHTML = '';
-        if (header) container.appendChild(header);
+        container.innerHTML = ''; // Очищаємо тільки сітку, заголовок залишається
 
         if (data.posts.length === 0) {
-            container.insertAdjacentHTML('beforeend', '<p class="text-gray-500 mt-4">У вас немає публікацій.</p>');
+            // col-span-full розтягує повідомлення на всю ширину сітки
+            container.insertAdjacentHTML('beforeend', '<p class="text-gray-500 mt-4 col-span-full text-center">У вас немає публікацій.</p>');
             return;
         }
 
         data.posts.forEach(post => {
-            // Для "Мої пости" додаємо кнопки редагування/видалення
             const html = createUniversalPostCard(post, true);
             container.insertAdjacentHTML('beforeend', html);
         });
@@ -440,11 +435,14 @@ async function loadMyPosts() {
 }
 
 async function loadSavedPosts() {
-    const container = document.querySelector('#tab-saved-posts');
-    const header = container.querySelector('.flex.justify-between');
-    const clearBtn = header ? header.querySelector('button') : null;
+    const container = document.getElementById('saved-posts-grid');
+    const clearBtn = document.querySelector('#tab-saved-posts button');
 
+    // Логіка кнопки очищення залишається
     if(clearBtn) {
+        // Видаляємо старі слухачі (через клонування або перевірку),
+        // але найпростіше залишити як є, якщо функція викликається рідко.
+        // Для надійності:
         clearBtn.onclick = async () => {
             if(!confirm('Очистити всі збережені пости?')) return;
             await fetch(`${API_URL}/forum/saved`, { method: 'DELETE', headers: getHeaders() });
@@ -452,20 +450,21 @@ async function loadSavedPosts() {
         };
     }
 
+    if (!container) return;
+
     try {
         const response = await fetch(`${API_URL}/forum/posts/saved`, { headers: getHeaders() });
         const data = await response.json();
 
         container.innerHTML = '';
-        if(header) container.appendChild(header);
 
         if (data.posts.length === 0) {
-            container.insertAdjacentHTML('beforeend', '<p class="text-gray-500 mt-4">Збережених постів немає.</p>');
+            container.insertAdjacentHTML('beforeend', '<p class="text-gray-500 mt-4 col-span-full text-center">Збережених постів немає.</p>');
             return;
         }
 
         data.posts.forEach(post => {
-            const html = createUniversalPostCard(post, false); // false = не моє (збережене)
+            const html = createUniversalPostCard(post, false);
             container.insertAdjacentHTML('beforeend', html);
         });
     } catch (e) { console.error(e); }
@@ -523,7 +522,7 @@ function createUniversalPostCard(post, isMyPost) {
     }
 
     return `
-        <div class="universal-card mb-6">
+        <div class="universal-card"> 
             <div class="card-header-user">
                 <div class="card-avatar" style="background-color: #281822;">${avatarContent}</div>
                 <div class="card-user-info">
