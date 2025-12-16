@@ -291,59 +291,91 @@ router.get('/bookings', authenticateToken, async (req, res) => {
     }
 });
 
-// === ПІДТВЕРДЖЕННЯ БРОНЮВАННЯ ===
-router.post('/bookings/:id/confirm', authenticateToken, async (req, res) => {
+// === ЗМІНА СТАТУСУ БРОНЮВАННЯ (Підтвердження / Відхилення / Відкат) ===
+router.patch('/bookings/:id/status', authenticateToken, async (req, res) => {
     const bookingId = req.params.id;
     const userId = req.user.userId; // ID агента
+    const { status } = req.body; // 'confirmed', 'rejected', 'pending'
+
+    if (!['confirmed', 'rejected', 'pending'].includes(status)) {
+        return res.status(400).json({ error: 'Некоректний статус' });
+    }
 
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
 
-        // 1. Перевірка прав (чи це бронювання належить агенції юзера)
-        // ... (код перевірки owner_id через join tables)
-
-        // 2. Оновлення статусу
-        await client.query(`UPDATE tour_bookings SET status = 'confirmed' WHERE booking_id = $1`, [bookingId]);
-
-        // 3. Отримання даних для "Email" та Магніту
+        // 1. Отримуємо деталі бронювання, включаючи поточний статус
         const bookingData = await client.query(`
-            SELECT tb.user_id, t.title, t.tour_id, m.magnet_id, u.email
+            SELECT tb.status as old_status, tb.user_id, t.title, t.tour_id, m.magnet_id, u.email
             FROM tour_bookings tb
             JOIN tours t ON tb.tour_id = t.tour_id
+            JOIN agencies a ON t.agency_id = a.agency_id
             JOIN users u ON tb.user_id = u.user_id
             LEFT JOIN magnets m ON t.tour_id = m.linked_tour_id
-            WHERE tb.booking_id = $1
-        `, [bookingId]);
+            WHERE tb.booking_id = $1 AND a.owner_id = $2
+        `, [bookingId, userId]);
 
-        const { user_id: clientUserId, title, magnet_id, email: clientEmail } = bookingData.rows[0];
-
-        // 4. "Відправка Email" (імітація)
-        console.log(`[EMAIL SENDING] To: ${clientEmail}. Subject: Тур підтверджено! Tour: ${title}.`);
-
-        // 5. Видача магніту (якщо він прив'язаний до туру)
-        let magnetMessage = '';
-        if (magnet_id) {
-            // Перевіряємо, чи немає вже такого магніту у юзера
-            await client.query(`
-                INSERT INTO user_fridge_magnets (user_id, magnet_id, x_position, y_position)
-                VALUES ($1, $2, 50, 50)
-                ON CONFLICT DO NOTHING
-            `, [clientUserId, magnet_id]);
-            magnetMessage = 'Магніт автоматично додано на холодильник клієнта!';
+        if (bookingData.rows.length === 0) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ error: 'Бронювання не знайдено або ви не є власником.' });
         }
 
-        // 6. Створення сповіщення для клієнта
-        await client.query(`
-            INSERT INTO notifications (user_id, message) 
-            VALUES ($1, $2)
-        `, [clientUserId, `Ваше бронювання туру "${title}" підтверджено! ${magnet_id ? 'Вам видано новий магніт!' : ''}`]);
+        const { old_status, user_id: clientUserId, title, magnet_id } = bookingData.rows[0];
+
+        // 2. Оновлюємо статус
+        await client.query(`UPDATE tour_bookings SET status = $1 WHERE booking_id = $2`, [status, bookingId]);
+
+        let messageForUser = '';
+
+        // 3. ЛОГІКА МАГНІТІВ
+
+        // Сценарій А: Підтвердження (видаємо магніт)
+        if (status === 'confirmed' && old_status !== 'confirmed') {
+            if (magnet_id) {
+                await client.query(`
+                    INSERT INTO user_fridge_magnets (user_id, magnet_id, x_position, y_position)
+                    VALUES ($1, $2, 50, 50)
+                    ON CONFLICT DO NOTHING
+                `, [clientUserId, magnet_id]);
+                messageForUser = `Ваше бронювання туру "${title}" підтверджено! Вам видано новий магніт!`;
+            } else {
+                messageForUser = `Ваше бронювання туру "${title}" підтверджено!`;
+            }
+        }
+
+        // Сценарій Б: Відкат (забираємо магніт, якщо він був виданий)
+        else if (old_status === 'confirmed' && status !== 'confirmed') {
+            if (magnet_id) {
+                await client.query(`
+                    DELETE FROM user_fridge_magnets 
+                    WHERE user_id = $1 AND magnet_id = $2
+                `, [clientUserId, magnet_id]);
+                messageForUser = `Статус бронювання туру "${title}" змінено на "${status}". Магніт вилучено.`;
+            } else {
+                messageForUser = `Статус бронювання туру "${title}" змінено на "${status}".`;
+            }
+        }
+
+        // Сценарій В: Просто зміна статусу (наприклад, pending -> rejected)
+        else if (status === 'rejected') {
+            messageForUser = `На жаль, ваше бронювання туру "${title}" було відхилено.`;
+        }
+
+        // 4. Сповіщення користувачу (якщо повідомлення сформовано)
+        if (messageForUser) {
+            await client.query(`
+                INSERT INTO notifications (user_id, message) 
+                VALUES ($1, $2)
+            `, [clientUserId, messageForUser]);
+        }
 
         await client.query('COMMIT');
-        res.json({ message: `Бронювання підтверджено. ${magnetMessage}` });
+        res.json({ message: `Статус змінено на ${status}` });
 
     } catch (error) {
         await client.query('ROLLBACK');
+        console.error("Booking Status Error:", error);
         res.status(500).json({ error: 'Server error' });
     } finally {
         client.release();

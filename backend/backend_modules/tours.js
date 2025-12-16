@@ -327,16 +327,44 @@ router.post('/:id/book', authenticateToken, async (req, res) => {
 
     if (!phone || !participants) return res.status(400).json({ error: 'Заповніть обовʼязкові поля' });
 
+    const client = await pool.connect();
     try {
-        await pool.query(
+        await client.query('BEGIN');
+
+        // 1. Створюємо бронювання
+        await client.query(
             `INSERT INTO tour_bookings (user_id, tour_id, contact_phone, selected_date, participants_count)
              VALUES ($1, $2, $3, $4, $5)`,
             [userId, tourId, phone, date || null, participants]
         );
+
+        // 2. Отримуємо ID власника агенції (агента) та назву туру для сповіщення
+        const tourInfo = await client.query(`
+            SELECT t.title, a.owner_id 
+            FROM tours t 
+            JOIN agencies a ON t.agency_id = a.agency_id 
+            WHERE t.tour_id = $1
+        `, [tourId]);
+
+        if (tourInfo.rows.length > 0) {
+            const { title, owner_id } = tourInfo.rows[0];
+            const message = `Нова заявка на тур "${title}"! Кількість осіб: ${participants}. Перевірте розділ бронювань.`;
+
+            // Створюємо сповіщення для агента
+            await client.query(`
+                INSERT INTO notifications (user_id, message, link_url) 
+                VALUES ($1, $2, $3)
+            `, [owner_id, message, 'agency_page.html']); // link_url веде в кабінет
+        }
+
+        await client.query('COMMIT');
         res.json({ message: 'Заявку на бронювання відправлено! Менеджер звʼяжеться з вами.' });
     } catch (error) {
+        await client.query('ROLLBACK');
         console.error(error);
         res.status(500).json({ error: 'Помилка бронювання' });
+    } finally {
+        client.release();
     }
 });
 

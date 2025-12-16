@@ -52,7 +52,7 @@ async function loadAgencyBookings() {
     container.innerHTML = '<p class="text-center text-gray-500 py-8"><i class="fas fa-spinner fa-spin"></i> Завантаження заявок...</p>';
 
     try {
-        const response = await fetch(`${API_URL}/agencies/bookings`, { headers: getHeaders() });
+        const response = await fetch(`${API_URL}/agencies/bookings`, { headers: getHeaders() }); //
 
         if (!response.ok) {
             throw new Error('Failed to fetch bookings');
@@ -72,31 +72,65 @@ async function loadAgencyBookings() {
                 ? new Date(booking.selected_date).toLocaleDateString('uk-UA')
                 : 'Дата не обрана';
 
-            const isPending = booking.status === 'pending';
+            // === СТИЛІЗАЦІЯ ВИПАДАЮЧОГО СПИСКУ ===
+            // Використовуємо класи Tailwind для створення вигляду "кнопки-бейджа"
+            // appearance-none прибирає стандартну стрілку браузера (ми додамо свою іконку або залишимо мінімалістично)
 
-            const statusBadge = isPending
-                ? '<span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded">Очікує</span>'
-                : '<span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded">Підтверджено</span>';
+            let selectClass = "appearance-none font-bold text-xs py-1.5 px-3 pr-8 rounded-lg border-2 cursor-pointer transition-all outline-none focus:ring-2 focus:ring-offset-1";
+            let containerClass = "relative inline-block"; // Для позиціонування стрілочки
+            let arrowColor = "";
 
-            const actionBtn = isPending
-                ? `<button onclick="confirmBooking(${booking.booking_id})" class="btn-burgundy-solid text-sm py-1 px-3">Підтвердити</button>`
-                : `<button disabled class="text-gray-400 border border-gray-200 rounded px-3 py-1 text-sm cursor-not-allowed">Оброблено</button>`;
+            // Налаштування кольорів під статус
+            if (booking.status === 'confirmed') {
+                selectClass += " bg-[#2D4952]/10 text-[#2D4952] border-[#2D4952] focus:ring-[#2D4952]";
+                arrowColor = "text-[#2D4952]";
+            } else if (booking.status === 'rejected') {
+                selectClass += " bg-red-50 text-red-600 border-red-200 focus:ring-red-500";
+                arrowColor = "text-red-600";
+            } else {
+                // Pending (Очікує)
+                selectClass += " bg-yellow-50 text-yellow-700 border-yellow-300 focus:ring-yellow-400";
+                arrowColor = "text-yellow-700";
+            }
+
+            // HTML для селекта з кастомною стрілочкою
+            const selectHTML = `
+                <div class="${containerClass}">
+                    <select onchange="changeBookingStatus(${booking.booking_id}, this.value)" class="${selectClass}">
+                        <option value="pending" ${booking.status === 'pending' ? 'selected' : ''}>⏳ Очікує</option>
+                        <option value="confirmed" ${booking.status === 'confirmed' ? 'selected' : ''}>✅ Підтверджено</option>
+                        <option value="rejected" ${booking.status === 'rejected' ? 'selected' : ''}>❌ Відхилено</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 ${arrowColor}">
+                        <i class="fas fa-chevron-down text-[10px]"></i>
+                    </div>
+                </div>
+            `;
 
             const html = `
-                <div class="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition">
-                    <div class="flex justify-between items-start">
-                        <div>
+                <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition duration-200">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                        
+                        <div class="flex-grow">
                             <div class="flex items-center gap-2 mb-1">
-                                <h4 class="font-bold text-[#281822] text-lg">${booking.tour_title}</h4>
-                                ${statusBadge}
+                                <h4 class="font-bold text-[#281822] text-lg hover:text-[#48192E] transition">${booking.tour_title}</h4>
                             </div>
-                            <p class="text-sm text-gray-600 mb-1"><i class="far fa-user w-5 text-center"></i> ${booking.first_name} ${booking.last_name} (${booking.email})</p>
-                            <p class="text-sm text-gray-600 mb-1"><i class="fas fa-phone w-5 text-center"></i> ${booking.contact_phone}</p>
-                            <p class="text-sm text-gray-600"><i class="far fa-calendar-alt w-5 text-center"></i> ${dateDisplay} • ${booking.participants_count} осіб</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 text-sm text-gray-600">
+                                <p><i class="far fa-user w-5 text-center text-[#2D4952]"></i> ${booking.first_name} ${booking.last_name}</p>
+                                <p><i class="fas fa-phone w-5 text-center text-[#2D4952]"></i> <a href="tel:${booking.contact_phone}" class="hover:underline">${booking.contact_phone}</a></p>
+                                <p><i class="far fa-envelope w-5 text-center text-[#2D4952]"></i> ${booking.email}</p>
+                                <p><i class="far fa-calendar-alt w-5 text-center text-[#2D4952]"></i> <strong>${dateDisplay}</strong> (${booking.participants_count} осіб)</p>
+                            </div>
                         </div>
-                        <div class="flex flex-col items-end gap-2">
-                            <span class="text-xs text-gray-400">${new Date(booking.booking_date).toLocaleDateString()}</span>
-                            ${actionBtn}
+
+                        <div class="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-4 md:gap-2 border-t md:border-t-0 border-gray-100 pt-3 md:pt-0 mt-2 md:mt-0">
+                            <span class="text-xs text-gray-400 font-medium" title="Дата створення заявки">
+                                <i class="far fa-clock mr-1"></i>${new Date(booking.booking_date).toLocaleDateString()}
+                            </span>
+                            
+                            <div class="flex flex-col items-end">
+                                ${selectHTML}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -109,6 +143,41 @@ async function loadAgencyBookings() {
         container.innerHTML = '<p class="text-center text-red-500 py-8">Не вдалося завантажити заявки.</p>';
     }
 }
+
+// Додаємо нову глобальну функцію для обробки зміни в селекті
+window.changeBookingStatus = async (bookingId, newStatus) => {
+    // Невеликий confirmation для критичних дій
+    let confirmText = `Змінити статус на "${newStatus}"?`;
+    if (newStatus === 'confirmed') confirmText += ' Клієнт отримає магніт.';
+    if (newStatus !== 'confirmed') confirmText += ' Якщо клієнт мав магніт за цей тур, його буде вилучено.';
+
+    if (!confirm(confirmText)) {
+        // Якщо скасували - перезавантажуємо список, щоб повернути старе значення в селекті
+        loadAgencyBookings();
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/agencies/bookings/${bookingId}/status`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify({ status: newStatus })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // alert(data.message); // Можна розкоментувати, якщо потрібне явне підтвердження
+            loadAgencyBookings(); // Оновлюємо список (кольри та стилі)
+        } else {
+            alert(data.error || 'Помилка зміни статусу');
+            loadAgencyBookings();
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Помилка з\'єднання з сервером');
+    }
+};
 
 // Глобальна функція для виклику з onclick в HTML
 window.confirmBooking = async (bookingId) => {
