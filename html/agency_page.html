@@ -119,58 +119,64 @@
 
 <main class="container-wide agency-page pt-6">
 
-    <div class="agency-header-card flex flex-col md:flex-row gap-8 items-start">
+    <div class="agency-header-card flex flex-col gap-6">
 
-        <div class="agency-logo-container group">
-            <img id="agency-logo" src="" alt="Лого агенції" class="agency-logo-img hidden">
-            <div id="agency-logo-placeholder" class="w-full h-full flex items-center justify-center text-gray-300 text-4xl">
-                <i class="fas fa-building"></i>
+        <div class="flex flex-col md:flex-row gap-8 items-start">
+            <div class="agency-logo-container group shrink-0">
+                <img id="agency-logo" src="" alt="Лого агенції" class="agency-logo-img hidden">
+                <div id="agency-logo-placeholder" class="w-full h-full flex items-center justify-center text-gray-300 text-4xl">
+                    <i class="fas fa-building"></i>
+                </div>
+                <label for="logo-input" class="logo-upload-overlay owner-only">
+                    <i class="fas fa-camera text-white text-2xl"></i>
+                </label>
+                <input type="file" id="logo-input" accept="image/*" class="hidden">
             </div>
-            <label for="logo-input" class="logo-upload-overlay owner-only">
-                <i class="fas fa-camera text-white text-2xl"></i>
-            </label>
-            <input type="file" id="logo-input" accept="image/*" class="hidden">
-        </div>
 
-        <div class="flex-grow w-full">
-            <div class="flex justify-between items-start">
-                <div>
-                    <h1 class="text-3xl font-bold text-[#281822] mb-2" id="agency-name-display">Завантаження...</h1>
+            <div class="flex-grow w-full">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h1 class="text-3xl font-bold text-[#281822] mb-2" id="agency-name-display">Завантаження...</h1>
 
-                    <div class="flex flex-col gap-1 text-sm font-medium text-[#2D4952] mb-4">
-                        <a id="link-phone" href="#" class="flex items-center gap-2 hover:underline"><i class="fas fa-phone w-5 text-center"></i> <span id="text-phone">...</span></a>
-                        <a id="link-email" href="#" class="flex items-center gap-2 hover:underline"><i class="far fa-envelope w-5 text-center"></i> <span id="text-email">...</span></a>
-                        <a id="link-website" href="#" target="_blank" class="flex items-center gap-2 hover:underline"><i class="fas fa-globe w-5 text-center"></i> <span id="text-website">...</span></a>
+                        <div class="flex flex-col gap-1 text-sm font-medium text-[#2D4952] mb-4">
+                            <a id="link-phone" href="#" class="flex items-center gap-2 hover:underline"><i class="fas fa-phone w-5 text-center"></i> <span id="text-phone">...</span></a>
+                            <a id="link-email" href="#" class="flex items-center gap-2 hover:underline"><i class="far fa-envelope w-5 text-center"></i> <span id="text-email">...</span></a>
+                            <a id="link-website" href="#" target="_blank" class="flex items-center gap-2 hover:underline"><i class="fas fa-globe w-5 text-center"></i> <span id="text-website">...</span></a>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-8 text-center mr-4">
+                        <div class="flex flex-col items-center">
+                            <div class="text-3xl font-bold text-[#281822] leading-none mb-1" id="stat-tours">0</div>
+                            <div class="text-sm text-[#2D4952] font-medium">Турів</div>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="text-3xl font-bold text-[#48192E] leading-none mb-1" id="stat-rating">0.0</div>
+                            <div class="text-sm text-[#2D4952] font-medium">Рейтинг</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="flex gap-8 text-center mr-4">
-                    <div class="flex flex-col items-center">
-                        <div class="text-3xl font-bold text-[#281822] leading-none mb-1" id="stat-tours">0</div>
-                        <div class="text-sm text-[#2D4952] font-medium">Турів</div>
-                    </div>
-                    <div class="flex flex-col items-center">
-                        <div class="text-3xl font-bold text-[#48192E] leading-none mb-1" id="stat-rating">0.0</div>
-                        <div class="text-sm text-[#2D4952] font-medium">Рейтинг</div>
-                    </div>
-                </div>
+                <p id="agency-description-display" class="text-gray-600 leading-relaxed max-w-4xl border-t border-gray-100 pt-4 mb-2"></p>
+
+                <div id="header-certificates" class="flex flex-wrap gap-2 mt-2"></div>
             </div>
-
-            <p id="agency-description-display" class="text-gray-600 leading-relaxed max-w-4xl border-t border-gray-100 pt-4">
-            </p>
         </div>
-    </div>
 
-    <div class="nav-pills">
-        <button class="nav-pill active" data-tab="agency-tours">Наші тури</button>
-        <button class="nav-pill" data-tab="agency-posts">Пости</button>
-        <button class="nav-pill" data-tab="agency-magnets">Каталог магнітів</button>
-        <button class="nav-pill owner-only" data-tab="agency-bookings">
-            <i class="far fa-calendar-check"></i> Заявки
-        </button>
-        <button class="nav-pill owner-only" data-tab="agency-settings">
-            <i class="fas fa-cog"></i> Налаштування
-        </button>
+        <div class="nav-pills border-t border-gray-100 pt-4 mt-2">
+            <button class="nav-pill active" data-tab="agency-tours">Наші тури</button>
+            <button class="nav-pill" data-tab="agency-posts">Пости</button>
+            <button class="nav-pill" data-tab="agency-magnets">Каталог магнітів</button>
+            <button class="nav-pill owner-only" data-tab="agency-bookings">
+                <i class="far fa-calendar-check"></i> Заявки
+            </button>
+            <button class="nav-pill owner-only" data-tab="agency-reviews">
+                <i class="far fa-star"></i> Відгуки
+            </button>
+            <button class="nav-pill owner-only" data-tab="agency-settings">
+                <i class="fas fa-cog"></i> Налаштування
+            </button>
+        </div>
     </div>
 
     <section id="tab-agency-tours" class="tab-content active">
@@ -189,6 +195,15 @@
         <div class="bg-white rounded-xl shadow-sm p-6">
             <h3 class="font-bold text-xl mb-6 text-[#281822]">Керування бронюваннями</h3>
             <div id="bookings-list" class="space-y-4"></div>
+        </div>
+    </section>
+
+    <section id="tab-agency-reviews" class="tab-content owner-only">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="font-bold text-xl mb-6 text-[#281822]">Відгуки клієнтів</h3>
+            <div id="agency-reviews-list" class="space-y-4">
+                <p class="text-gray-500 text-center py-4">Завантаження...</p>
+            </div>
         </div>
     </section>
 
@@ -223,11 +238,23 @@
 
                 <div>
                     <label class="block text-sm font-medium mb-1 text-[#281822]">Опис агенції</label>
-                    <textarea id="edit-description" rows="5" class="form-input" placeholder="Розкажіть про ваші переваги, напрямки та досвід..."></textarea>
-                    <p class="text-xs text-gray-500 mt-1">Цей текст бачитимуть клієнти на вашій сторінці.</p>
+                    <textarea id="edit-description" rows="5" class="form-input" placeholder="Розкажіть про ваші переваги..."></textarea>
                 </div>
 
-                <div class="pt-4 border-t border-gray-100 flex justify-end">
+                <div class="border-t border-gray-100 pt-6">
+                    <h4 class="font-bold text-[#281822] mb-3">Ліцензії та сертифікати</h4>
+                    <p class="text-xs text-gray-500 mb-3">Завантажте фото ліцензій або нагород, щоб підвищити довіру клієнтів.</p>
+
+                    <div class="flex flex-wrap gap-4 mb-4" id="settings-certificates-list">
+                    </div>
+
+                    <label for="certificate-input" class="inline-flex items-center gap-2 cursor-pointer bg-gray-100 hover:bg-gray-200 text-[#281822] px-4 py-2 rounded-lg transition text-sm font-medium">
+                        <i class="fas fa-plus"></i> Додати сертифікат
+                    </label>
+                    <input type="file" id="certificate-input" accept="image/*" multiple class="hidden">
+                </div>
+
+                <div class="pt-6 border-t border-gray-100 flex justify-end">
                     <button type="submit" id="save-settings-btn" class="btn-solid bg-[#48192E] text-[#D3CBC4] px-8 py-2 rounded-lg hover:bg-[#281822] transition">
                         Зберегти зміни
                     </button>

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAgencyInfo();     // Завантаження профілю
     initLogoUpload();     // Логіка завантаження лого
     initSaveSettingsButton(); // Логіка збереження текстових даних
+    initCertificateUpload();
 });
 
 // ---- Перемикання вкладок ----
@@ -27,6 +28,7 @@ function initAgencyTabs() {
             if (pill.dataset.tab === 'agency-bookings') loadAgencyBookings();
             if (pill.dataset.tab === 'agency-tours') loadAgencyTours();
             if (pill.dataset.tab === 'agency-posts') loadAgencyPosts();
+            if (pill.dataset.tab === 'agency-reviews') loadAgencyReviews();
         });
     });
 }
@@ -88,6 +90,8 @@ async function loadAgencyInfo() {
         if(editEmail) editEmail.value = agency.email || '';
         if(editWebsite) editWebsite.value = agency.website || '';
         if(editDesc) editDesc.value = agency.description || '';
+
+        renderCertificates(agency.certificates || []);
 
         checkOwnerAccess(currentUser);
 
@@ -433,3 +437,139 @@ window.changeBookingStatus = async (bookingId, newStatus) => {
         else alert('Помилка зміни статусу');
     } catch (error) { console.error(error); }
 };
+
+
+function renderCertificates(certificates) {
+    const headerContainer = document.getElementById('header-certificates');
+    const settingsContainer = document.getElementById('settings-certificates-list');
+
+    if (headerContainer) headerContainer.innerHTML = '';
+    if (settingsContainer) settingsContainer.innerHTML = '';
+
+    certificates.forEach(url => {
+        // Для хедера (маленькі іконки, відкриваються у новому вікні)
+        if (headerContainer) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.className = 'block w-12 h-16 border border-gray-200 rounded overflow-hidden hover:opacity-80 transition';
+            link.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+            headerContainer.appendChild(link);
+        }
+
+        // Для налаштувань (більші, з кнопкою видалення)
+        if (settingsContainer) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'relative w-24 h-32 border border-gray-200 rounded-lg overflow-hidden group';
+            wrapper.innerHTML = `
+                <img src="${url}" class="w-full h-full object-cover">
+                <button type="button" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition" onclick="deleteCertificate('${url}')">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            `;
+            settingsContainer.appendChild(wrapper);
+        }
+    });
+}
+
+// === Ініціалізація завантаження сертифікатів ===
+function initCertificateUpload() {
+    const input = document.getElementById('certificate-input');
+    if (!input) return;
+
+    input.addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        const formData = new FormData();
+        files.forEach(file => formData.append('certificates', file));
+
+        const btnLabel = document.querySelector('label[for="certificate-input"]');
+        const originalText = btnLabel.innerHTML;
+        btnLabel.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Завантаження...';
+
+        try {
+            const response = await fetch(`${API_URL}/agencies/me/certificates`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                body: formData
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                renderCertificates(data.certificates);
+                alert('Сертифікати додано!');
+            } else {
+                alert(data.error || 'Помилка завантаження');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Помилка з\'єднання');
+        } finally {
+            btnLabel.innerHTML = originalText;
+            input.value = ''; // Очистити інпут
+        }
+    });
+}
+
+window.deleteCertificate = async (url) => {
+    if(!confirm('Видалити цей сертифікат?')) return;
+
+    try {
+        const response = await fetch(`${API_URL}/agencies/me/certificates`, {
+            method: 'DELETE',
+            headers: getHeaders(),
+            body: JSON.stringify({ imageUrl: url })
+        });
+
+        const data = await response.json();
+        if(response.ok) {
+            renderCertificates(data.certificates);
+        }
+    } catch(e) { console.error(e); }
+};
+
+async function loadAgencyReviews() {
+    const container = document.getElementById('agency-reviews-list');
+    container.innerHTML = '<p class="text-center text-gray-500 py-4"><i class="fas fa-spinner fa-spin"></i> Завантаження...</p>';
+
+    try {
+        const response = await fetch(`${API_URL}/agencies/me/reviews`, { headers: getHeaders() });
+        const data = await response.json();
+
+        container.innerHTML = '';
+
+        if (!data.reviews || data.reviews.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-8">Відгуків поки немає.</p>';
+            return;
+        }
+
+        data.reviews.forEach(review => {
+            const stars = '★'.repeat(review.rating) + '☆'.repeat(5 - review.rating);
+            const avatar = review.profile_image_url
+                ? `<img src="${review.profile_image_url}" class="w-10 h-10 rounded-full object-cover">`
+                : `<div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-gray-600">${review.first_name[0]}</div>`;
+
+            const html = `
+                <div class="border border-gray-100 rounded-lg p-4 bg-gray-50/50">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex items-center gap-3">
+                            ${avatar}
+                            <div>
+                                <div class="font-bold text-[#281822] text-sm">${review.first_name} ${review.last_name}</div>
+                                <div class="text-xs text-gray-400">${new Date(review.created_at).toLocaleDateString()}</div>
+                            </div>
+                        </div>
+                        <div class="text-yellow-500 tracking-widest text-sm">${stars}</div>
+                    </div>
+                    <p class="text-gray-700 text-sm pl-[52px]">${review.comment || ''}</p>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        });
+
+    } catch (e) {
+        console.error(e);
+        container.innerHTML = '<p class="text-center text-red-500">Помилка завантаження відгуків.</p>';
+    }
+}

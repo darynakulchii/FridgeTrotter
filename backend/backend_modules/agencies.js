@@ -213,6 +213,84 @@ router.get('/me/tours', authenticateToken, async (req, res) => {
     }
 });
 
+router.get('/me/reviews', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    try {
+        const query = `
+            SELECT ar.*, up.first_name, up.last_name, up.profile_image_url
+            FROM agency_reviews ar
+            JOIN agencies a ON ar.agency_id = a.agency_id
+            JOIN user_profiles up ON ar.user_id = up.user_id
+            WHERE a.owner_id = $1
+            ORDER BY ar.created_at DESC;
+        `;
+        const result = await pool.query(query, [userId]);
+        res.json({ reviews: result.rows });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Помилка отримання відгуків' });
+    }
+});
+
+router.post('/me/certificates', authenticateToken, upload.array('certificates', 5), async (req, res) => {
+    const userId = req.user.userId;
+    const files = req.files;
+
+    if (!files || files.length === 0) {
+        return res.status(400).json({ error: 'Файли не завантажено.' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. Завантажуємо файли в Cloudinary
+        const uploadPromises = files.map(file => uploadToCloudinary(file.buffer));
+        const uploadResults = await Promise.all(uploadPromises);
+        const newUrls = uploadResults.map(r => r.secure_url);
+
+        // 2. Додаємо нові URL до масиву certificates в БД
+        // array_cat об'єднує існуючий масив з новим
+        const updateQuery = `
+            UPDATE agencies
+            SET certificates = COALESCE(certificates, '{}') || $1::text[]
+            WHERE owner_id = $2
+            RETURNING certificates;
+        `;
+
+        const result = await client.query(updateQuery, [newUrls, userId]);
+
+        await client.query('COMMIT');
+        res.json({ message: 'Сертифікати додано', certificates: result.rows[0].certificates });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error('Certificate Upload Error:', error);
+        res.status(500).json({ error: 'Помилка сервера.' });
+    } finally {
+        client.release();
+    }
+});
+
+router.delete('/me/certificates', authenticateToken, async (req, res) => {
+    const userId = req.user.userId;
+    const { imageUrl } = req.body; // URL картинки, яку треба видалити
+
+    try {
+        const query = `
+            UPDATE agencies
+            SET certificates = array_remove(certificates, $1)
+            WHERE owner_id = $2
+            RETURNING certificates;
+        `;
+        const result = await pool.query(query, [imageUrl, userId]);
+        res.json({ message: 'Сертифікат видалено', certificates: result.rows[0].certificates });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Помилка сервера' });
+    }
+});
+
 /**
  * POST /api/agencies/magnets
  * Створення замовлення на магніт (або завантаження свого, або запит менеджеру)

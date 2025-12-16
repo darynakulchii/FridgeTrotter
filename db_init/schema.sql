@@ -365,3 +365,5 @@ CREATE TABLE IF NOT EXISTS agency_reviews (
                                               comment TEXT,
                                               created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+ALTER TABLE agencies ADD COLUMN IF NOT EXISTS certificates TEXT[];
