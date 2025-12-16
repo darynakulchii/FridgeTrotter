@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="UTF-8">
-    <title>Сторінка агенції</title>
+    <title>Кабінет Агенції</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -12,155 +12,228 @@
     <script src="https://npmcdn.com/flatpickr/dist/l10n/uk.js"></script>
     <link rel="stylesheet" href="../css/main_page.css">
     <link rel="stylesheet" href="../css/agency_page.css">
+    <link rel="stylesheet" href="../css/tours.css"> <style>
+    body { background-color: #D3CBC4; min-height: 100vh; }
 
-    <style>
-        body { background-color: #D3CBC4; min-height: 100vh; }
+    /* Стиль хедера як у публічного профілю агенції */
+    .agency-header-card {
+        background-color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
 
-        .agency-header-card {
-            background-color: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-        }
+    .agency-logo-container {
+        width: 128px;
+        height: 128px;
+        border-radius: 16px;
+        overflow: hidden;
+        background-color: #f3f4f6;
+        border: 1px solid #e5e7eb;
+        position: relative;
+        flex-shrink: 0;
+    }
 
-        .profile-title {
-            font-size: 2rem;
-            font-weight: 400;
-            color: #281822;
-            margin-bottom: 1.5rem;
-        }
+    .agency-logo-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
 
-        .nav-pills {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
+    .logo-upload-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.2s;
+        cursor: pointer;
+    }
 
-        .nav-pill {
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            background-color: #E5E7EB;
-            color: #281822;
-            cursor: pointer;
-            transition: 0.2s;
-            border: none;
-        }
+    .agency-logo-container:hover .logo-upload-overlay {
+        opacity: 1;
+    }
 
-        .nav-pill.active {
-            background-color: #48192E;
-            color: #D3CBC4;
-        }
+    /* Стилі табів (кнопок) */
+    .nav-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
 
-        /* Клас для приховування елементів, доступних тільки власнику (логіка в JS) */
-        .owner-only { display: none; }
+    .nav-pill {
+        padding: 0.6rem 1.25rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        background-color: #E5E7EB;
+        color: #281822;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
 
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+    .nav-pill:hover {
+        background-color: #d1d5db;
+    }
 
-        .btn-burgundy-solid {
-            background: #48192E;
-            color: #D3CBC4;
-            padding: 0.5rem 1rem;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-        }
-    </style>
+    .nav-pill.active {
+        background-color: #48192E;
+        color: #D3CBC4;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #D1D5DB;
+        border-radius: 8px;
+        outline: none;
+        background-color: #F9FAFB;
+        color: #281822;
+        transition: border-color 0.2s;
+    }
+
+    .form-input:focus {
+        border-color: #48192E;
+        background-color: white;
+    }
+
+    .owner-only { display: none; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+</style>
 </head>
 
 <body>
 
-<header id="main-header"></header>
 <script type="module" src="../js/modules/navigation.js"></script>
+<script type="module" src="../js/modules/agent.js"></script>
 <script type="module" src="../js/modules/agency_page.js"></script>
 
-<main class="container-wide agency-page">
+<main class="container-wide agency-page pt-6">
 
-    <div class="agency-header-card">
-        <h1 class="profile-title" id="agency-name">Назва агенції</h1>
+    <div class="agency-header-card flex flex-col md:flex-row gap-8 items-start">
 
-        <div class="nav-pills">
-            <button class="nav-pill active" data-tab="agency-info">Про агенцію</button>
-            <button class="nav-pill" data-tab="agency-tours">Наші тури</button>
-            <button class="nav-pill" data-tab="agency-posts">Наші пости</button>
-            <button class="nav-pill" data-tab="agency-magnets">Наші магніти</button>
-            <button class="nav-pill owner-only" data-tab="agency-bookings">Заявки на бронювання</button>
-            <button class="nav-pill owner-only" data-tab="agency-settings">Налаштування</button>
+        <div class="agency-logo-container group">
+            <img id="agency-logo" src="" alt="Лого агенції" class="agency-logo-img hidden">
+            <div id="agency-logo-placeholder" class="w-full h-full flex items-center justify-center text-gray-300 text-4xl">
+                <i class="fas fa-building"></i>
+            </div>
+            <label for="logo-input" class="logo-upload-overlay owner-only">
+                <i class="fas fa-camera text-white text-2xl"></i>
+            </label>
+            <input type="file" id="logo-input" accept="image/*" class="hidden">
+        </div>
+
+        <div class="flex-grow w-full">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 class="text-3xl font-bold text-[#281822] mb-2" id="agency-name-display">Завантаження...</h1>
+
+                    <div class="flex flex-col gap-1 text-sm font-medium text-[#2D4952] mb-4">
+                        <a id="link-phone" href="#" class="flex items-center gap-2 hover:underline"><i class="fas fa-phone w-5 text-center"></i> <span id="text-phone">...</span></a>
+                        <a id="link-email" href="#" class="flex items-center gap-2 hover:underline"><i class="far fa-envelope w-5 text-center"></i> <span id="text-email">...</span></a>
+                        <a id="link-website" href="#" target="_blank" class="flex items-center gap-2 hover:underline"><i class="fas fa-globe w-5 text-center"></i> <span id="text-website">...</span></a>
+                    </div>
+                </div>
+
+                <div class="flex gap-8 text-center mr-4">
+                    <div class="flex flex-col items-center">
+                        <div class="text-3xl font-bold text-[#281822] leading-none mb-1" id="stat-tours">0</div>
+                        <div class="text-sm text-[#2D4952] font-medium">Турів</div>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <div class="text-3xl font-bold text-[#48192E] leading-none mb-1" id="stat-rating">0.0</div>
+                        <div class="text-sm text-[#2D4952] font-medium">Рейтинг</div>
+                    </div>
+                </div>
+            </div>
+
+            <p id="agency-description-display" class="text-gray-600 leading-relaxed max-w-4xl border-t border-gray-100 pt-4">
+            </p>
         </div>
     </div>
 
-    <section id="tab-agency-info" class="tab-content active p-6 bg-white rounded-lg shadow-md">
-        <div class="flex items-center gap-6 mb-4">
-            <div class="relative">
-                <img id="agency-logo" src="" alt="Лого агенції" class="w-24 h-24 rounded-lg object-cover border">
-                <button id="edit-logo-btn" class="absolute bottom-0 right-0 bg-gray-300 text-sm px-1 rounded-full hover:bg-gray-400 owner-only">✎</button>
-                <input type="file" id="logo-input" accept="image/*" class="hidden">
-            </div>
-            <div class="flex-1">
-                <textarea id="agency-description" placeholder="Короткий опис агенції..." class="mb-2 p-2 rounded border w-full"></textarea>
-                <p><strong>Телефон:</strong> <span id="agency-phone">—</span></p>
-                <p><strong>Email:</strong> <span id="agency-email">—</span></p>
-                <p><strong>Сайт:</strong> <span id="agency-website">—</span></p>
-            </div>
-        </div>
+    <div class="nav-pills">
+        <button class="nav-pill active" data-tab="agency-tours">Наші тури</button>
+        <button class="nav-pill" data-tab="agency-posts">Пости</button>
+        <button class="nav-pill" data-tab="agency-magnets">Каталог магнітів</button>
+        <button class="nav-pill owner-only" data-tab="agency-bookings">
+            <i class="far fa-calendar-check"></i> Заявки
+        </button>
+        <button class="nav-pill owner-only" data-tab="agency-settings">
+            <i class="fas fa-cog"></i> Налаштування
+        </button>
+    </div>
 
-        <div id="agency-awards" class="mt-6 p-4 bg-gray-50 rounded-xl shadow-sm">
-            <h4 class="font-bold text-[#281822] mb-2">Нагороди та сертифікати</h4>
-            <div id="awards-list" class="flex flex-wrap gap-3 mb-3">
-            </div>
-            <input type="file" id="add-award-input" accept="image/*" class="hidden">
-            <button id="add-award-btn" class="btn-burgundy-solid mb-4 owner-only">Додати сертифікат</button>
-        </div>
-
-        <div class="mt-4 owner-only">
-            <button id="save-agency-info" class="btn-burgundy-solid">Зберегти зміни</button>
-        </div>
-    </section>
-
-
-    <section id="tab-agency-tours" class="tab-content">
-        <div id="agency-tours-grid"></div>
+    <section id="tab-agency-tours" class="tab-content active">
+        <div id="agency-tours-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
     </section>
 
     <section id="tab-agency-posts" class="tab-content">
-        <div id="agency-posts-list"></div>
+        <div id="agency-posts-list" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
     </section>
 
     <section id="tab-agency-magnets" class="tab-content">
         <div id="agency-magnets-grid"></div>
     </section>
 
-    <section id="tab-agency-bookings" class="tab-content owner-only p-6 bg-white rounded-lg shadow-md">
-        <h3 class="font-bold text-xl mb-4 text-[#281822]">Вхідні заявки на бронювання</h3>
-
-        <div id="bookings-list" class="space-y-4">
-            <p class="text-gray-500 text-center py-4">Завантаження заявок...</p>
+    <section id="tab-agency-bookings" class="tab-content owner-only">
+        <div class="bg-white rounded-xl shadow-sm p-6">
+            <h3 class="font-bold text-xl mb-6 text-[#281822]">Керування бронюваннями</h3>
+            <div id="bookings-list" class="space-y-4"></div>
         </div>
     </section>
 
-    <section id="tab-agency-settings" class="tab-content owner-only p-6 bg-gray-100 rounded-lg shadow-md">
-        <h3 class="font-semibold mb-2">Редагування агенції</h3>
-        <input id="edit-agency-name" placeholder="Назва агенції" class="mb-2 p-2 rounded border w-full">
-        <textarea id="edit-agency-description" placeholder="Опис агенції" class="mb-2 p-2 rounded border w-full"></textarea>
+    <section id="tab-agency-settings" class="tab-content owner-only">
+        <div class="bg-white rounded-xl shadow-sm p-8 max-w-4xl">
+            <h3 class="font-bold text-xl mb-6 text-[#281822] flex items-center gap-2">
+                <i class="fas fa-edit"></i> Редагування профілю
+            </h3>
 
-        <input id="edit-agency-phone" placeholder="Телефон" class="mb-2 p-2 rounded border w-full">
-        <input id="edit-agency-email" placeholder="Email" class="mb-2 p-2 rounded border w-full">
-        <input id="edit-agency-website" placeholder="Сайт" class="mb-2 p-2 rounded border w-full">
+            <form id="agency-settings-form" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-[#281822]">Назва агенції (Бренд)</label>
+                        <input type="text" id="edit-name" class="form-input" placeholder="Назва вашої компанії">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-[#281822]">Контактний телефон</label>
+                        <input type="text" id="edit-phone" class="form-input" placeholder="+380...">
+                    </div>
+                </div>
 
-        <label class="block mb-4">
-            Фон сторінки:
-            <select id="page-bg-select" class="ml-2 p-1 border rounded">
-                <option value="#D3CBC4">Світлий</option>
-                <option value="#F0F0F0">Сірий</option>
-                <option value="#FFF7E1">Бежевий</option>
-                <option value="#E8F6F3">Блакитний</option>
-            </select>
-        </label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-[#281822]">Email для клієнтів</label>
+                        <input type="email" id="edit-email" class="form-input" placeholder="booking@agency.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1 text-[#281822]">Веб-сайт</label>
+                        <input type="url" id="edit-website" class="form-input" placeholder="https://">
+                    </div>
+                </div>
 
-        <button id="save-agency-settings" class="btn-burgundy-solid">Зберегти зміни</button>
+                <div>
+                    <label class="block text-sm font-medium mb-1 text-[#281822]">Опис агенції</label>
+                    <textarea id="edit-description" rows="5" class="form-input" placeholder="Розкажіть про ваші переваги, напрямки та досвід..."></textarea>
+                    <p class="text-xs text-gray-500 mt-1">Цей текст бачитимуть клієнти на вашій сторінці.</p>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100 flex justify-end">
+                    <button type="submit" id="save-settings-btn" class="btn-solid bg-[#48192E] text-[#D3CBC4] px-8 py-2 rounded-lg hover:bg-[#281822] transition">
+                        Зберегти зміни
+                    </button>
+                </div>
+            </form>
+        </div>
     </section>
 
 </main>

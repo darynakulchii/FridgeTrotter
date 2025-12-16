@@ -1,14 +1,10 @@
 import { API_URL, getHeaders } from '../api-config.js';
 
-let agencyOwnerId = null;
-
 document.addEventListener('DOMContentLoaded', () => {
     initAgencyTabs();
-    loadAgencyInfo();
-    initLogoUpload();
-    initAwards();
-    initSaveInfoButton();
-    initSaveSettingsButton();
+    loadAgencyInfo();     // Завантаження профілю
+    initLogoUpload();     // Логіка завантаження лого
+    initSaveSettingsButton(); // Логіка збереження текстових даних
 });
 
 // ---- Перемикання вкладок ----
@@ -18,33 +14,337 @@ function initAgencyTabs() {
 
     pills.forEach(pill => {
         pill.addEventListener('click', () => {
-            // Знімаємо активний клас з усіх кнопок і вкладок
             pills.forEach(p => p.classList.remove('active'));
             tabs.forEach(t => t.classList.remove('active'));
 
-            // Активуємо натиснуту кнопку
             pill.classList.add('active');
-
-            // Знаходимо і активуємо відповідну вкладку
             const tabId = `tab-${pill.dataset.tab}`;
             const targetTab = document.getElementById(tabId);
             if (targetTab) {
                 targetTab.classList.add('active');
             }
 
-            // === ЛОГІКА ЗАВАНТАЖЕННЯ ДАНИХ ДЛЯ ВКЛАДОК ===
-            if (pill.dataset.tab === 'agency-bookings') {
-                loadAgencyBookings();
-            }
+            if (pill.dataset.tab === 'agency-bookings') loadAgencyBookings();
+            if (pill.dataset.tab === 'agency-tours') loadAgencyTours();
+            if (pill.dataset.tab === 'agency-posts') loadAgencyPosts();
         });
     });
 }
 
+// =========================================================
+// 1. ЗАВАНТАЖЕННЯ ДАНИХ АГЕНЦІЇ
+// =========================================================
+async function loadAgencyInfo() {
+    try {
+        const response = await fetch(`${API_URL}/agencies/me`, {
+            headers: getHeaders()
+        });
+
+        if (!response.ok) throw new Error('Не вдалося завантажити профіль');
+
+        const agency = await response.json();
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+
+        // 1. Заповнюємо шапку профілю
+        document.getElementById('agency-name-display').innerText = agency.name;
+        document.getElementById('agency-description-display').innerText = agency.description || 'Опис ще не додано. Перейдіть у налаштування, щоб додати інформацію.';
+
+        // Контакти
+        document.getElementById('text-phone').innerText = agency.phone || '—';
+        document.getElementById('link-phone').href = `tel:${agency.phone}`;
+
+        document.getElementById('text-email').innerText = agency.email || '—';
+        document.getElementById('link-email').href = `mailto:${agency.email}`;
+
+        document.getElementById('text-website').innerText = agency.website || '—';
+        document.getElementById('link-website').href = agency.website || '#';
+
+        // Статистика (оновлені ID)
+        document.getElementById('stat-tours').innerText = agency.total_tours_count || 0;
+        document.getElementById('stat-rating').innerText = agency.avg_rating || '0.0';
+
+        // Логотип
+        const logoImg = document.getElementById('agency-logo');
+        const logoPlaceholder = document.getElementById('agency-logo-placeholder');
+
+        if (agency.logo_url) {
+            logoImg.src = agency.logo_url;
+            logoImg.classList.remove('hidden');
+            logoPlaceholder.classList.add('hidden');
+        } else {
+            logoImg.classList.add('hidden');
+            logoPlaceholder.classList.remove('hidden');
+        }
+
+        // 2. Заповнюємо поля редагування
+        const editName = document.getElementById('edit-name');
+        const editPhone = document.getElementById('edit-phone');
+        const editEmail = document.getElementById('edit-email');
+        const editWebsite = document.getElementById('edit-website');
+        const editDesc = document.getElementById('edit-description');
+
+        if(editName) editName.value = agency.name || '';
+        if(editPhone) editPhone.value = agency.phone || '';
+        if(editEmail) editEmail.value = agency.email || '';
+        if(editWebsite) editWebsite.value = agency.website || '';
+        if(editDesc) editDesc.value = agency.description || '';
+
+        checkOwnerAccess(currentUser);
+
+        // Завантажуємо контент
+        loadAgencyTours();
+        loadAgencyPosts();
+
+    } catch (e) {
+        console.error("Помилка завантаження даних агенції", e);
+    }
+}
+
+function checkOwnerAccess(user) {
+    if (!user || !user.isAgent) return;
+    const ownerElements = document.querySelectorAll('.owner-only');
+    ownerElements.forEach(el => {
+        el.classList.remove('owner-only');
+        if(el.tagName === 'BUTTON') el.style.display = 'flex'; // Для кнопок у флексі
+    });
+}
 
 // =========================================================
-// ЛОГІКА БРОНЮВАНЬ (НОВА)
+// 2. ЗАВАНТАЖЕННЯ ЛОГОТИПУ
 // =========================================================
+function initLogoUpload() {
+    const logoInput = document.getElementById('logo-input');
+    const logoImg = document.getElementById('agency-logo');
+    const logoPlaceholder = document.getElementById('agency-logo-placeholder');
 
+    if (!logoInput) return;
+
+    logoInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            logoImg.src = event.target.result;
+            logoImg.classList.remove('hidden');
+            logoPlaceholder.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+
+        const formData = new FormData();
+        formData.append('avatar', file);
+
+        try {
+            const response = await fetch(`${API_URL}/user/avatar`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Помилка завантаження');
+            console.log('Логотип збережено');
+        } catch (error) {
+            console.error(error);
+            alert('Не вдалося зберегти логотип.');
+        }
+    });
+}
+
+// =========================================================
+// 3. ЗБЕРЕЖЕННЯ НАЛАШТУВАНЬ
+// =========================================================
+function initSaveSettingsButton() {
+    const form = document.getElementById('agency-settings-form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('save-settings-btn');
+        const originalText = btn.innerText;
+        btn.disabled = true;
+        btn.innerText = 'Збереження...';
+
+        const data = {
+            name: document.getElementById('edit-name').value,
+            phone: document.getElementById('edit-phone').value,
+            email: document.getElementById('edit-email').value,
+            website: document.getElementById('edit-website').value,
+            description: document.getElementById('edit-description').value
+        };
+
+        try {
+            const response = await fetch(`${API_URL}/agencies/me`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify(data)
+            });
+
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(errData.error || 'Помилка збереження');
+            }
+
+            alert('Профіль успішно оновлено!');
+            loadAgencyInfo();
+
+        } catch (error) {
+            console.error(error);
+            alert(error.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = originalText;
+        }
+    });
+}
+
+// =========================================================
+// 4. ТУРИ (ПОВНИЙ ВИГЛЯД)
+// =========================================================
+async function loadAgencyTours() {
+    const container = document.getElementById('agency-tours-grid');
+    if(!container) return;
+
+    try {
+        const res = await fetch(`${API_URL}/agencies/me/tours`, { headers: getHeaders() });
+        const data = await res.json();
+
+        container.innerHTML = '';
+        if(!data.tours || data.tours.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 py-4 col-span-2 text-center">Ви ще не додали турів.</p>';
+            return;
+        }
+
+        data.tours.forEach(tour => {
+            const html = createFullTourCard(tour);
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    } catch(e) { console.error(e); }
+}
+
+// Функція для створення повної картки туру (ідентична до tours.js, але кнопки адаптовані)
+function createFullTourCard(tour) {
+    const image = tour.image_url || 'https://via.placeholder.com/400x300?text=No+Image';
+    let dateText = `${tour.duration_days} днів`;
+
+    if (tour.available_dates && typeof tour.available_dates === 'object' && tour.available_dates.length > 0) {
+        // Якщо це масив (Postgres array)
+        const nextDate = new Date(tour.available_dates[0]).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+        dateText += ` • з ${nextDate}`;
+    }
+
+    return `
+        <div class="universal-card cursor-pointer group flex flex-col h-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow">
+            
+            <div class="card-image-middle h-56 bg-gray-50 relative overflow-hidden">
+                <img src="${image}" alt="${tour.title}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                <span class="card-badge absolute top-3 right-3 bg-[#281822] text-[#D3CBC4] px-2 py-1 rounded text-xs font-bold uppercase">${tour.category_name || 'Тур'}</span>
+            </div>
+
+            <div class="card-body flex flex-col p-5 flex-grow">
+                <h3 class="card-title text-lg font-bold text-[#281822] mb-2 line-clamp-2 hover:text-[#48192E] transition">${tour.title}</h3>
+                
+                <div class="text-sm text-[#2D4952] font-medium mb-3 flex items-center gap-2">
+                    <i class="fas fa-map-marker-alt"></i> ${tour.location}
+                </div>
+
+                <div class="space-y-2 mb-4 bg-gray-50 p-3 rounded-lg mt-auto">
+                    <div class="flex items-center gap-3 text-sm text-gray-700">
+                        <i class="far fa-calendar-alt text-[#2D4952] w-5 text-center"></i>
+                        <span>${dateText}</span>
+                    </div>
+                    <div class="flex items-center gap-3 text-sm text-gray-700">
+                        <i class="fas fa-star text-yellow-500 w-5 text-center"></i>
+                        <span class="font-bold">${tour.rating || 'New'}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-footer px-5 py-4 border-t border-gray-100 flex items-center justify-between bg-white mt-0">
+                <div class="font-bold text-xl text-[#281822]">
+                    ${parseInt(tour.price_uah).toLocaleString()} ₴
+                </div>
+                
+                <div class="flex gap-2">
+                    <button class="btn-outline px-4 text-sm h-10 border border-gray-300 rounded-lg hover:bg-gray-50 text-gray-600 transition" onclick="alert('Редагування туру буде доступне скоро')">
+                        <i class="far fa-edit"></i>
+                    </button>
+                    <button class="btn-fill px-4 text-sm h-10 bg-[#48192E] text-white rounded-lg hover:bg-[#281822] transition flex items-center gap-2" onclick="openTourDetails(${tour.tour_id})">
+                        Перегляд
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// =========================================================
+// 5. ПОСТИ (ПОВНИЙ ВИГЛЯД)
+// =========================================================
+async function loadAgencyPosts() {
+    const container = document.getElementById('agency-posts-list');
+    if(!container) return;
+
+    try {
+        const res = await fetch(`${API_URL}/forum/posts/my`, { headers: getHeaders() });
+        const data = await res.json();
+
+        container.innerHTML = '';
+        if(!data.posts || data.posts.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 py-4 col-span-2 text-center">Немає постів.</p>';
+            return;
+        }
+
+        data.posts.forEach(post => {
+            const html = createFullPostCard(post);
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    } catch(e) { console.error(e); }
+}
+
+function createFullPostCard(post) {
+    let imageSection = '';
+    if (post.images && post.images.length > 0) {
+        imageSection = `
+            <div class="h-48 relative overflow-hidden bg-gray-100 border-b border-gray-100">
+                <img src="${post.images[0]}" alt="${post.title}" class="w-full h-full object-cover">
+                <span class="absolute top-3 right-3 bg-white/90 backdrop-blur text-xs px-2 py-1 rounded text-gray-700 font-medium">${post.category || 'Блог'}</span>
+            </div>
+        `;
+    }
+
+    return `
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full hover:shadow-md transition-shadow">
+            ${imageSection}
+            
+            <div class="p-5 flex flex-col flex-grow">
+                <div class="flex justify-between items-start mb-2">
+                    <h3 class="font-bold text-lg text-[#281822] line-clamp-2">${post.title}</h3>
+                </div>
+                
+                <p class="text-gray-600 text-sm line-clamp-3 mb-4 flex-grow">${post.content}</p>
+                
+                <div class="flex items-center justify-between text-gray-500 text-sm border-t border-gray-100 pt-3 mt-auto">
+                    <span class="text-xs text-gray-400">${new Date(post.created_at).toLocaleDateString()}</span>
+                    <div class="flex gap-4">
+                        <span class="flex items-center gap-1"><i class="far fa-thumbs-up"></i> ${post.likes_count}</span>
+                        <span class="flex items-center gap-1"><i class="far fa-comment-alt"></i> ${post.comments_count || 0}</span>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 mt-4 pt-2">
+                     <button class="flex-1 py-2 text-sm border border-red-200 text-red-500 rounded-lg hover:bg-red-50 transition" onclick="deletePost(${post.post_id})">Видалити</button>
+                     <button class="flex-1 py-2 text-sm bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition" onclick="openEditPostModal(${post.post_id}, '${post.title.replace(/'/g, "\\'")}', '${post.content.replace(/'/g, "\\'")}', '${post.category}')">Редагувати</button>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// =========================================================
+// 6. БРОНЮВАННЯ (Збережено попередню логіку)
+// =========================================================
 async function loadAgencyBookings() {
     const container = document.getElementById('bookings-list');
     if (!container) return;
@@ -52,18 +352,13 @@ async function loadAgencyBookings() {
     container.innerHTML = '<p class="text-center text-gray-500 py-8"><i class="fas fa-spinner fa-spin"></i> Завантаження заявок...</p>';
 
     try {
-        const response = await fetch(`${API_URL}/agencies/bookings`, { headers: getHeaders() }); //
-
-        if (!response.ok) {
-            throw new Error('Failed to fetch bookings');
-        }
-
+        const response = await fetch(`${API_URL}/agencies/bookings`, { headers: getHeaders() });
         const data = await response.json();
 
         container.innerHTML = '';
 
         if (!data.bookings || data.bookings.length === 0) {
-            container.innerHTML = '<p class="text-center text-gray-500 py-8">Активних заявок на бронювання немає.</p>';
+            container.innerHTML = '<p class="text-center text-gray-500 py-8">Активних заявок немає.</p>';
             return;
         }
 
@@ -72,15 +367,9 @@ async function loadAgencyBookings() {
                 ? new Date(booking.selected_date).toLocaleDateString('uk-UA')
                 : 'Дата не обрана';
 
-            // === СТИЛІЗАЦІЯ ВИПАДАЮЧОГО СПИСКУ ===
-            // Використовуємо класи Tailwind для створення вигляду "кнопки-бейджа"
-            // appearance-none прибирає стандартну стрілку браузера (ми додамо свою іконку або залишимо мінімалістично)
-
             let selectClass = "appearance-none font-bold text-xs py-1.5 px-3 pr-8 rounded-lg border-2 cursor-pointer transition-all outline-none focus:ring-2 focus:ring-offset-1";
-            let containerClass = "relative inline-block"; // Для позиціонування стрілочки
             let arrowColor = "";
 
-            // Налаштування кольорів під статус
             if (booking.status === 'confirmed') {
                 selectClass += " bg-[#2D4952]/10 text-[#2D4952] border-[#2D4952] focus:ring-[#2D4952]";
                 arrowColor = "text-[#2D4952]";
@@ -88,29 +377,13 @@ async function loadAgencyBookings() {
                 selectClass += " bg-red-50 text-red-600 border-red-200 focus:ring-red-500";
                 arrowColor = "text-red-600";
             } else {
-                // Pending (Очікує)
                 selectClass += " bg-yellow-50 text-yellow-700 border-yellow-300 focus:ring-yellow-400";
                 arrowColor = "text-yellow-700";
             }
 
-            // HTML для селекта з кастомною стрілочкою
-            const selectHTML = `
-                <div class="${containerClass}">
-                    <select onchange="changeBookingStatus(${booking.booking_id}, this.value)" class="${selectClass}">
-                        <option value="pending" ${booking.status === 'pending' ? 'selected' : ''}>⏳ Очікує</option>
-                        <option value="confirmed" ${booking.status === 'confirmed' ? 'selected' : ''}>✅ Підтверджено</option>
-                        <option value="rejected" ${booking.status === 'rejected' ? 'selected' : ''}>❌ Відхилено</option>
-                    </select>
-                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 ${arrowColor}">
-                        <i class="fas fa-chevron-down text-[10px]"></i>
-                    </div>
-                </div>
-            `;
-
             const html = `
                 <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition duration-200">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                        
                         <div class="flex-grow">
                             <div class="flex items-center gap-2 mb-1">
                                 <h4 class="font-bold text-[#281822] text-lg hover:text-[#48192E] transition">${booking.tour_title}</h4>
@@ -122,14 +395,15 @@ async function loadAgencyBookings() {
                                 <p><i class="far fa-calendar-alt w-5 text-center text-[#2D4952]"></i> <strong>${dateDisplay}</strong> (${booking.participants_count} осіб)</p>
                             </div>
                         </div>
-
                         <div class="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-4 md:gap-2 border-t md:border-t-0 border-gray-100 pt-3 md:pt-0 mt-2 md:mt-0">
-                            <span class="text-xs text-gray-400 font-medium" title="Дата створення заявки">
-                                <i class="far fa-clock mr-1"></i>${new Date(booking.booking_date).toLocaleDateString()}
-                            </span>
-                            
-                            <div class="flex flex-col items-end">
-                                ${selectHTML}
+                            <span class="text-xs text-gray-400 font-medium"><i class="far fa-clock mr-1"></i>${new Date(booking.booking_date).toLocaleDateString()}</span>
+                            <div class="relative inline-block">
+                                <select onchange="changeBookingStatus(${booking.booking_id}, this.value)" class="${selectClass}">
+                                    <option value="pending" ${booking.status === 'pending' ? 'selected' : ''}>⏳ Очікує</option>
+                                    <option value="confirmed" ${booking.status === 'confirmed' ? 'selected' : ''}>✅ Підтверджено</option>
+                                    <option value="rejected" ${booking.status === 'rejected' ? 'selected' : ''}>❌ Відхилено</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 ${arrowColor}"><i class="fas fa-chevron-down text-[10px]"></i></div>
                             </div>
                         </div>
                     </div>
@@ -140,226 +414,22 @@ async function loadAgencyBookings() {
 
     } catch (error) {
         console.error(error);
-        container.innerHTML = '<p class="text-center text-red-500 py-8">Не вдалося завантажити заявки.</p>';
+        container.innerHTML = '<p class="text-center text-red-500 py-4">Помилка завантаження.</p>';
     }
 }
 
-// Додаємо нову глобальну функцію для обробки зміни в селекті
 window.changeBookingStatus = async (bookingId, newStatus) => {
-    // Невеликий confirmation для критичних дій
-    let confirmText = `Змінити статус на "${newStatus}"?`;
-    if (newStatus === 'confirmed') confirmText += ' Клієнт отримає магніт.';
-    if (newStatus !== 'confirmed') confirmText += ' Якщо клієнт мав магніт за цей тур, його буде вилучено.';
-
-    if (!confirm(confirmText)) {
-        // Якщо скасували - перезавантажуємо список, щоб повернути старе значення в селекті
+    if (!confirm(`Змінити статус на "${newStatus}"?`)) {
         loadAgencyBookings();
         return;
     }
-
     try {
         const response = await fetch(`${API_URL}/agencies/bookings/${bookingId}/status`, {
             method: 'PATCH',
             headers: getHeaders(),
             body: JSON.stringify({ status: newStatus })
         });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            // alert(data.message); // Можна розкоментувати, якщо потрібне явне підтвердження
-            loadAgencyBookings(); // Оновлюємо список (кольри та стилі)
-        } else {
-            alert(data.error || 'Помилка зміни статусу');
-            loadAgencyBookings();
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Помилка з\'єднання з сервером');
-    }
+        if (response.ok) loadAgencyBookings();
+        else alert('Помилка зміни статусу');
+    } catch (error) { console.error(error); }
 };
-
-// Глобальна функція для виклику з onclick в HTML
-window.confirmBooking = async (bookingId) => {
-    if (!confirm('Підтвердити це бронювання? Клієнт отримає сповіщення та магніт.')) return;
-
-    try {
-        const response = await fetch(`${API_URL}/agencies/bookings/${bookingId}/confirm`, {
-            method: 'POST',
-            headers: getHeaders()
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            alert(data.message);
-            loadAgencyBookings(); // Перезавантажити список
-        } else {
-            alert(data.error || 'Помилка підтвердження');
-        }
-    } catch (error) {
-        console.error(error);
-        alert('Помилка з\'єднання з сервером');
-    }
-};
-
-// =========================================================
-// ІСНУЮЧА ЛОГІКА (Агенція, Лого, Нагороди)
-// =========================================================
-
-// ---- Дані агенції (Можна замінити на fetch /api/agencies/me) ----
-let agencyData = {
-    name: 'Travel Pro',
-    description: 'Ми організовуємо авторські тури по Європі.',
-    phone: '',
-    email: '',
-    website: '',
-    logo: '',
-    awards: [],
-    bgColor: '#D3CBC4'
-};
-
-// ---- Завантаження початкових даних ----
-async function loadAgencyInfo() {
-    try {
-        const response = await fetch(`${API_URL}/agencies/me`, {
-            headers: getHeaders()
-        });
-
-        const currentUser = JSON.parse(localStorage.getItem('user'));
-
-        document.getElementById('agency-name').innerText = agencyData.name;
-        const descEl = document.getElementById('agency-description');
-        if (descEl.tagName === 'TEXTAREA' || descEl.tagName === 'INPUT') {
-            descEl.value = agencyData.description;
-        } else {
-            descEl.innerText = agencyData.description;
-        }
-        document.getElementById('agency-phone').innerText = agencyData.phone || '—';
-        document.getElementById('agency-email').innerText = agencyData.email || '—';
-        document.getElementById('agency-website').innerText = agencyData.website || '—';
-        if (agencyData.logo) {
-            document.getElementById('agency-logo').src = agencyData.logo;
-        }
-        document.body.style.backgroundColor = agencyData.bgColor;
-
-        checkOwnerAccess(currentUser);
-    } catch (e) {
-        console.error("Помилка завантаження даних агенції", e);
-    }
-}
-
-// === ВИПРАВЛЕНА ФУНКЦІЯ ===
-function checkOwnerAccess(user) {
-    if (!user) return;
-
-    if (user.isAgent) {
-        const ownerElements = document.querySelectorAll('.owner-only');
-        ownerElements.forEach(el => {
-            // МИ НЕ СТАВИМО display: block, бо це ламає таби
-            // Ми просто видаляємо клас, який їх приховує
-            el.classList.remove('owner-only');
-        });
-    }
-}
-
-// ---- Логотип агенції ----
-function initLogoUpload() {
-    const logoBtn = document.getElementById('edit-logo-btn');
-    const logoInput = document.getElementById('logo-input');
-    const logoImg = document.getElementById('agency-logo');
-
-    if (logoBtn && logoInput && logoImg) {
-        logoBtn.addEventListener('click', () => {
-            logoInput.click();
-        });
-
-        logoInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                logoImg.src = event.target.result;
-                agencyData.logo = event.target.result;
-            };
-            reader.readAsDataURL(file);
-        });
-    }
-}
-
-// ---- Нагороди (сертифікати) ----
-function initAwards() {
-    const addAwardBtn = document.getElementById('add-award-btn');
-    const addAwardInput = document.getElementById('add-award-input');
-    const awardsList = document.getElementById('awards-list');
-
-    if (!addAwardBtn || !addAwardInput || !awardsList) return;
-
-    addAwardBtn.addEventListener('click', () => addAwardInput.click());
-
-    addAwardInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(event) {
-            const imgContainer = document.createElement('div');
-            imgContainer.className = 'award-item relative inline-block m-2';
-
-            const img = document.createElement('img');
-            img.src = event.target.result;
-            img.alt = 'Сертифікат';
-            img.className = 'w-24 h-24 object-cover rounded-md border';
-
-            const removeBtn = document.createElement('button');
-            removeBtn.innerText = '✖';
-            removeBtn.className = 'absolute top-0 right-0 bg-red-500 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center cursor-pointer';
-            removeBtn.addEventListener('click', () => {
-                awardsList.removeChild(imgContainer);
-                agencyData.awards = agencyData.awards.filter(a => a !== img.src);
-            });
-
-            imgContainer.appendChild(img);
-            imgContainer.appendChild(removeBtn);
-            awardsList.appendChild(imgContainer);
-
-            agencyData.awards.push(img.src);
-        }
-        reader.readAsDataURL(file);
-    });
-}
-
-// ---- Збереження опису агенції ----
-function initSaveInfoButton() {
-    const saveBtn = document.getElementById('save-agency-info');
-    const descriptionInput = document.getElementById('agency-description');
-    if (!saveBtn || !descriptionInput) return;
-
-    saveBtn.disabled = false;
-    saveBtn.addEventListener('click', () => {
-        agencyData.description = descriptionInput.value;
-        loadAgencyInfo();
-        alert('Опис агенції збережено!');
-    });
-}
-
-// ---- Збереження налаштувань ----
-function initSaveSettingsButton() {
-    const saveBtn = document.getElementById('save-agency-settings');
-    if(!saveBtn) return;
-
-    saveBtn.disabled = false;
-    saveBtn.addEventListener('click', () => {
-        agencyData.phone = document.getElementById('edit-agency-phone').value;
-        agencyData.email = document.getElementById('edit-agency-email').value;
-        agencyData.website = document.getElementById('edit-agency-website').value;
-
-        const bgSelect = document.getElementById('page-bg-select');
-        agencyData.bgColor = bgSelect.value;
-        document.body.style.backgroundColor = agencyData.bgColor;
-
-        loadAgencyInfo();
-        alert('Налаштування збережено!');
-    });
-}
