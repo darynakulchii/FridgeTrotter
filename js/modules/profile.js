@@ -3,8 +3,7 @@ import { API_URL, getHeaders } from '../api-config.js';
 const currentUser = JSON.parse(localStorage.getItem('user'));
 let editingPostId = null;
 
-// === HELPER: Debounce для автозбереження ===
-// Запобігає надто частим запитам до сервера при перетягуванні
+// === HELPER: Debounce ===
 function debounce(func, timeout = 1000) {
     let timer;
     return (...args) => {
@@ -13,7 +12,6 @@ function debounce(func, timeout = 1000) {
     };
 }
 
-// Автозбереження розташування магнітів
 const autoSaveFridge = debounce(() => {
     saveFridgeOnlyLayout();
 }, 1000);
@@ -24,16 +22,23 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-    injectPostModal();
+    injectPostModal(); // Модалка редагування (Edit)
     initTabs();
-    loadUserProfile(); // Завантажує дані, кольори та налаштування перемикачів
-    initFridge();      // Ініціалізує холодильник та Drag-n-Drop
-    initContentTabs(); // Ініціалізує вкладки збереженого контенту
-    initSettingsForms(); // Ініціалізує форми налаштувань
+    loadUserProfile();
+    initFridge();
+    initSettingsForms();
+
+    // Глобальні закриття модалок
+    document.querySelectorAll('.modal-close-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const modal = e.target.closest('.modal-backdrop');
+            if(modal) modal.classList.remove('active');
+        });
+    });
 });
 
 /* =========================================
-   1. ЛОГІКА ТАБІВ (TABS)
+   1. ЛОГІКА ТАБІВ
    ========================================= */
 function initTabs() {
     const navPills = document.querySelectorAll('.nav-pill');
@@ -41,18 +46,15 @@ function initTabs() {
 
     navPills.forEach(pill => {
         pill.addEventListener('click', (e) => {
-            // Перемикання класів кнопок
             navPills.forEach(btn => btn.classList.remove('active'));
             e.currentTarget.classList.add('active');
 
-            // Перемикання контенту
             const tabName = pill.getAttribute('data-tab');
             tabContents.forEach(content => content.classList.remove('active'));
 
             const targetTab = document.getElementById(`tab-${tabName}`);
             if (targetTab) targetTab.classList.add('active');
 
-            // "Ліниве" завантаження даних для відповідних вкладок
             if (tabName === 'my-posts') loadMyPosts();
             if (tabName === 'saved-tours') loadSavedTours();
             if (tabName === 'saved-posts') loadSavedPosts();
@@ -68,22 +70,18 @@ async function loadUserProfile() {
     try {
         const response = await fetch(`${API_URL}/user/profile`, { headers: getHeaders() });
         if (!response.ok) throw new Error('Failed to load profile');
-
         const data = await response.json();
         fillProfileData(data);
-    } catch (error) {
-        console.error(error);
-    }
+    } catch (error) { console.error(error); }
 }
 
 function fillProfileData(data) {
-    // --- 1. Вкладка "Моя інформація" ---
+    // Вкладка "Інфо"
     const infoTab = document.getElementById('tab-info');
     if (infoTab) {
         const inputs = infoTab.querySelectorAll('input.form-input');
         const textarea = infoTab.querySelector('textarea.form-input');
 
-        // Заповнюємо поля, перевіряючи наявність даних
         if (inputs[0]) inputs[0].value = `${data.first_name || ''} ${data.last_name || ''}`.trim();
         if (inputs[1]) inputs[1].value = data.email || '';
         if (inputs[2]) inputs[2].value = data.location || '';
@@ -92,96 +90,65 @@ function fillProfileData(data) {
         if (textarea) textarea.value = data.bio || '';
         if (inputs[5]) inputs[5].value = data.travel_interests || '';
 
-        // Аватар
         const avatarCircle = infoTab.querySelector('.avatar-circle-lg');
         if (avatarCircle && data.profile_image_url) {
             avatarCircle.innerHTML = `<img src="${data.profile_image_url}" class="w-full h-full object-cover rounded-full">`;
-            // Видаляємо стандартні класи стилізації тексту, якщо є картинка
             avatarCircle.classList.remove('bg-[#48192E]', 'text-[#D3CBC4]');
-        } else if (avatarCircle) {
-            avatarCircle.innerText = (data.first_name?.[0] || '') + (data.last_name?.[0] || '');
         }
 
-        // Статистика
         const statNumbers = infoTab.querySelectorAll('.stat-number');
         if (statNumbers.length >= 4) {
             statNumbers[0].innerText = data.countries_visited || 0;
             statNumbers[1].innerText = data.cities_visited || 0;
-            // statNumbers[2] зазвичай для активних турів (поки 0)
             statNumbers[3].innerText = data.followers_count || 0;
         }
     }
 
-    // --- 2. Налаштування холодильника (ВИПРАВЛЕНО ВИБІР КОЛЬОРУ) ---
+    // Налаштування холодильника
     const settingsTab = document.getElementById('tab-fridge-settings');
     if (settingsTab) {
         const colorOptions = settingsTab.querySelectorAll('.color-option');
-
-        // Скидаємо всі вибрані
         colorOptions.forEach(opt => opt.classList.remove('selected'));
-
-        // Шукаємо потрібний колір по атрибуту data-color
         let colorFound = false;
         colorOptions.forEach(opt => {
             const optColor = opt.getAttribute('data-color');
-            // Порівнюємо рядки (ігноруючи регістр)
             if (optColor && data.fridge_color && optColor.toLowerCase() === data.fridge_color.toLowerCase()) {
                 opt.classList.add('selected');
                 colorFound = true;
             }
         });
-
-        // Якщо колір не знайдено, вибираємо перший (дефолтний) як fallback
-        if (!colorFound && colorOptions.length > 0) {
-            colorOptions[0].classList.add('selected');
-        }
+        if (!colorFound && colorOptions.length > 0) colorOptions[0].classList.add('selected');
 
         const switches = settingsTab.querySelectorAll('.toggle-switch');
         if (switches[0]) toggleSwitch(switches[0], data.fridge_is_public);
         if (switches[1]) toggleSwitch(switches[1], data.fridge_allow_comments);
-        // Третій перемикач (відображення в профілі) можна прив'язати до fridge_is_public або окремого поля
         if (switches[2]) toggleSwitch(switches[2], data.fridge_is_public);
     }
 
-    // Фарбуємо сам холодильник при завантаженні
     const fridgeDoor = document.getElementById('fridge-door');
-    if (fridgeDoor && data.fridge_color) {
-        fridgeDoor.style.backgroundColor = data.fridge_color;
-    }
+    if (fridgeDoor && data.fridge_color) fridgeDoor.style.backgroundColor = data.fridge_color;
 
-    // --- 3. Загальні налаштування (ВИПРАВЛЕНО ПЕРЕМИКАЧІ) ---
+    // Загальні налаштування
     const mainSettingsTab = document.getElementById('tab-settings');
     if (mainSettingsTab) {
         const allSwitches = mainSettingsTab.querySelectorAll('.toggle-switch');
-
-        // Переконуємось, що індекси відповідають HTML структурі my_profile.html
         if(allSwitches.length >= 8) {
             toggleSwitch(allSwitches[0], data.notify_email);
             toggleSwitch(allSwitches[1], data.notify_push);
-            // 2 - нові підписники
             toggleSwitch(allSwitches[2], data.notify_new_followers);
-            // 3 - нові коментарі
             toggleSwitch(allSwitches[3], data.notify_comments);
-            // 4 - нові повідомлення
             toggleSwitch(allSwitches[4], data.notify_messages);
-
-            // Конфіденційність
-            // Прибираємо заглушку "true". Прив'язуємо до fridge_is_public (або іншого поля, якщо є)
             toggleSwitch(allSwitches[5], data.fridge_is_public);
-
             toggleSwitch(allSwitches[6], data.is_email_public);
             toggleSwitch(allSwitches[7], data.is_location_public);
         }
     }
-    // --- 4. Розмір магнітів ---
+
     if (data.magnet_size) {
         const sizeBtns = document.querySelectorAll('.magnet-size-btn');
         sizeBtns.forEach(btn => {
-            // Скидаємо стилі
             btn.classList.remove('bg-[#281822]', 'text-white', 'border-transparent');
             btn.classList.add('border-gray-300', 'text-gray-700');
-
-            // Активуємо потрібну
             if (btn.getAttribute('data-size') === data.magnet_size) {
                 btn.classList.remove('border-gray-300', 'text-gray-700');
                 btn.classList.add('bg-[#281822]', 'text-white', 'border-transparent');
@@ -190,17 +157,11 @@ function fillProfileData(data) {
     }
 }
 
-// Допоміжна функція для перемикання класу active
 function toggleSwitch(element, isActive) {
-    // Перетворюємо в boolean, щоб уникнути null/undefined помилок
-    const active = !!isActive;
-    if (active) element.classList.add('active');
+    if (!!isActive) element.classList.add('active');
     else element.classList.remove('active');
 }
 
-/* =========================================
-   3. ЛОГІКА ХОЛОДИЛЬНИКА
-   ========================================= */
 /* =========================================
    3. ЛОГІКА ХОЛОДИЛЬНИКА
    ========================================= */
@@ -208,35 +169,27 @@ async function initFridge() {
     const fridgeDoor = document.getElementById('fridge-door');
     const panel = document.querySelector('.magnet-panel-card');
 
-    if (fridgeDoor) {
-        initDragAndDrop(fridgeDoor);
-    }
+    if (fridgeDoor) initDragAndDrop(fridgeDoor);
 
-    // === ОНОВЛЕНО: Проста логіка кнопки "Зберегти" ===
     const saveBtn = document.getElementById('save-fridge-btn');
     if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
-            // Блокуємо кнопку на час збереження
-            const originalText = saveBtn.innerHTML;
             saveBtn.disabled = true;
             await saveFridgeOnlyLayout();
             alert('Зміни успішно збережено!');
+            saveBtn.disabled = false;
         });
     }
-    // ==================================================
 
-    // 1. Завантажуємо доступні магніти (Ваш існуючий код для Grid)
     try {
         const response = await fetch(`${API_URL}/fridge/magnets/available`, { headers: getHeaders() });
         const data = await response.json();
-
         let grid = panel.querySelector('#magnet-grid');
 
         if (!grid) {
             const title = panel.querySelector('h3');
             panel.innerHTML = '';
             if (title) panel.appendChild(title);
-
             grid = document.createElement('div');
             grid.id = 'magnet-grid';
             grid.style.display = 'grid';
@@ -252,20 +205,15 @@ async function initFridge() {
         if (data.magnets && data.magnets.length > 0) {
             data.magnets.forEach(m => {
                 const el = createMagnetElement(m, false);
-
                 el.style.boxSizing = 'border-box';
                 grid.appendChild(el);
             });
         }
 
-        const hintExists = panel.querySelector('.text-gray-500.border-t');
-        if (!hintExists) {
+        if (!panel.querySelector('.text-gray-500.border-t')) {
             panel.insertAdjacentHTML('beforeend', '<p class="text-sm text-gray-500 mt-6 pt-4 border-t border-gray-100">Перетягніть магніт на холодильник</p>');
         }
-
-    } catch (e) {
-        console.error('Error loading available magnets:', e);
-    }
+    } catch (e) { console.error('Error loading magnets:', e); }
 
     loadUserFridgeLayout();
 
@@ -280,9 +228,7 @@ async function initFridge() {
     });
 
     document.querySelectorAll('.toggle-switch').forEach(sw => {
-        sw.addEventListener('click', () => {
-            sw.classList.toggle('active');
-        });
+        sw.addEventListener('click', () => sw.classList.toggle('active'));
     });
 }
 
@@ -291,13 +237,11 @@ function initDragAndDrop(fridgeDoor) {
     let isNewItem = false;
     let offset = { x: 0, y: 0 };
 
-    // Подія для панелі (нові магніти)
     document.addEventListener('dragstart', (e) => {
         const target = e.target.closest('.magnet-btn');
         if (target) {
             isNewItem = true;
             draggedItem = target;
-            // Безпечно отримуємо ID або пустий рядок
             e.dataTransfer.setData('text/plain', target.getAttribute('data-id') || '');
             e.dataTransfer.effectAllowed = 'copy';
         }
@@ -354,7 +298,6 @@ function initDragAndDrop(fridgeDoor) {
         autoSaveFridge();
     });
 
-    // Видалення
     document.addEventListener('dragover', (e) => e.preventDefault());
     document.addEventListener('drop', (e) => {
         const isOverFridge = e.target.closest('#fridge-door');
@@ -370,14 +313,10 @@ function initDragAndDrop(fridgeDoor) {
 async function loadUserFridgeLayout() {
     const fridgeDoor = document.getElementById('fridge-door');
     try {
-        // Отримуємо і магніти, і налаштування
         const response = await fetch(`${API_URL}/fridge/${currentUser.userId}/layout`, { headers: getHeaders() });
         const data = await response.json();
-
-        // Очищення
         const oldMagnets = fridgeDoor.querySelectorAll('.magnet-on-fridge');
         oldMagnets.forEach(m => m.remove());
-
         const size = data.settings?.magnet_size || 'medium';
 
         if(data.magnets) {
@@ -394,20 +333,18 @@ async function loadUserFridgeLayout() {
 
 function createMagnetElement(magnetData, isOnFridge, size = 'medium') {
     const div = document.createElement('div');
-    div.setAttribute('draggable', 'true')
+    div.setAttribute('draggable', 'true');
     const baseClass = isOnFridge ? 'magnet-on-fridge' : 'magnet-btn';
     const shapeClass = magnetData.shape ? `magnet-shape-${magnetData.shape}` : '';
     const extraClasses = magnetData.image_url ? 'relative overflow-hidden' : '';
     const sizeClass = isOnFridge ? `size-${size}` : '';
 
     div.className = `${baseClass} ${magnetData.color_group || 'burgundy'} ${shapeClass} ${extraClasses} ${sizeClass}`;
-
     div.setAttribute('data-id', magnetData.magnet_id);
     div.setAttribute('data-country', magnetData.country);
     div.setAttribute('data-city', magnetData.city || '');
     div.setAttribute('data-icon', magnetData.icon_class || 'star');
     div.setAttribute('data-color', magnetData.color_group || 'burgundy');
-
     if (magnetData.image_url) div.setAttribute('data-image', magnetData.image_url);
     if (magnetData.shape) div.setAttribute('data-shape', magnetData.shape);
 
@@ -423,7 +360,6 @@ function createMagnetElement(magnetData, isOnFridge, size = 'medium') {
     } else {
         const countryText = magnetData.country;
         const cityText = magnetData.city || magnetData.country;
-
         div.innerHTML = `
             <i class="fas fa-${magnetData.icon_class} ${isOnFridge ? '' : 'text-xl'} z-10 relative"></i>
             <div class="z-10 relative">
@@ -432,7 +368,6 @@ function createMagnetElement(magnetData, isOnFridge, size = 'medium') {
             </div>
         `;
     }
-
     return div;
 }
 
@@ -440,29 +375,24 @@ function createMagnetOnFridgeElement(magnetData, size = 'medium') {
     return createMagnetElement(magnetData, true, size);
 }
 
-
 function checkPlaceholder() {
     const fridgeDoor = document.getElementById('fridge-door');
     const placeholder = document.getElementById('fridge-placeholder');
     if(!fridgeDoor || !placeholder) return;
-
     const hasMagnets = fridgeDoor.querySelectorAll('.magnet-on-fridge').length > 0;
     if (hasMagnets) placeholder.classList.add('hidden');
     else placeholder.classList.remove('hidden');
 }
 
-// Функція збереження магнітів (викликається автоматично або примусово)
 async function saveFridgeOnlyLayout() {
     const fridgeDoor = document.getElementById('fridge-door');
     if(!fridgeDoor) return;
-
     const magnetElements = fridgeDoor.querySelectorAll('.magnet-on-fridge');
-
     const magnetsData = Array.from(magnetElements).map(el => ({
-        magnet_id: parseInt(el.getAttribute('data-id')), // Впевнюємось, що це число
+        magnet_id: parseInt(el.getAttribute('data-id')),
         x_position: parseInt(el.style.left) || 0,
         y_position: parseInt(el.style.top) || 0
-    })).filter(m => !isNaN(m.magnet_id)); // Відфільтровуємо поламані ID
+    })).filter(m => !isNaN(m.magnet_id));
 
     try {
         await fetch(`${API_URL}/fridge/save`, {
@@ -475,256 +405,19 @@ async function saveFridgeOnlyLayout() {
 }
 
 /* =========================================
-   4. ЗБЕРЕЖЕННЯ ПРОФІЛЮ (КНОПКИ)
+   4. КОНТЕНТ (ОНОВЛЕНО: UNIVERSAL CARDS)
    ========================================= */
 
-function collectAllProfileData() {
-    // Info Tab Data
-    const infoTab = document.getElementById('tab-info');
-    const inputs = infoTab.querySelectorAll('input.form-input');
-    const textarea = infoTab.querySelector('textarea.form-input');
-    const fullName = inputs[0].value.split(' ');
-    const activeSizeBtn = document.querySelector('.magnet-size-btn.bg-\\[\\#281822\\]');
-    const magnetSize = activeSizeBtn ? activeSizeBtn.getAttribute('data-size') : 'medium';
-
-    // Fridge Settings Data
-    const fSettingsTab = document.getElementById('tab-fridge-settings');
-    const selectedOption = fSettingsTab?.querySelector('.color-option.selected');
-    const fSwitches = fSettingsTab?.querySelectorAll('.toggle-switch');
-
-    // General Settings Data
-    const gSettingsTab = document.getElementById('tab-settings');
-    const gSwitches = gSettingsTab?.querySelectorAll('.toggle-switch');
-
-    return {
-        // Профіль
-        firstName: fullName[0] || '',
-        lastName: fullName.slice(1).join(' ') || '',
-        email: inputs[1].value,
-        location: inputs[2].value,
-        dateOfBirth: inputs[3].value,
-        website: inputs[4].value,
-        bio: textarea.value,
-        travelInterests: inputs[5].value,
-
-        // Холодильник (колір беремо з атрибуту data-color)
-        fridgeColor: selectedOption?.getAttribute('data-color') || '#f3f4f6',
-        magnetSize: magnetSize,
-
-        fridgeIsPublic: fSwitches?.[0]?.classList.contains('active') ?? true,
-        fridgeAllowComments: fSwitches?.[1]?.classList.contains('active') ?? true,
-
-        // Сповіщення
-        notifyEmail: gSwitches?.[0]?.classList.contains('active') ?? true,
-        notifyPush: gSwitches?.[1]?.classList.contains('active') ?? true,
-        notifyNewFollowers: gSwitches?.[2]?.classList.contains('active') ?? true,
-        notifyComments: gSwitches?.[3]?.classList.contains('active') ?? true,
-        notifyMessages: gSwitches?.[4]?.classList.contains('active') ?? true,
-
-        // Приватність
-        isEmailPublic: gSwitches?.[6]?.classList.contains('active') ?? false,
-        isLocationPublic: gSwitches?.[7]?.classList.contains('active') ?? true
-    };
-}
-
-async function saveFullProfile() {
-    const body = collectAllProfileData();
-    try {
-        const res = await fetch(`${API_URL}/user/profile`, {
-            method: 'PUT', headers: getHeaders(), body: JSON.stringify(body)
-        });
-
-        // Також примусово зберігаємо магніти при ручному збереженні (синхронізація)
-        await saveFridgeOnlyLayout();
-
-        if(res.ok) alert('Зміни успішно збережено!');
-        else alert('Помилка збереження');
-    } catch(e) { console.error(e); }
-}
-
-function initSettingsForms() {
-    // 1. Кнопка "Зберегти зміни" на вкладці "Інфо"
-    const infoSaveBtn = document.querySelector('#tab-info .btn-burgundy-solid');
-    if(infoSaveBtn) infoSaveBtn.onclick = saveFullProfile;
-
-    // 2. Кнопка "Зберегти налаштування" на вкладці "Холодильник"
-    const fridgeSaveBtn = document.querySelector('#tab-fridge-settings .btn-burgundy-solid');
-    if (fridgeSaveBtn) fridgeSaveBtn.onclick = saveFullProfile;
-
-    // 3. Кнопки на вкладці "Загальні налаштування"
-    const settingsTab = document.getElementById('tab-settings');
-    if (settingsTab) {
-        // Зміна пароля (перша кнопка)
-        const savePassBtn = settingsTab.querySelectorAll('.btn-burgundy-solid')[0];
-        if (savePassBtn) {
-            savePassBtn.addEventListener('click', async () => {
-                const inputs = settingsTab.querySelectorAll('input[type="password"]');
-                const currentPassword = inputs[0].value;
-                const newPassword = inputs[1].value;
-                const confirmPassword = inputs[2].value;
-
-                if (newPassword !== confirmPassword) {
-                    alert('Нові паролі не співпадають');
-                    return;
-                }
-                try {
-                    const res = await fetch(`${API_URL}/user/password`, {
-                        method: 'PUT', headers: getHeaders(), body: JSON.stringify({ currentPassword, newPassword })
-                    });
-                    const data = await res.json();
-                    if (res.ok) {
-                        alert(data.message);
-                        inputs.forEach(i => i.value = '');
-                    } else {
-                        alert(data.error);
-                    }
-                } catch (e) { console.error(e); }
-            });
-        }
-
-        // Загальне збереження (друга кнопка внизу)
-        const saveAllBtn = settingsTab.querySelectorAll('.btn-burgundy-solid')[1];
-        if (saveAllBtn) saveAllBtn.onclick = saveFullProfile;
-
-        // Видалення акаунту
-        const deleteBtn = settingsTab.querySelector('.bg-red-50 button');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', async () => {
-                if(confirm('Ви впевнені? Цю дію не можна відмінити!')) {
-                    try {
-                        const res = await fetch(`${API_URL}/user/account`, { method: 'DELETE', headers: getHeaders() });
-                        if (res.ok) {
-                            localStorage.clear();
-                            window.location.href = 'register.html';
-                        }
-                    } catch(e) { console.error(e); }
-                }
-            });
-        }
-    }
-
-    // 4. Логіка завантаження аватара
-    const infoTab = document.getElementById('tab-info');
-    if(infoTab) {
-        const uploadBtn = infoTab.querySelector('.btn-burgundy-outline');
-        const fileInput = document.createElement('input');
-        fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.style.display = 'none';
-        infoTab.appendChild(fileInput);
-
-        if (uploadBtn) {
-            uploadBtn.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', async () => {
-                if (fileInput.files.length > 0) {
-                    const formData = new FormData();
-                    formData.append('avatar', fileInput.files[0]);
-                    try {
-                        const res = await fetch(`${API_URL}/user/avatar`, {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                            body: formData
-                        });
-                        const data = await res.json();
-                        if (res.ok) {
-                            const avatarCircle = infoTab.querySelector('.avatar-circle-lg');
-                            if (avatarCircle) {
-                                avatarCircle.innerHTML = `<img src="${data.url}" class="w-full h-full object-cover rounded-full">`;
-                                avatarCircle.classList.remove('bg-[#48192E]', 'text-[#D3CBC4]');
-                            }
-                        }
-                    } catch (e) { console.error(e); }
-                }
-            });
-        }
-    }
-
-    // 5. Логіка вибору розміру магнітів
-    const sizeBtns = document.querySelectorAll('.magnet-size-btn');
-    sizeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            // Прибираємо активний клас з усіх
-            sizeBtns.forEach(b => {
-                b.classList.remove('bg-[#281822]', 'text-white', 'border-transparent');
-                b.classList.add('border-gray-300', 'text-gray-700');
-            });
-            // Додаємо активний клас натиснутій
-            btn.classList.remove('border-gray-300', 'text-gray-700');
-            btn.classList.add('bg-[#281822]', 'text-white', 'border-transparent');
-
-            // Опціонально: можна одразу оновити вигляд на холодильнику (live preview)
-            // updateFridgeMagnetsSize(btn.getAttribute('data-size'));
-        });
-    });
-}
-
-/* =========================================
-   5. ФУНКЦІОНАЛ КОНТЕНТУ (ПОСТИ, ТУРИ)
-   ========================================= */
-
-// HELPER: Модалка для постів
-function injectPostModal() {
-    const modalHTML = `
-        <div id="post-modal" class="modal-backdrop">
-            <div class="modal-content max-w-lg">
-                <div class="modal-header">
-                    <h3 class="text-xl font-bold text-[#281822]" id="post-modal-title">Редагувати пост</h3>
-                    <button class="modal-close-btn" onclick="closePostModal()">&times;</button>
-                </div>
-                <div class="modal-body space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-[#281822]">Заголовок</label>
-                        <input type="text" id="post-title" class="w-full border p-2 rounded-md focus:border-[#48192E] outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-[#281822]">Категорія</label>
-                        <select id="post-category" class="w-full border p-2 rounded-md bg-white focus:border-[#48192E] outline-none">
-                            <option value="Поради">Поради</option>
-                            <option value="Маршрути">Маршрути</option>
-                            <option value="Спорядження">Спорядження</option>
-                            <option value="Інше">Інше</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1 text-[#281822]">Текст</label>
-                        <textarea id="post-content" rows="5" class="w-full border p-2 rounded-md focus:border-[#48192E] outline-none"></textarea>
-                    </div>
-                    <button id="save-post-btn" class="btn-burgundy-solid w-full">Зберегти зміни</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-
-    const saveBtn = document.getElementById('save-post-btn');
-    if (saveBtn) saveBtn.addEventListener('click', savePost);
-}
-
-// Глобальні методи для виклику з onclick
-window.openCreatePostModal = () => {
-    window.location.href = 'create_post.html';
-};
-
-window.openEditPostModal = (id, title, content, category) => {
-    editingPostId = id;
-    document.getElementById('post-modal-title').innerText = 'Редагувати пост';
-    document.getElementById('post-title').value = title;
-    document.getElementById('post-content').value = content;
-    document.getElementById('post-category').value = category || 'Інше';
-    document.getElementById('post-modal').classList.add('active');
-};
-
-window.closePostModal = () => {
-    document.getElementById('post-modal').classList.remove('active');
-};
+// --- A. ПОСТИ (Мої та Збережені) ---
 
 async function loadMyPosts() {
     const container = document.querySelector('#tab-my-posts');
+    // Зберігаємо заголовок перед очищенням
     const header = container.querySelector('.flex.justify-between');
 
-    // Прив'язка кнопки "Створити новий пост"
-    const createBtn = header.querySelector('button');
-    if(createBtn) {
-        createBtn.onclick = () => window.openCreatePostModal();
-    }
+    // Прив'язка кнопки створення
+    const createBtn = header ? header.querySelector('button') : null;
+    if(createBtn) createBtn.onclick = () => window.location.href = 'create_post.html';
 
     try {
         const response = await fetch(`${API_URL}/forum/posts/my`, { headers: getHeaders() });
@@ -739,92 +432,8 @@ async function loadMyPosts() {
         }
 
         data.posts.forEach(post => {
-            const html = createPostCardHTML(post, true);
-            container.insertAdjacentHTML('beforeend', html);
-        });
-    } catch (e) { console.error(e); }
-}
-
-async function savePost() {
-    const title = document.getElementById('post-title').value;
-    const content = document.getElementById('post-content').value;
-    const category = document.getElementById('post-category').value;
-
-    if(!title || !content) return alert('Заповніть всі поля');
-
-    try {
-        let url = `${API_URL}/forum/posts`;
-        let method = 'POST';
-
-        if (editingPostId) {
-            url = `${API_URL}/forum/posts/${editingPostId}`;
-            method = 'PUT';
-        }
-
-        const res = await fetch(url, {
-            method: method,
-            headers: getHeaders(),
-            body: JSON.stringify({ title, content, category })
-        });
-
-        if (res.ok) {
-            closePostModal();
-            loadMyPosts();
-        } else {
-            alert('Помилка збереження');
-        }
-    } catch (e) { console.error(e); }
-}
-
-window.deletePost = async (id) => {
-    if(!confirm('Видалити пост?')) return;
-    try {
-        await fetch(`${API_URL}/forum/posts/${id}`, { method: 'DELETE', headers: getHeaders() });
-        loadMyPosts();
-    } catch(e) { console.error(e); }
-};
-
-async function loadSavedTours() {
-    const container = document.querySelector('#tab-saved-tours .grid');
-    const clearBtn = document.querySelector('#tab-saved-tours button');
-
-    if(clearBtn) {
-        clearBtn.onclick = async () => {
-            if(!confirm('Очистити всі збережені тури?')) return;
-            await fetch(`${API_URL}/tours/saved`, { method: 'DELETE', headers: getHeaders() });
-            loadSavedTours();
-        };
-    }
-
-    if (!container) return;
-
-    try {
-        const response = await fetch(`${API_URL}/tours/saved`, { headers: getHeaders() });
-        const data = await response.json();
-
-        container.innerHTML = '';
-        if (data.tours.length === 0) {
-            container.innerHTML = '<p class="text-gray-500 col-span-2">Збережених турів немає.</p>';
-            return;
-        }
-
-        data.tours.forEach(tour => {
-            const html = `
-                <div class="tour-card-saved shadow-md flex flex-col h-full overflow-hidden p-0 bg-white rounded-xl">
-                    <div class="relative h-48">
-                        <img src="${tour.image_url || 'https://via.placeholder.com/400'}" class="w-full h-full object-cover m-0">
-                        <span class="absolute top-3 right-3 bg-[#48192E] text-white text-xs px-2 py-1 rounded font-medium">${tour.category_name || 'Тур'}</span>
-                    </div>
-                    <div class="p-5 flex flex-col flex-grow">
-                        <h3 class="text-lg font-bold text-[#281822] mb-1">${tour.title}</h3>
-                        <p class="text-sm text-gray-500 mb-4 line-clamp-2">${tour.description}</p>
-                        <div class="mt-auto pt-4 border-t border-gray-100 flex justify-between items-center">
-                            <span class="text-xl font-bold text-[#48192E]">${tour.price_uah} ₴</span>
-                            <button class="border border-[#48192E] text-[#48192E] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-50" onclick="removeSavedTour(${tour.tour_id})">Видалити</button>
-                        </div>
-                    </div>
-                </div>
-             `;
+            // Для "Мої пости" додаємо кнопки редагування/видалення
+            const html = createUniversalPostCard(post, true);
             container.insertAdjacentHTML('beforeend', html);
         });
     } catch (e) { console.error(e); }
@@ -833,7 +442,7 @@ async function loadSavedTours() {
 async function loadSavedPosts() {
     const container = document.querySelector('#tab-saved-posts');
     const header = container.querySelector('.flex.justify-between');
-    const clearBtn = header.querySelector('button');
+    const clearBtn = header ? header.querySelector('button') : null;
 
     if(clearBtn) {
         clearBtn.onclick = async () => {
@@ -856,15 +465,162 @@ async function loadSavedPosts() {
         }
 
         data.posts.forEach(post => {
-            const html = createPostCardHTML(post, false);
+            const html = createUniversalPostCard(post, false); // false = не моє (збережене)
             container.insertAdjacentHTML('beforeend', html);
         });
     } catch (e) { console.error(e); }
 }
 
+// Універсальна картка Поста (як на Форумі)
+function createUniversalPostCard(post, isMyPost) {
+    // Аватар
+    let avatarContent = post.author_avatar
+        ? `<img src="${post.author_avatar}" class="w-full h-full object-cover">`
+        : `<div class="w-full h-full flex items-center justify-center font-bold text-white text-sm">${(post.first_name?.[0]||'') + (post.last_name?.[0]||'')}</div>`;
+
+    // Фото
+    let imageSection = '';
+    if (post.images && post.images.length > 0) {
+        imageSection = `
+            <div class="card-image-middle h-48 relative overflow-hidden bg-gray-100">
+                <img src="${post.images[0]}" class="w-full h-full object-cover">
+                <span class="card-badge">${post.category || 'Загальне'}</span>
+            </div>
+        `;
+    } else {
+        imageSection = `
+             <div class="card-image-middle h-24 bg-gradient-to-r from-gray-100 to-gray-200 relative overflow-hidden flex items-center justify-center">
+                <span class="card-badge relative top-auto right-auto m-0 opacity-80">${post.category || 'Загальне'}</span>
+            </div>
+        `;
+    }
+
+    // Дії (Footer)
+    let footerActions = '';
+    if (isMyPost) {
+        const safeTitle = post.title.replace(/'/g, "\\'");
+        const safeContent = post.content.replace(/'/g, "\\'");
+        footerActions = `
+            <button class="btn-icon-square text-red-500 hover:bg-red-50 hover:border-red-200" onclick="deletePost(${post.post_id})" title="Видалити">
+                <i class="far fa-trash-alt"></i>
+            </button>
+            <button class="btn-action-outline h-10" onclick="openEditPostModal(${post.post_id}, '${safeTitle}', '${safeContent}', '${post.category}')">
+                Редагувати
+            </button>
+            <button class="btn-action-solid h-10" onclick="openPostDetails(${post.post_id})">
+                Деталі
+            </button>
+        `;
+    } else {
+        footerActions = `
+            <button onclick="toggleSavePost(${post.post_id}, this)" class="btn-icon-square active text-[#48192E] border-[#48192E]" title="Видалити зі збережених">
+                <i class="fas fa-bookmark"></i>
+            </button>
+            <button class="btn-action-solid h-10" onclick="openPostDetails(${post.post_id})">
+                Читати
+            </button>
+        `;
+    }
+
+    return `
+        <div class="universal-card mb-6">
+            <div class="card-header-user">
+                <div class="card-avatar" style="background-color: #281822;">${avatarContent}</div>
+                <div class="card-user-info">
+                    <div class="card-user-name">${post.first_name} ${post.last_name}</div>
+                    <div class="card-user-sub">${new Date(post.created_at).toLocaleDateString()}</div>
+                </div>
+            </div>
+            ${imageSection}
+            <div class="card-body">
+                <h3 class="card-title line-clamp-2">${post.title}</h3>
+                <p class="text-gray-600 text-sm line-clamp-3">${post.content}</p>
+            </div>
+            <div class="card-footer gap-2">
+                <div class="flex gap-4 text-gray-500 text-sm mr-auto">
+                    <span class="flex items-center gap-1"><i class="far fa-thumbs-up"></i> ${post.likes_count}</span>
+                    <span class="flex items-center gap-1"><i class="far fa-comment-alt"></i> ${post.comments_count || 0}</span>
+                </div>
+                ${footerActions}
+            </div>
+        </div>
+    `;
+}
+
+// --- B. ТУРИ (Збережені) ---
+
+async function loadSavedTours() {
+    const container = document.querySelector('#tab-saved-tours .grid');
+    const clearBtn = document.querySelector('#tab-saved-tours button');
+
+    if(clearBtn) clearBtn.onclick = async () => {
+        if(!confirm('Очистити всі тури?')) return;
+        await fetch(`${API_URL}/tours/saved`, { method: 'DELETE', headers: getHeaders() });
+        loadSavedTours();
+    };
+
+    if (!container) return;
+
+    try {
+        const response = await fetch(`${API_URL}/tours/saved`, { headers: getHeaders() });
+        const data = await response.json();
+
+        container.innerHTML = '';
+        if (data.tours.length === 0) {
+            container.innerHTML = '<p class="text-gray-500 col-span-2">Збережених турів немає.</p>';
+            return;
+        }
+
+        data.tours.forEach(tour => {
+            const html = createUniversalTourCard(tour);
+            container.insertAdjacentHTML('beforeend', html);
+        });
+    } catch (e) { console.error(e); }
+}
+
+function createUniversalTourCard(tour) {
+    const image = tour.image_url || 'https://via.placeholder.com/400x300';
+    let dateText = `${tour.duration_days} днів`;
+    if (tour.available_dates && typeof tour.available_dates === 'object' && tour.available_dates.length > 0) {
+        const nextDate = new Date(tour.available_dates[0]).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+        dateText += ` • з ${nextDate}`;
+    }
+
+    return `
+        <div class="universal-card cursor-pointer group" onclick="openTourDetails(${tour.tour_id})">
+            <div class="card-header-user">
+                <div class="card-avatar" style="background-color: #281822;"><i class="fas fa-briefcase"></i></div>
+                <div class="card-user-info">
+                    <div class="card-user-name">${tour.agency_name || 'Агенція'}</div>
+                    <div class="card-user-sub text-[#2D4952]"><i class="fas fa-map-marker-alt mr-1"></i> ${tour.location}</div>
+                </div>
+            </div>
+            <div class="card-image-middle h-56 bg-gray-50 relative overflow-hidden">
+                <img src="${image}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+                <span class="card-badge">${tour.category_name || 'Тур'}</span>
+            </div>
+            <div class="card-body">
+                <h3 class="card-title line-clamp-2">${tour.title}</h3>
+                <div class="space-y-1 mb-2 bg-gray-50 p-2 rounded text-sm text-gray-700">
+                    <div class="flex items-center gap-2"><i class="far fa-calendar-alt text-[#2D4952]"></i> ${dateText}</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-star text-yellow-500"></i> ${tour.rating || 'New'}</div>
+                </div>
+            </div>
+            <div class="card-footer gap-2">
+                <div class="font-bold text-xl text-[#281822] mr-auto">${parseInt(tour.price_uah)} ₴</div>
+                <button onclick="event.stopPropagation(); removeSavedTour(${tour.tour_id})" class="btn-icon-square active text-[#48192E] border-[#48192E]" title="Видалити"><i class="fas fa-bookmark"></i></button>
+                <button onclick="event.stopPropagation(); openTourDetails(${tour.tour_id})" class="btn-action-solid h-10">Деталі</button>
+            </div>
+        </div>
+    `;
+}
+
+// --- C. ОГОЛОШЕННЯ (Збережені) ---
+
 async function loadSavedCompanions() {
     const container = document.getElementById('saved-companions-grid');
-    if (!container) return;
+    const clearBtn = document.querySelector('#tab-saved-companions button');
+    if(clearBtn) clearBtn.onclick = window.clearSavedCompanions;
 
     try {
         const response = await fetch(`${API_URL}/companion/saved`, { headers: getHeaders() });
@@ -877,27 +633,140 @@ async function loadSavedCompanions() {
         }
 
         data.ads.forEach(ad => {
-            // Спрощена версія картки для профілю
-            const html = `
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col h-full">
-                    <div class="flex justify-between items-start mb-2">
-                        <h4 class="font-bold text-[#281822]">${ad.destination_country}</h4>
-                        <button onclick="removeSavedAd(${ad.ad_id})" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
-                    </div>
-                    <p class="text-sm text-gray-600 mb-2 line-clamp-2">${ad.description}</p>
-                    <div class="mt-auto text-xs text-gray-500">
-                        <i class="far fa-calendar"></i> ${new Date(ad.start_date).toLocaleDateString()}
-                    </div>
-                </div>
-            `;
+            const html = createUniversalCompanionCard(ad);
             container.insertAdjacentHTML('beforeend', html);
         });
     } catch (e) { console.error(e); }
 }
 
-// Функції видалення (глобальні або експортовані)
-window.removeSavedAd = async (id) => {
+function createUniversalCompanionCard(ad) {
+    const start = new Date(ad.start_date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+    const end = new Date(ad.end_date).toLocaleDateString('uk-UA', {day: 'numeric', month: 'short'});
+    const image = (ad.images && ad.images[0]) ? ad.images[0] : 'https://via.placeholder.com/400x200';
+
+    let avatarContent = ad.author_avatar
+        ? `<img src="${ad.author_avatar}" class="w-full h-full object-cover">`
+        : (ad.first_name?.[0] || 'U');
+
+    return `
+        <div class="universal-card cursor-pointer group" onclick="openAdDetails(${ad.ad_id})">
+            <div class="card-header-user">
+                <div class="card-avatar" style="background-color: #2D4952;">${avatarContent}</div>
+                <div class="card-user-info">
+                    <div class="card-user-name">${ad.first_name} ${ad.last_name}</div>
+                    <div class="text-[#48192E] font-semibold text-sm"><i class="fas fa-map-marker-alt mr-1"></i> ${ad.destination_country}</div>
+                </div>
+            </div>
+            <div class="card-image-middle h-48 bg-gray-50 relative overflow-hidden">
+                <img src="${image}" class="w-full h-full object-cover transition duration-500 group-hover:scale-105">
+            </div>
+            <div class="card-body">
+                <p class="text-gray-600 text-sm mb-3 line-clamp-3">${ad.description}</p>
+                <div class="bg-gray-50 p-2 rounded text-sm text-gray-700 space-y-1">
+                    <div class="flex items-center gap-2"><i class="far fa-calendar text-[#2D4952]"></i> ${start} - ${end}</div>
+                    <div class="flex items-center gap-2"><i class="fas fa-wallet text-[#2D4952]"></i> ${ad.budget_min || 0} - ${ad.budget_max || '...'} грн</div>
+                </div>
+            </div>
+            <div class="card-footer gap-2">
+                <div class="mr-auto"></div>
+                <button onclick="event.stopPropagation(); removeSavedAd(${ad.ad_id})" class="btn-icon-square active text-[#48192E] border-[#48192E]"><i class="fas fa-bookmark"></i></button>
+                <button onclick="event.stopPropagation(); openAdDetails(${ad.ad_id})" class="btn-action-outline h-10">Деталі</button>
+                <button onclick="event.stopPropagation(); window.location.href='chat.html?user_id=${ad.user_id}'" class="btn-action-solid h-10">Написати</button>
+            </div>
+        </div>
+    `;
+}
+
+/* =========================================
+   5. ФУНКЦІОНАЛ ДІЙ (Details, Save, Delete)
+   ========================================= */
+
+// --- TOURS ---
+window.removeSavedTour = async (id) => {
     if(!confirm('Видалити зі збережених?')) return;
+    try {
+        await fetch(`${API_URL}/tours/${id}/save`, { method: 'DELETE', headers: getHeaders() });
+        loadSavedTours();
+    } catch(e) { console.error(e); }
+};
+
+window.openTourDetails = async (id) => {
+    const modal = document.getElementById('tour-details-modal');
+    modal.classList.add('active');
+
+    // Заповнення модалки
+    try {
+        const res = await fetch(`${API_URL}/tours/${id}`);
+        const data = await res.json();
+        const tour = data.tour;
+
+        document.getElementById('modal-tour-title').innerText = tour.title;
+        document.getElementById('modal-tour-desc').innerText = tour.description;
+        document.getElementById('modal-tour-price').innerText = `${parseInt(tour.price_uah)} ₴`;
+        document.getElementById('modal-tour-image').src = tour.image_url || 'https://via.placeholder.com/600';
+        document.getElementById('modal-tour-loc').innerText = tour.location;
+        document.getElementById('modal-tour-duration').innerText = tour.duration_days + ' днів';
+        document.getElementById('modal-tour-rating').innerText = tour.rating || '0.0';
+
+        const programEl = document.getElementById('modal-tour-program');
+        if (tour.program) {
+            programEl.innerText = tour.program;
+            programEl.classList.remove('italic', 'text-gray-400');
+        } else {
+            programEl.innerText = 'Детальна програма уточнюється в організатора.';
+            programEl.classList.add('italic', 'text-gray-400');
+        }
+
+        const datesEl = document.getElementById('modal-tour-dates');
+        if (tour.available_dates && tour.available_dates.length > 0) {
+            datesEl.innerHTML = tour.available_dates.map(dateStr => {
+                const formatted = new Date(dateStr).toLocaleDateString('uk-UA', {day: 'numeric', month: 'long', year: 'numeric'});
+                return `<span class="bg-[#F3F4F6] text-[#281822] border border-gray-200 px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2"><i class="far fa-calendar-check text-[#48192E]"></i> ${formatted}</span>`;
+            }).join('');
+        } else {
+            datesEl.innerHTML = '<span class="text-gray-500 text-sm italic">Дати уточнюються менеджером</span>';
+        }
+
+        const galleryEl = document.getElementById('modal-tour-gallery');
+        galleryEl.innerHTML = '';
+        if (tour.images && tour.images.length > 0) {
+            tour.images.forEach(imgUrl => {
+                const thumb = document.createElement('img');
+                thumb.src = imgUrl;
+                thumb.className = "w-full h-16 object-cover rounded cursor-pointer hover:opacity-80 transition border border-transparent hover:border-[#48192E]";
+                thumb.onclick = () => { document.getElementById('modal-tour-image').src = imgUrl; };
+                galleryEl.appendChild(thumb);
+            });
+        }
+
+        // Завантаження коментарів (без форми для збережених, лише перегляд)
+        const list = document.getElementById('tour-comments-list');
+        const commRes = await fetch(`${API_URL}/tours/${id}/comments`);
+        const commData = await commRes.json();
+        list.innerHTML = '';
+        if (!commData.comments || commData.comments.length === 0) {
+            list.innerHTML = '<p class="text-gray-400 text-sm italic">Поки немає відгуків.</p>';
+        } else {
+            commData.comments.forEach(c => {
+                const avatarHtml = c.author_avatar ? `<img src="${c.author_avatar}" class="w-8 h-8 rounded-full object-cover">` : `<div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600">${c.first_name[0]}</div>`;
+                const html = `
+                    <div class="flex gap-3 items-start border-b border-gray-100 pb-3 last:border-0">
+                        ${avatarHtml}
+                        <div>
+                            <div class="flex items-baseline gap-2"><span class="font-bold text-sm text-[#281822]">${c.first_name} ${c.last_name}</span><span class="text-xs text-gray-400">${new Date(c.created_at).toLocaleDateString()}</span></div>
+                            <p class="text-gray-700 text-sm mt-1">${c.content}</p>
+                        </div>
+                    </div>`;
+                list.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+    } catch(e) { console.error(e); }
+};
+
+// --- COMPANIONS ---
+window.removeSavedAd = async (id) => {
+    if(!confirm('Видалити?')) return;
     try {
         await fetch(`${API_URL}/companion/ads/${id}/save`, { method: 'DELETE', headers: getHeaders() });
         loadSavedCompanions();
@@ -905,72 +774,237 @@ window.removeSavedAd = async (id) => {
 };
 
 window.clearSavedCompanions = async () => {
-    if(!confirm('Очистити список?')) return;
+    if(!confirm('Очистити всі?')) return;
     try {
         await fetch(`${API_URL}/companion/saved`, { method: 'DELETE', headers: getHeaders() });
         loadSavedCompanions();
     } catch(e) { console.error(e); }
 };
 
-function initContentTabs() {
-    window.removeSavedTour = async (id) => {
-        if(!confirm('Видалити зі збережених?')) return;
-        try {
-            const response = await fetch(`${API_URL}/tours/${id}/save`, {
-                method: 'DELETE',
-                headers: getHeaders()
-            });
-            if (response.ok) {
-                loadSavedTours();
-            } else {
-                alert('Помилка видалення');
+window.openAdDetails = async (id) => {
+    const modal = document.getElementById('ad-details-modal');
+    modal.classList.add('active');
+    try {
+        const res = await fetch(`${API_URL}/companion/ads/${id}`, { headers: getHeaders() });
+        const data = await res.json();
+        const ad = data.ad;
+
+        document.getElementById('modal-ad-country').innerText = ad.destination_country;
+        document.getElementById('modal-ad-desc').innerText = ad.description;
+        document.getElementById('modal-author-name-link').innerText = ad.first_name + ' ' + ad.last_name;
+        document.getElementById('modal-author-age').innerText = ad.author_age ? `${ad.author_age} років` : 'Вік приховано';
+
+        const start = new Date(ad.start_date).toLocaleDateString('uk-UA');
+        const end = new Date(ad.end_date).toLocaleDateString('uk-UA');
+        document.getElementById('modal-ad-dates').innerText = `${start} — ${end}`;
+        document.getElementById('modal-ad-budget').innerText = `${ad.budget_min||0} - ${ad.budget_max||'..'} грн`;
+        document.getElementById('modal-ad-group').innerText = `${ad.min_group_size}-${ad.max_group_size} осіб`;
+
+        const tagsContainer = document.getElementById('modal-ad-tags');
+        tagsContainer.innerHTML = (ad.tags || []).map(t => `<span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">${t}</span>`).join('');
+
+        const mainImg = document.getElementById('modal-ad-main-image');
+        const gallery = document.getElementById('modal-ad-gallery');
+        gallery.innerHTML = '';
+
+        if (ad.images && ad.images.length > 0) {
+            mainImg.src = ad.images[0];
+            mainImg.classList.remove('hidden');
+            if (ad.images.length > 1) {
+                ad.images.forEach(imgUrl => {
+                    const thumb = document.createElement('img');
+                    thumb.src = imgUrl;
+                    thumb.className = "w-full h-16 object-cover rounded cursor-pointer hover:opacity-80 transition border border-transparent hover:border-[#48192E]";
+                    thumb.onclick = () => { mainImg.src = imgUrl; };
+                    gallery.appendChild(thumb);
+                });
             }
-        } catch(e) { console.error(e); }
-    };
+        }
 
-    window.removeSavedPost = async (id) => {
-        if(!confirm('Видалити зі збережених?')) return;
-        try {
-            await fetch(`${API_URL}/forum/saved/${id}`, { method: 'DELETE', headers: getHeaders() });
-            loadSavedPosts();
-        } catch(e) { console.error(e); }
-    };
-}
+    } catch(e) { console.error(e); }
+};
 
-function createPostCardHTML(post, isMyPost) {
-    const safeTitle = post.title.replace(/"/g, '&quot;');
-    const safeContent = post.content.replace(/"/g, '&quot;');
+// --- POSTS ---
+// Видалити МІЙ пост
+window.deletePost = async (id) => {
+    if(!confirm('Видалити пост?')) return;
+    try {
+        await fetch(`${API_URL}/forum/posts/${id}`, { method: 'DELETE', headers: getHeaders() });
+        loadMyPosts();
+    } catch(e) { console.error(e); }
+};
 
-    return `
-        <div class="post-card shadow-sm bg-white p-6 rounded-xl mb-6">
-            <div class="flex justify-between items-start mb-3">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-full bg-[#2D4952] flex items-center justify-center text-white font-bold overflow-hidden">
-                        ${post.author_avatar ? `<img src="${post.author_avatar}" class="w-full h-full object-cover">` : 'A'}
-                    </div>
-                    <div>
-                        <div class="font-bold text-[#281822] text-sm">${isMyPost ? 'Ви' : (post.first_name + ' ' + post.last_name)}</div>
-                        <div class="text-sm text-[#281822] font-medium mt-0.5">${post.title}</div>
-                    </div>
+// Видалити ЗБЕРЕЖЕНИЙ пост (toggleSavePost для кнопки в картці)
+window.toggleSavePost = async (id, btn) => {
+    if(!confirm('Видалити зі збережених?')) return;
+    try {
+        // Тут ми тільки видаляємо, бо це вкладка збережених
+        await fetch(`${API_URL}/forum/saved/${id}`, { method: 'DELETE', headers: getHeaders() });
+        loadSavedPosts();
+    } catch(e) { console.error(e); }
+};
+
+window.openPostDetails = async (id) => {
+    const modal = document.getElementById('post-details-modal');
+    modal.classList.add('active');
+    try {
+        const res = await fetch(`${API_URL}/forum/posts/${id}`);
+        const data = await res.json();
+        const post = data.post;
+
+        document.getElementById('detail-post-title').innerText = post.title;
+        document.getElementById('detail-post-content').innerText = post.content;
+        document.getElementById('detail-post-author').innerText = post.first_name + ' ' + post.last_name;
+        document.getElementById('detail-post-date').innerText = new Date(post.created_at).toLocaleDateString();
+        document.getElementById('detail-post-category').innerText = post.category;
+
+        const mainImg = document.getElementById('detail-post-main-image');
+        const gallery = document.getElementById('detail-post-gallery');
+        gallery.innerHTML = '';
+
+        if (post.images && post.images.length > 0) {
+            mainImg.src = post.images[0];
+            mainImg.classList.remove('hidden');
+            if (post.images.length > 1) {
+                post.images.forEach(imgUrl => {
+                    const thumb = document.createElement('img');
+                    thumb.src = imgUrl;
+                    thumb.className = "w-full h-16 object-cover rounded cursor-pointer hover:opacity-80 transition border border-transparent hover:border-[#48192E]";
+                    thumb.onclick = () => { mainImg.src = imgUrl; };
+                    gallery.appendChild(thumb);
+                });
+            }
+        } else {
+            mainImg.classList.add('hidden');
+        }
+
+        // Коментарі
+        const list = document.getElementById('detail-comments-list');
+        const commRes = await fetch(`${API_URL}/forum/posts/${id}/comments`);
+        const commData = await commRes.json();
+        list.innerHTML = '';
+        document.getElementById('detail-comments-count').innerText = commData.comments.length;
+
+        if(commData.comments) {
+            commData.comments.forEach(c => {
+                const avatarHtml = c.author_avatar ? `<img src="${c.author_avatar}" class="w-8 h-8 rounded-full object-cover">` : `<div class="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600">${c.first_name[0]}</div>`;
+                const html = `
+                    <div class="flex gap-3 items-start">
+                        ${avatarHtml}
+                        <div class="bg-white p-3 rounded-lg border border-gray-100 flex-grow shadow-sm">
+                            <div class="flex justify-between items-baseline mb-1"><span class="font-bold text-sm text-[#281822]">${c.first_name} ${c.last_name}</span><span class="text-xs text-gray-400">${new Date(c.created_at).toLocaleDateString()}</span></div>
+                            <p class="text-gray-700 text-sm leading-relaxed">${c.content}</p>
+                        </div>
+                    </div>`;
+                list.insertAdjacentHTML('beforeend', html);
+            });
+        }
+
+    } catch(e) { console.error(e); }
+};
+
+function injectPostModal() {
+    const modalHTML = `
+        <div id="post-modal" class="modal-backdrop">
+            <div class="modal-content max-w-lg">
+                <div class="modal-header">
+                    <h3 class="text-xl font-bold" id="post-modal-title">Редагувати</h3>
+                    <button class="modal-close-btn" onclick="document.getElementById('post-modal').classList.remove('active')">&times;</button>
                 </div>
-                <span class="text-xs bg-gray-200 px-3 py-1 rounded-full text-gray-600 font-medium">${post.category || 'Загальне'}</span>
-            </div>
-            <p class="text-gray-600 text-sm mb-4 leading-relaxed pl-[52px] line-clamp-3">${post.content}</p>
-            <div class="flex justify-between items-center border-t border-gray-100 pt-3 pl-[52px]">
-                <div class="flex gap-4 text-gray-500 text-sm">
-                    <span class="flex items-center gap-1"><i class="far fa-thumbs-up"></i> ${post.likes_count}</span>
-                    <span class="flex items-center gap-1"><i class="far fa-comment-alt"></i> ${post.comments_count || 0}</span>
+                <div class="modal-body space-y-4">
+                    <input type="text" id="post-title" class="w-full border p-2 rounded">
+                    <textarea id="post-content" rows="5" class="w-full border p-2 rounded"></textarea>
+                    <select id="post-category" class="w-full border p-2 rounded"><option>Загальна</option><option>Поради</option><option>Маршрути</option></select>
+                    <button id="save-post-btn" class="btn-solid w-full">Зберегти</button>
                 </div>
-                ${isMyPost ? `
-                <div class="flex gap-4 text-sm">
-                    <button class="text-[#2D4952] hover:text-[#48192E] flex items-center gap-1" onclick="openEditPostModal(${post.post_id}, '${safeTitle}', '${safeContent}', '${post.category}')"><i class="far fa-edit"></i> Редагувати</button>
-                    <button class="text-[#48192E] hover:text-red-600 flex items-center gap-1" onclick="deletePost(${post.post_id})"><i class="far fa-trash-alt"></i> Видалити</button>
-                </div>` : `
-                <div class="flex gap-3 text-sm items-center">
-                    <button class="border border-[#48192E] text-[#48192E] px-4 py-1 rounded-md text-sm font-medium hover:bg-red-50" onclick="removeSavedPost(${post.post_id})">Видалити</button>
-                </div>
-                `}
             </div>
         </div>
     `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.getElementById('save-post-btn').onclick = savePost;
 }
+
+window.openEditPostModal = (id, title, content, category) => {
+    editingPostId = id;
+    document.getElementById('post-modal-title').innerText = 'Редагувати пост';
+    document.getElementById('post-title').value = title;
+    document.getElementById('post-content').value = content;
+    document.getElementById('post-category').value = category || 'Загальна';
+    document.getElementById('post-modal').classList.add('active');
+};
+
+async function savePost() {
+    const title = document.getElementById('post-title').value;
+    const content = document.getElementById('post-content').value;
+    const category = document.getElementById('post-category').value;
+
+    await fetch(`${API_URL}/forum/posts/${editingPostId}`, {
+        method: 'PUT', headers: getHeaders(), body: JSON.stringify({title, content, category})
+    });
+    document.getElementById('post-modal').classList.remove('active');
+    loadMyPosts();
+}
+
+function initSettingsForms() {
+    const infoSaveBtn = document.querySelector('#tab-info .btn-burgundy-solid');
+    if(infoSaveBtn) infoSaveBtn.onclick = saveFullProfile;
+
+    const fridgeSaveBtn = document.querySelector('#tab-fridge-settings .btn-burgundy-solid');
+    if(fridgeSaveBtn) fridgeSaveBtn.onclick = saveFullProfile;
+
+    const settingsTab = document.getElementById('tab-settings');
+    if (settingsTab) {
+        const saveAllBtn = settingsTab.querySelectorAll('.btn-burgundy-solid')[1];
+        if (saveAllBtn) saveAllBtn.onclick = saveFullProfile;
+    }
+}
+
+async function saveFullProfile() {
+    const body = collectAllProfileData();
+    try {
+        const res = await fetch(`${API_URL}/user/profile`, {
+            method: 'PUT', headers: getHeaders(), body: JSON.stringify(body)
+        });
+        await saveFridgeOnlyLayout();
+        if(res.ok) alert('Зміни успішно збережено!');
+    } catch(e) { console.error(e); }
+}
+
+function collectAllProfileData() {
+    const infoTab = document.getElementById('tab-info');
+    const inputs = infoTab.querySelectorAll('input.form-input');
+    const textarea = infoTab.querySelector('textarea.form-input');
+    const fullName = inputs[0].value.split(' ');
+
+    const fSettingsTab = document.getElementById('tab-fridge-settings');
+    const selectedOption = fSettingsTab?.querySelector('.color-option.selected');
+    const fSwitches = fSettingsTab?.querySelectorAll('.toggle-switch');
+
+    const activeSizeBtn = document.querySelector('.magnet-size-btn.bg-\\[\\#281822\\]');
+
+    const gSettingsTab = document.getElementById('tab-settings');
+    const gSwitches = gSettingsTab?.querySelectorAll('.toggle-switch');
+
+    return {
+        firstName: fullName[0] || '',
+        lastName: fullName.slice(1).join(' ') || '',
+        email: inputs[1].value,
+        location: inputs[2].value,
+        dateOfBirth: inputs[3].value,
+        website: inputs[4].value,
+        bio: textarea.value,
+        travelInterests: inputs[5].value,
+        fridgeColor: selectedOption?.getAttribute('data-color') || '#f3f4f6',
+        magnetSize: activeSizeBtn ? activeSizeBtn.getAttribute('data-size') : 'medium',
+        fridgeIsPublic: fSwitches?.[0]?.classList.contains('active') ?? true,
+        fridgeAllowComments: fSwitches?.[1]?.classList.contains('active') ?? true,
+        notifyEmail: gSwitches?.[0]?.classList.contains('active') ?? true,
+        notifyPush: gSwitches?.[1]?.classList.contains('active') ?? true,
+        notifyNewFollowers: gSwitches?.[2]?.classList.contains('active') ?? true,
+        notifyComments: gSwitches?.[3]?.classList.contains('active') ?? true,
+        notifyMessages: gSwitches?.[4]?.classList.contains('active') ?? true,
+        isEmailPublic: gSwitches?.[6]?.classList.contains('active') ?? false,
+        isLocationPublic: gSwitches?.[7]?.classList.contains('active') ?? true
+    };
+}
+
