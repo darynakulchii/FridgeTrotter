@@ -11,7 +11,7 @@
 </head>
 <body class="bg-[#D3CBC4] flex items-center justify-center min-h-screen">
 
-<div class="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md my-8">
+<div class="bg-[#f8f8f8] p-8 rounded-2xl shadow-lg w-full max-w-md my-8">
     <div class="text-center mb-6">
         <h1 class="text-2xl font-bold text-[#281822] mb-2">Створити акаунт</h1>
         <p class="text-gray-500">Приєднуйтесь до спільноти мандрівників</p>
@@ -21,11 +21,11 @@
         <div class="grid grid-cols-2 gap-4">
             <div>
                 <label class="block text-sm font-medium text-[#281822] mb-1">Ім'я</label>
-                <input type="text" id="reg-firstname" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]" placeholder="Іван" required>
+                <input type="text" id="reg-firstname" class="w-full border p-2 rounded-md outline-none focus:border-[#273F76]" placeholder="Іван" required>
             </div>
             <div>
                 <label class="block text-sm font-medium text-[#281822] mb-1">Прізвище</label>
-                <input type="text" id="reg-lastname" class="w-full border p-2 rounded-md outline-none focus:border-[#48192E]" placeholder="Петренко" required>
+                <input type="text" id="reg-lastname" class="w-full border p-2 rounded-md outline-none focus:border-[#273F76]" placeholder="Петренко" required>
             </div>
         </div>
 
@@ -33,7 +33,7 @@
             <label class="block text-sm font-medium text-[#281822] mb-1">Email</label>
             <div class="relative">
                 <i class="far fa-envelope absolute left-3 top-3 text-gray-400"></i>
-                <input type="email" id="reg-email" class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]" placeholder="name@example.com" required>
+                <input type="email" id="reg-email" class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#273F76]" placeholder="name@example.com" required>
             </div>
         </div>
 
@@ -41,13 +41,13 @@
             <label class="block text-sm font-medium text-[#281822] mb-1">Пароль</label>
             <div class="relative">
                 <i class="fas fa-lock absolute left-3 top-3 text-gray-400"></i>
-                <input type="password" id="reg-password" class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#48192E]" placeholder="••••••••" required>
+                <input type="password" id="reg-password" class="w-full border p-2 pl-10 rounded-md outline-none focus:border-[#273F76]" placeholder="••••••••" required>
             </div>
             <p class="text-xs text-gray-500 mt-1">Мінімум 6 символів</p>
         </div>
 
         <div class="flex items-start gap-2 mt-2">
-            <input type="checkbox" id="reg-consent" class="mt-1 accent-[#48192E] w-4 h-4 cursor-pointer">
+            <input type="checkbox" id="reg-consent" class="mt-1 accent-[#273F76] w-4 h-4 cursor-pointer">
             <label for="reg-consent" class="text-xs text-gray-600 cursor-pointer select-none">
                 Я даю згоду на обробку персональних даних та погоджуюсь з
                 <a href="#" id="open-privacy-modal-link" class="text-[#48192E] font-bold underline hover:text-[#281822]">Політикою конфіденційності</a>.
@@ -55,7 +55,7 @@
         </div>
 
         <div class="flex items-start gap-2 mt-2">
-            <input type="checkbox" id="reg-rules-consent" class="mt-1 accent-[#48192E] w-4 h-4 cursor-pointer">
+            <input type="checkbox" id="reg-rules-consent" class="mt-1 accent-[#273F76] w-4 h-4 cursor-pointer">
             <label for="reg-rules-consent" class="text-xs text-gray-600 cursor-pointer select-none">
                 Я погоджуюсь з
                 <a href="#" id="open-rules-modal-link" class="text-[#48192E] font-bold underline hover:text-[#281822]">Правилами використання</a>
@@ -63,7 +63,7 @@
             </label>
         </div>
 
-        <button type="submit" class="w-full bg-[#48192E] text-white py-2 rounded-md font-bold hover:bg-[#281822] transition duration-200 mt-2">
+        <button type="submit" class="w-full bg-[#273F76] text-white py-2 rounded-md font-bold hover:bg-[#281822] transition duration-200 mt-2">
             Зареєструватися
         </button>
     </form>
@@ -125,7 +125,7 @@
             <p>Якщо у вас виникли запитання щодо цієї Політики, зв'яжіться з нами через форму підтримки або напишіть на email: privacy@fridgetrotter.com.</p>
         </div>
         <div class="p-4 border-t border-gray-100 bg-gray-50 rounded-b-xl text-center shrink-0">
-            <button id="accept-privacy-btn" class="bg-[#48192E] text-white px-6 py-2 rounded-md font-bold hover:bg-[#281822] transition">Зрозуміло</button>
+            <button id="accept-privacy-btn" class="bg-[#273F76] text-white px-6 py-2 rounded-md font-bold hover:bg-[#281822] transition">Зрозуміло</button>
         </div>
     </div>
 </div>

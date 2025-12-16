@@ -2,13 +2,13 @@
 
 :root {
     /* Палітра */
-    --color-bg-main: #D3CBC4;       /* Основний фон сторінки */
-    --color-header-bg: #281822;     /* Шапка */
+    --color-bg-main: #E7E5E3;       /* Основний фон сторінки */
+    --color-header-bg: #414C7E;     /* Шапка */
     --color-text-light: #D3CBC4;    /* Текст в шапці */
-    --color-nav-bg: #2D4951;       /* Навігаційна панель */
-    --color-accent: #48192E;        /* Активний стан / Кнопки */
-    --color-card-bg: #FFFFFF;       /* Фон карток */
-    --color-text-dark: #281822;     /* Темний текст */
+    --color-nav-bg: #6482A1;       /* Навігаційна панель */
+    --color-accent: #273F76;        /* Активний стан / Кнопки */
+    --color-card-bg: #F5F5F4;       /* Фон карток */
+    --color-text-dark: #0D2543;     /* Темний текст */
 
     /* Налаштування шрифтів та розмірів */
     --font-main: 'Inter', sans-serif;
@@ -216,7 +216,7 @@ body {
     left: 0;
     height: 100%;
     width: 280px;
-    background-color: #281822; /* Темний фон з макету */
+    background-color: #0D2543; /* Темний фон з макету */
     color: #D3CBC4;
     padding: 2rem;
     z-index: 100;
@@ -740,10 +740,10 @@ body {
 }
 .btn-icon-square:hover {
     border-color: #48192E;
-    color: #48192E;
+    color: #273F76;
 }
 .btn-icon-square.active {
-    background-color: #48192E;
+    background-color: #273F76;
     color: white;
     border-color: #48192E;
 }
@@ -779,7 +779,7 @@ body {
     cursor: pointer;
 }
 .btn-action-solid:hover {
-    background-color: #48192E;
+    background-color: #273F76;
 }
 
 /* Специфічно для форуму - статистика перед кнопками */
