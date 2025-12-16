@@ -92,14 +92,27 @@ function fillProfileData(data) {
         if (textarea) textarea.value = data.bio || '';
         if (inputs[5]) inputs[5].value = data.travel_interests || '';
 
-        // Аватар
-        const avatarCircle = infoTab.querySelector('.avatar-circle-lg');
-        if (avatarCircle && data.profile_image_url) {
-            avatarCircle.innerHTML = `<img src="${data.profile_image_url}" class="w-full h-full object-cover rounded-full">`;
-            // Видаляємо стандартні класи стилізації тексту, якщо є картинка
-            avatarCircle.classList.remove('bg-[#48192E]', 'text-[#D3CBC4]');
-        } else if (avatarCircle) {
-            avatarCircle.innerText = (data.first_name?.[0] || '') + (data.last_name?.[0] || '');
+        console.log('User data from server:', data);
+
+        // ===== АВАТАР (ЄДИНА СТАБІЛЬНА ЛОГІКА, ЯК У ПОСТАХ) =====
+        const avatarImg = document.getElementById('profile-avatar');
+        const avatarCircle = document.querySelector('.avatar-circle-lg');
+
+        if (!avatarImg || !avatarCircle) {
+            console.warn('Avatar elements not found');
+            return;
+        }
+
+        if (data.profile_image_url) {
+            avatarImg.src = data.profile_image_url;   // ✅ src ТІЛЬКИ тут
+            avatarImg.classList.remove('hidden');
+            avatarCircle.textContent = '';
+        } else {
+            avatarImg.removeAttribute('src');
+            avatarImg.classList.add('hidden');
+            avatarCircle.textContent =
+                (data.first_name?.[0] || '') +
+                (data.last_name?.[0] || '');
         }
 
         // Статистика
@@ -531,7 +544,9 @@ async function saveFullProfile() {
     const body = collectAllProfileData();
     try {
         const res = await fetch(`${API_URL}/user/profile`, {
-            method: 'PUT', headers: getHeaders(), body: JSON.stringify(body)
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(body)
         });
 
         // Також примусово зберігаємо магніти при ручному збереженні (синхронізація)
@@ -604,38 +619,52 @@ function initSettingsForms() {
     }
 
     // 4. Логіка завантаження аватара
+    // 4. Логіка завантаження аватара (ВИПРАВЛЕНО)
     const infoTab = document.getElementById('tab-info');
-    if(infoTab) {
+    if (infoTab) {
         const uploadBtn = infoTab.querySelector('.btn-burgundy-outline');
         const fileInput = document.createElement('input');
-        fileInput.type = 'file'; fileInput.accept = 'image/*'; fileInput.style.display = 'none';
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
         infoTab.appendChild(fileInput);
+
+        const avatarImg = document.getElementById('profile-avatar');
+        const avatarCircle = avatarImg?.parentElement;
 
         if (uploadBtn) {
             uploadBtn.addEventListener('click', () => fileInput.click());
+
             fileInput.addEventListener('change', async () => {
-                if (fileInput.files.length > 0) {
-                    const formData = new FormData();
-                    formData.append('avatar', fileInput.files[0]);
-                    try {
-                        const res = await fetch(`${API_URL}/user/avatar`, {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                            body: formData
-                        });
-                        const data = await res.json();
-                        if (res.ok) {
-                            const avatarCircle = infoTab.querySelector('.avatar-circle-lg');
-                            if (avatarCircle) {
-                                avatarCircle.innerHTML = `<img src="${data.url}" class="w-full h-full object-cover rounded-full">`;
-                                avatarCircle.classList.remove('bg-[#48192E]', 'text-[#D3CBC4]');
-                            }
-                        }
-                    } catch (e) { console.error(e); }
+                if (fileInput.files.length === 0) return;
+
+                const formData = new FormData();
+                formData.append('avatar', fileInput.files[0]);
+
+                try {
+                    const res = await fetch(`${API_URL}/user/avatar`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: formData
+                    });
+
+                    const data = await res.json();
+
+                    if (res.ok && data.url && avatarImg && avatarCircle) {
+                        avatarImg.src = data.url;
+                        avatarImg.classList.remove('hidden');
+                        avatarCircle.textContent = '';
+                    }
+
+                } catch (e) {
+                    console.error(e);
                 }
             });
         }
     }
+
 
     // 5. Логіка вибору розміру магнітів
     const sizeBtns = document.querySelectorAll('.magnet-size-btn');
