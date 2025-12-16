@@ -12,15 +12,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (agencyIdParam) {
         currentAgencyId = agencyIdParam;
     } else if (userIdParam) {
-        // Це "милиця". В ідеалі треба передавати agency_id.
-        // Але якщо у нас є тільки owner_id, ми можемо спробувати завантажити
-        // дані пізніше або використати його (якщо API підтримує пошук по owner_id)
-        // Для надійності, в наступному кроці вам треба оновити посилання в tours.js
-        console.warn("Using user_id as agency_id lookup fallback. Update your links!");
-        // Припустимо, що бекенд може приймати owner_id в іншому ендпойнті,
-        // але зараз ми просто покажемо помилку, якщо ID не збігається.
-        // Або краще: просто перенаправимо користувача, якщо даних немає.
-        currentAgencyId = userIdParam; // Це може не спрацювати, якщо ID різні.
+        // Якщо передано ID користувача-власника, а не агенції
+        currentAgencyId = userIdParam;
     }
 
     if (!currentAgencyId) {
@@ -43,29 +36,29 @@ window.switchTab = (tabName) => {
     // Активуємо кнопку
     const buttons = document.querySelectorAll('.nav-pill');
     if (tabName === 'tours') buttons[0].classList.add('active');
-    if (tabName === 'reviews') buttons[1].classList.add('active');
+    if (tabName === 'posts') buttons[1].classList.add('active');
+    if (tabName === 'reviews') buttons[2].classList.add('active');
 };
 
 async function loadAgencyData() {
     try {
-        // Якщо currentAgencyId це насправді owner_id, цей запит може повернути 404,
-        // якщо ID юзера і ID агенції не збігаються.
-        // Тому важливо передавати правильний agency_id в URL.
         const response = await fetch(`${API_URL}/agencies/${currentAgencyId}`, { headers: getHeaders() });
 
         if (!response.ok) throw new Error('Agency not found');
 
         const data = await response.json();
-        const { agency, tours, reviews } = data;
+        // Додаємо posts до деструктуризації
+        const { agency, tours, reviews, posts } = data;
 
-        // Оновлюємо currentAgencyId на правильний, якщо ми якось помилились
+        // Оновлюємо currentAgencyId на правильний
         currentAgencyId = agency.agency_id;
 
         renderHeader(agency);
         renderTours(tours);
+        renderPosts(posts); // Рендеримо пости
         renderReviews(reviews);
 
-        // Логіка відображення форми
+        // Логіка відображення форми відгуку
         const formContainer = document.getElementById('review-form-container');
         if (!currentUser) {
             formContainer.innerHTML = '<p class="text-center text-gray-500 py-4"><a href="login.html" class="text-[#48192E] font-bold underline">Увійдіть</a>, щоб залишити відгук.</p>';
@@ -155,6 +148,51 @@ function renderTours(tours) {
     });
 }
 
+function renderPosts(posts) {
+    const container = document.getElementById('posts-grid');
+    container.innerHTML = '';
+
+    if (!posts || posts.length === 0) {
+        container.innerHTML = '<p class="text-gray-500 col-span-2 text-center py-10">Постів поки немає.</p>';
+        return;
+    }
+
+    posts.forEach(post => {
+        let imagesHtml = '';
+        if (post.images && post.images.length > 0) {
+            const imgUrl = post.images[0];
+            imagesHtml = `
+                <div class="h-48 mb-4 rounded-lg overflow-hidden relative border border-gray-100">
+                    <img src="${imgUrl}" class="w-full h-full object-cover">
+                    ${post.images.length > 1 ? `<span class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">+${post.images.length-1}</span>` : ''}
+                </div>
+            `;
+        }
+
+        const html = `
+            <div class="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h3 class="font-bold text-lg text-[#281822]">${post.title}</h3>
+                        <span class="text-xs text-gray-400">${new Date(post.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <span class="text-xs bg-gray-100 px-2 py-1 rounded text-gray-600">${post.category}</span>
+                </div>
+                
+                ${imagesHtml}
+                
+                <p class="text-gray-600 text-sm mb-4 line-clamp-3 leading-relaxed">${post.content}</p>
+                
+                <div class="flex items-center gap-4 text-gray-500 text-sm border-t border-gray-100 pt-3">
+                    <span><i class="far fa-thumbs-up"></i> ${post.likes_count}</span>
+                    <span><i class="far fa-comment-alt"></i> ${post.comments_count}</span>
+                </div>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', html);
+    });
+}
+
 function renderReviews(reviews) {
     const container = document.getElementById('reviews-list');
     container.innerHTML = '';
@@ -226,7 +264,7 @@ function initReviewForm() {
             if (response.ok) {
                 alert('Дякуємо за ваш відгук!');
                 form.reset();
-                loadAgencyData(); // Перезавантажуємо дані, щоб побачити новий відгук і оновлений рейтинг
+                loadAgencyData(); // Перезавантажуємо дані
             } else {
                 alert(data.error || 'Помилка');
             }

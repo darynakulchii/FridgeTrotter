@@ -114,11 +114,11 @@ router.get('/me', authenticateToken, async (req, res) => {
     // Шукаємо агенцію, яка належить цьому користувачу
     // Також підтягуємо логотип з таблиці user_profiles
     const query = `
-        SELECT 
+        SELECT
             a.*,
             up.profile_image_url AS logo_url
         FROM agencies a
-        JOIN user_profiles up ON a.owner_id = up.user_id
+                 JOIN user_profiles up ON a.owner_id = up.user_id
         WHERE a.owner_id = $1;
     `;
 
@@ -151,7 +151,7 @@ router.put('/me', authenticateToken, async (req, res) => {
         // COALESCE дозволяє не оновлювати поле, якщо воно не передано (null)
         const updateAgencyQuery = `
             UPDATE agencies
-            SET 
+            SET
                 description = COALESCE($1, description),
                 phone = COALESCE($2, phone),
                 website = COALESCE($3, website),
@@ -198,8 +198,8 @@ router.get('/me/tours', authenticateToken, async (req, res) => {
     const query = `
         SELECT t.*, tc.name_ukr as category_name
         FROM tours t
-        JOIN agencies a ON t.agency_id = a.agency_id
-        LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
+                 JOIN agencies a ON t.agency_id = a.agency_id
+                 LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
         WHERE a.owner_id = $1
         ORDER BY t.tour_id DESC;
     `;
@@ -309,10 +309,10 @@ router.patch('/bookings/:id/status', authenticateToken, async (req, res) => {
         const bookingData = await client.query(`
             SELECT tb.status as old_status, tb.user_id, t.title, t.tour_id, m.magnet_id, u.email
             FROM tour_bookings tb
-            JOIN tours t ON tb.tour_id = t.tour_id
-            JOIN agencies a ON t.agency_id = a.agency_id
-            JOIN users u ON tb.user_id = u.user_id
-            LEFT JOIN magnets m ON t.tour_id = m.linked_tour_id
+                     JOIN tours t ON tb.tour_id = t.tour_id
+                     JOIN agencies a ON t.agency_id = a.agency_id
+                     JOIN users u ON tb.user_id = u.user_id
+                     LEFT JOIN magnets m ON t.tour_id = m.linked_tour_id
             WHERE tb.booking_id = $1 AND a.owner_id = $2
         `, [bookingId, userId]);
 
@@ -365,7 +365,7 @@ router.patch('/bookings/:id/status', authenticateToken, async (req, res) => {
         // 4. Сповіщення користувачу (якщо повідомлення сформовано)
         if (messageForUser) {
             await client.query(`
-                INSERT INTO notifications (user_id, message) 
+                INSERT INTO notifications (user_id, message)
                 VALUES ($1, $2)
             `, [clientUserId, messageForUser]);
         }
@@ -394,7 +394,7 @@ router.get('/:id', async (req, res) => {
         const agencyQuery = `
             SELECT a.*, up.profile_image_url as logo_url, up.location
             FROM agencies a
-            JOIN user_profiles up ON a.owner_id = up.user_id
+                     JOIN user_profiles up ON a.owner_id = up.user_id
             WHERE a.agency_id = $1;
         `;
         const agencyRes = await client.query(agencyQuery, [agencyId]);
@@ -405,9 +405,9 @@ router.get('/:id', async (req, res) => {
 
         // 2. Тури агенції
         const toursQuery = `
-            SELECT t.*, tc.name_ukr as category_name 
+            SELECT t.*, tc.name_ukr as category_name
             FROM tours t
-            LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
+                     LEFT JOIN tour_categories tc ON t.category_id = tc.category_id
             WHERE t.agency_id = $1
             ORDER BY t.tour_id DESC;
         `;
@@ -417,16 +417,35 @@ router.get('/:id', async (req, res) => {
         const reviewsQuery = `
             SELECT ar.*, up.first_name, up.last_name, up.profile_image_url
             FROM agency_reviews ar
-            JOIN user_profiles up ON ar.user_id = up.user_id
+                     JOIN user_profiles up ON ar.user_id = up.user_id
             WHERE ar.agency_id = $1
             ORDER BY ar.created_at DESC;
         `;
         const reviewsRes = await client.query(reviewsQuery, [agencyId]);
 
+        // 4. Пости агенції (НОВЕ)
+        // Ми беремо пости, де автором є власник цієї агенції (a.owner_id)
+        const postsQuery = `
+            SELECT
+                p.post_id, p.title, p.content, p.category, p.created_at, p.likes_count,
+                (SELECT COUNT(*) FROM comments WHERE post_id = p.post_id) AS comments_count,
+                COALESCE(
+                                ARRAY_AGG(pi.image_url) FILTER (WHERE pi.image_url IS NOT NULL),
+                                '{}'
+                ) AS images
+            FROM posts p
+            LEFT JOIN post_images pi ON p.post_id = pi.post_id
+            WHERE p.author_id = (SELECT owner_id FROM agencies WHERE agency_id = $1)
+            GROUP BY p.post_id
+            ORDER BY p.created_at DESC;
+        `;
+        const postsRes = await client.query(postsQuery, [agencyId]);
+
         res.json({
             agency: agencyRes.rows[0],
             tours: toursRes.rows,
-            reviews: reviewsRes.rows
+            reviews: reviewsRes.rows,
+            posts: postsRes.rows // Віддаємо пости на фронт
         });
 
     } catch (error) {
@@ -482,8 +501,8 @@ router.post('/:id/reviews', authenticateToken, async (req, res) => {
 
         // 4. Оновлення таблиці agencies
         await client.query(`
-            UPDATE agencies 
-            SET avg_rating = $1, review_count = $2 
+            UPDATE agencies
+            SET avg_rating = $1, review_count = $2
             WHERE agency_id = $3
         `, [newAvg, newCount, agencyId]);
 
