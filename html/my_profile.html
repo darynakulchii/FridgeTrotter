@@ -9,8 +9,8 @@
     <link rel="stylesheet" href="../css/main_page.css">
     <style>
         /* Загальні стилі профілю */
-        body { background-color: #D3CBC4; min-height: 100vh; }
-        .profile-header-card { background-color: white; border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        body { background-color: #E7E5E3; min-height: 100vh; }
+        .profile-header-card { background-color: #f8f8f8; border-radius: 16px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .profile-title { font-size: 2rem; font-weight: 400; color: #281822; margin-bottom: 1.5rem; }
 
         /* Стилі табів */
@@ -28,7 +28,7 @@
         }
         .nav-pill:hover { background-color: #d1d5db; }
         .nav-pill.active {
-            background-color: #48192E;
+            background-color: #273F76;
             color: #D3CBC4;
         }
 
@@ -47,7 +47,7 @@
 
         /* Рамки (Картки) для блоків холодильника */
         .magnet-panel-card {
-            background: white;
+            background: #f8f8f8;
             padding: 1.5rem;
             border-radius: 16px;
             height: fit-content;
@@ -56,7 +56,7 @@
         }
 
         .fridge-wrapper-card {
-            background: white;
+            background: #f8f8f8;
             padding: 1.5rem;
             border-radius: 16px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
@@ -90,7 +90,7 @@
         }
 
         .magnet-btn.burgundy {
-            background-color: #48192E;
+            background-color: #273F76;
         }
 
         .magnet-btn.teal {
@@ -173,7 +173,7 @@
             user-select: none;
         }
         .magnet-on-fridge:active { cursor: grabbing; transform: scale(1.05); }
-        .magnet-on-fridge.burgundy { background-color: #48192E; }
+        .magnet-on-fridge.burgundy { background-color: #273F76; }
         .magnet-on-fridge.teal { background-color: #2D4952; }
         .magnet-on-fridge i { font-size: 1.5rem; margin-bottom: 4px; pointer-events: none; }
         .magnet-on-fridge div { pointer-events: none; }
@@ -190,7 +190,7 @@
             border: 1px solid #E5E7EB; border-radius: 12px; padding: 0.75rem; cursor: pointer; transition: all 0.2s;
         }
         .color-option:hover { border-color: #2D4952; }
-        .color-option.selected { border: 2px solid #48192E; }
+        .color-option.selected { border: 2px solid #273F76; }
         .color-preview { height: 80px; border-radius: 8px; margin-bottom: 0.5rem; }
 
         /* Тумблери (Switch) */
@@ -209,7 +209,7 @@
         /* Вкладка: Інформація */
         .info-section { background: white; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; }
         .avatar-circle-lg {
-            width: 80px; height: 80px; border-radius: 50%; background: #48192E;
+            width: 80px; height: 80px; border-radius: 50%; background: #273F76;
             color: #D3CBC4; font-size: 1.5rem; display: flex; align-items: center; justify-content: center;
         }
         .form-label { display: block; font-size: 0.9rem; font-weight: 500; color: #281822; margin-bottom: 0.5rem; }
@@ -217,11 +217,11 @@
             width: 100%; padding: 0.75rem 1rem; border: 1px solid #E5E7EB;
             border-radius: 8px; background: #F9FAFB; color: #281822; outline: none;
         }
-        .form-input:focus { border-color: #48192E; background: white; }
+        .form-input:focus { border-color: #273F76; background: white; }
 
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-top: 2rem; }
         .stat-box { background: #F3F4F6; border-radius: 12px; padding: 1.5rem; text-align: center; }
-        .stat-number { font-size: 1.8rem; font-weight: 400; color: #48192E; margin-bottom: 0.25rem; }
+        .stat-number { font-size: 1.8rem; font-weight: 400; color: #273F76; margin-bottom: 0.25rem; }
         .stat-label { font-size: 0.9rem; color: #6B7280; }
 
         /* Вкладка: Пости та Тури */
@@ -229,9 +229,9 @@
         .tour-card-saved img { border-radius: 12px; height: 200px; width: 100%; object-fit: cover; margin-bottom: 1rem; }
 
         /* Кнопки дій */
-        .btn-burgundy-outline { border: 1px solid #48192E; color: #48192E; background: transparent; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; transition: 0.2s; }
-        .btn-burgundy-outline:hover { background: #48192E; color: #D3CBC4; }
-        .btn-burgundy-solid { background: #48192E; color: #D3CBC4; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; border: none; cursor: pointer; }
+        .btn-burgundy-outline { border: 1px solid #273F76; color: #273F76; background: transparent; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; transition: 0.2s; }
+        .btn-burgundy-outline:hover { background: #273F76; color: #D3CBC4; }
+        .btn-burgundy-solid { background: #273F76; color: #D3CBC4; padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.9rem; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -375,7 +375,7 @@
                     <div class="font-bold text-[#281822] mb-2 text-sm">Аватар</div>
                     <div class="flex gap-2">
                         <button class="btn-burgundy-outline text-xs">Завантажити фото</button>
-                        <button class="text-[#48192E] border border-[#48192E] rounded-lg px-3 py-1.5 text-xs hover:bg-red-50">Видалити</button>
+                        <button class="text-[#273F76] border border-[#273F76] rounded-lg px-3 py-1.5 text-xs hover:bg-red-50">Видалити</button>
                     </div>
                 </div>
             </div>
@@ -458,8 +458,8 @@
                     <span class="flex items-center gap-1"><i class="far fa-comment-alt"></i> 12</span>
                 </div>
                 <div class="flex gap-4 text-sm">
-                    <button class="text-[#2D4952] hover:text-[#48192E] flex items-center gap-1"><i class="far fa-edit"></i> Редагувати</button>
-                    <button class="text-[#48192E] hover:text-red-600 flex items-center gap-1"><i class="far fa-trash-alt"></i> Видалити</button>
+                    <button class="text-[#2D4952] hover:text-[#273F76] flex items-center gap-1"><i class="far fa-edit"></i> Редагувати</button>
+                    <button class="text-[#273F76] hover:text-red-600 flex items-center gap-1"><i class="far fa-trash-alt"></i> Видалити</button>
                 </div>
             </div>
         </div>
@@ -503,15 +503,15 @@
             <div class="space-y-4 mb-6">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Поточний пароль</label>
-                    <input type="password" placeholder="Введіть поточний пароль" class="w-full border p-2.5 rounded-md bg-gray-50 outline-none focus:border-[#48192E]">
+                    <input type="password" placeholder="Введіть поточний пароль" class="w-full border p-2.5 rounded-md bg-gray-50 outline-none focus:border-[#273F76]">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Новий пароль</label>
-                    <input type="password" placeholder="Введіть новий пароль" class="w-full border p-2.5 rounded-md bg-gray-50 outline-none focus:border-[#48192E]">
+                    <input type="password" placeholder="Введіть новий пароль" class="w-full border p-2.5 rounded-md bg-gray-50 outline-none focus:border-[#273F76]">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Підтвердити пароль</label>
-                    <input type="password" placeholder="Повторіть новий пароль" class="w-full border p-2.5 rounded-md bg-gray-50 outline-none focus:border-[#48192E]">
+                    <input type="password" placeholder="Повторіть новий пароль" class="w-full border p-2.5 rounded-md bg-gray-50 outline-none focus:border-[#273F76]">
                 </div>
             </div>
             <button class="btn-burgundy-solid mb-8">Змінити пароль</button>
@@ -610,7 +610,7 @@
 
             <label class="font-bold text-[#281822] text-sm block mb-2">Мова інтерфейсу</label>
             <div class="flex gap-2">
-                <button class="bg-[#48192E] text-white px-4 py-1.5 rounded-md text-sm font-medium">Українська</button>
+                <button class="bg-[#273F76] text-white px-4 py-1.5 rounded-md text-sm font-medium">Українська</button>
                 <button class="bg-white border border-gray-300 text-[#281822] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-gray-50">English</button>
             </div>
         </div>
@@ -624,7 +624,7 @@
                     <div class="font-bold text-[#281822] text-sm">Видалити акаунт</div>
                     <div class="text-sm text-gray-500">Назавжди видалити ваш акаунт та всі дані</div>
                 </div>
-                <button class="border border-[#48192E] text-[#48192E] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-100">Видалити</button>
+                <button class="border border-[#273F76] text-[#273F76] px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-100">Видалити</button>
             </div>
         </div>
 
