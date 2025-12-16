@@ -9,7 +9,7 @@ const cloudinary = require('cloudinary').v2;
 // Налаштування multer для обробки файлів у пам'яті
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 5 * 1024 * 1024 }, // Ліміт 5MB на файл
+    limits: { fileSize: 20 * 1024 * 1024 }, // Ліміт 5MB на файл
 });
 
 // Допоміжна функція для завантаження на Cloudinary
