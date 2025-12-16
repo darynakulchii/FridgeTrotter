@@ -130,9 +130,13 @@ async function loadAgencies() {
             if (index === 1) rankIcon = `<div class="text-4xl mb-2">🥈</div><div class="text-2xl font-bold text-[#2D4952]">#2</div>`;
             if (index === 2) rankIcon = `<div class="text-4xl mb-2">🥉</div><div class="text-2xl font-bold text-[#A8B5B2]">#3</div>`;
 
-            // Посилання на профіль агенції (other_user_profile.html)
-            // Використовуємо owner_id, щоб відкрити сторінку користувача-агента
-            const profileLink = `other_user_profile.html?user_id=${agency.owner_id}`;
+            // Посилання на профіль агенції
+            let profileLink;
+            if (currentUser && currentUser.userId == agency.owner_id) {
+                profileLink = 'agency_page.html'; // Моя агенція
+            } else {
+                profileLink = `other_agency_profile.html?agency_id=${agency.agency_id}`; // Чужа агенція
+            }
 
             const html = `
                 <div class="bg-white rounded-xl p-6 shadow-sm border border-[#2D4952]/20 hover:shadow-lg transition flex items-start gap-6">
