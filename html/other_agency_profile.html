@@ -10,13 +10,13 @@
     <link rel="stylesheet" href="../css/agency_page.css">
     <style>
         body { background-color: #D3CBC4; min-height: 100vh; }
-        .agency-header-card { background-color: white; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .agency-header-card { background-color: #f8f8f8; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 
         /* Стилі для табів */
         .nav-pills { display: flex; gap: 1rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; margin-bottom: 1.5rem; }
         .nav-pill { padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 600; color: #555; transition: 0.2s; cursor: pointer; background: transparent; border: none; }
         .nav-pill:hover { background-color: #f3f4f6; }
-        .nav-pill.active { background-color: #48192E; color: white; }
+        .nav-pill.active { background-color: #273F76; color: #f8f8f8; }
 
         .tab-content { display: none; }
         .tab-content.active { display: block; }
@@ -84,7 +84,7 @@
 
     <div id="tab-reviews" class="tab-content max-w-3xl">
 
-        <div id="review-form-container" class="bg-white p-6 rounded-xl shadow-sm mb-8 border border-gray-100">
+        <div id="review-form-container" class="bg-[#273F76] p-6 rounded-xl shadow-sm mb-8 border border-gray-100">
             <h3 class="text-lg font-bold text-[#281822] mb-4">Оцінити агенцію</h3>
             <form id="review-form">
                 <div class="mb-4">
@@ -99,7 +99,7 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-medium mb-1">Ваш відгук:</label>
-                    <textarea id="review-text" rows="3" class="w-full border p-3 rounded-lg outline-none focus:border-[#48192E]" placeholder="Поділіться враженнями про роботу агенції..."></textarea>
+                    <textarea id="review-text" rows="3" class="w-full border p-3 rounded-lg outline-none focus:border-[#273F76]" placeholder="Поділіться враженнями про роботу агенції..."></textarea>
                 </div>
                 <button type="submit" class="bg-[#48192E] text-white px-6 py-2 rounded-lg hover:bg-[#281822] transition">Опублікувати відгук</button>
             </form>
