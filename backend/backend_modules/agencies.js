@@ -347,13 +347,13 @@ router.patch('/bookings/:id/status', authenticateToken, async (req, res) => {
         // Сценарій Б: Відкат (забираємо магніт, якщо він був виданий)
         else if (old_status === 'confirmed' && status !== 'confirmed') {
             if (magnet_id) {
+                // ВИДАЛЯЄМО МАГНІТ
                 await client.query(`
-                    DELETE FROM user_fridge_magnets 
+                    DELETE FROM user_fridge_magnets
                     WHERE user_id = $1 AND magnet_id = $2
                 `, [clientUserId, magnet_id]);
+
                 messageForUser = `Статус бронювання туру "${title}" змінено на "${status}". Магніт вилучено.`;
-            } else {
-                messageForUser = `Статус бронювання туру "${title}" змінено на "${status}".`;
             }
         }
 

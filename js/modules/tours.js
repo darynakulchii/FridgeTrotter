@@ -244,9 +244,16 @@ function createTourCard(tour) {
     }
 
     // === ЛОГІКА ПОСИЛАННЯ НА ПРОФІЛЬ АГЕНЦІЇ ===
-    let agencyProfileLink = `other_user_profile.html?user_id=${tour.owner_id}`;
+    let agencyProfileLink;
+
     if (currentUser && currentUser.userId === tour.owner_id) {
         agencyProfileLink = 'agency_page.html';
+    } else {
+        if (tour.agency_id) {
+            agencyProfileLink = `other_agency_profile.html?agency_id=${tour.agency_id}`;
+        } else {
+            agencyProfileLink = `other_agency_profile.html?user_id=${tour.owner_id}`;
+        }
     }
 
     // === ЛОГІКА КНОПКИ "ЗБЕРЕГТИ" ===
